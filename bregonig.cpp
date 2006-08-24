@@ -37,6 +37,15 @@
 #include "dbgtrace.h"
 
 
+//OnigSyntaxType OnigSyntaxPerl_NG_EX = *ONIG_SYNTAX_PERL_NG;
+OnigSyntaxType OnigSyntaxPerl_NG_EX = {
+	ONIG_SYNTAX_PERL_NG->op,
+	ONIG_SYNTAX_PERL_NG->op2,
+	ONIG_SYNTAX_PERL_NG->behavior | ONIG_SYN_DIFFERENT_LEN_ALT_LOOK_BEHIND,
+	ONIG_SYNTAX_PERL_NG->options,
+};
+
+
 char *BRegexpVersion(void)
 {
 	static char version[256];
@@ -262,10 +271,9 @@ int BSplit(char *str, char *target, char *targetendp,
 
 void BRegfree(BREGEXP *rx)
 {
-	if (rx == NULL) {
-		return;
+	if (rx) {
+		delete static_cast<bregonig*>(rx);
 	}
-	delete static_cast<bregonig*>(rx);
 }
 
 
@@ -460,9 +468,10 @@ TRACE0("compile_onig()\n");
 		delete [] parap;
 		return NULL;
 	}
+//	OnigSyntaxPerl_NG_EX.behavior |= ONIG_SYN_DIFFERENT_LEN_ALT_LOOK_BEHIND;
 	OnigErrorInfo err_info;
 	int err_code = onig_new(&rx->reg, (UChar*) res, (UChar*) resend,
-			option, enc, ONIG_SYNTAX_PERL, &err_info);
+			option, enc, /*ONIG_SYNTAX_PERL_NG*/&OnigSyntaxPerl_NG_EX, &err_info);
 	
 	if (err_code != ONIG_NORMAL) {
 		onig_err_to_bregexp_msg(err_code, &err_info, msg);
@@ -494,16 +503,25 @@ int regexec_onig(bregonig *rx, char *stringarg,
 	int one_shot,   /* if not match then break without proceed str pointer */
 	char *msg)		/* fatal error message */
 {
-	int err_code = onig_search(rx->reg, (UChar*) strbeg, (UChar*) strend,
-			(UChar*) stringarg, (UChar*) strend, rx->region,
-			ONIG_OPTION_NONE);
+TRACE1("one_shot: %d\n", one_shot);
+	int err_code;
+	if (one_shot) {
+		err_code = onig_match(rx->reg, (UChar*) strbeg, (UChar*) strend,
+				(UChar*) stringarg, rx->region,
+				ONIG_OPTION_NONE);
+	} else {
+		err_code = onig_search(rx->reg, (UChar*) strbeg, (UChar*) strend,
+				(UChar*) stringarg, (UChar*) strend, rx->region,
+				ONIG_OPTION_NONE);
+	}
 	if (err_code >= 0) {
 		/* FOUND */
 		if (rx->startp) {
 			delete [] rx->startp;
 		}
 		rx->nparens = rx->region->num_regs - 1;
-		rx->startp = new (std::nothrow) char*[rx->region->num_regs * 2];	/* allocate startp and endp together */
+		rx->startp = new (std::nothrow) char*[rx->region->num_regs * 2];
+			/* allocate startp and endp together */
 		if (rx->startp == NULL) {
 			strcpy(msg, "out of space");
 			return -1;

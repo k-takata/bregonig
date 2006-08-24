@@ -36,6 +36,8 @@
 /*** Debugging Routines ***/
 
 #ifdef _DEBUG
+#pragma comment(lib, "user32.lib")
+
 #define TRACE0(msg)	\
 	{	\
 		TCHAR buf_[1024]; wsprintf(buf_, TEXT("%s"), msg); \

@@ -4,7 +4,7 @@
 #  Copyright (C) 2006  K.Takata
 #
 
-ONIG_DIR = ../onig-4.3.1-mt
+ONIG_DIR = ../onig-4.4.0-mt
 ONIG_LIB = $(ONIG_DIR)/onig_s.lib
 
 #CPPFLAGS = /O2 /W3 /GX /LD /nologo /I$(ONIG_DIR) /DONIG_EXTERN=extern
@@ -15,7 +15,6 @@ LDFLAGS = /DLL /nologo
 
 !ifdef DEBUG
 CPPFLAGS = $(CPPFLAGS) /D_DEBUG
-LDFLAGS = $(LDFLAGS) user32.lib
 !endif
 
 
