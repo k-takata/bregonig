@@ -52,6 +52,7 @@ struct bregonig : bregexp {
 	REPSTR *repstr;
 	char *prerepp;		/* original replace string */
 	char *prerependp;	/* original replace string end */
+	int prelen;
 	
 	
 	bregonig();
@@ -74,6 +75,8 @@ REPSTR *compile_rep(bregonig *rx, const char *str, const char *strend);
 
 int subst_onig(bregonig *rx, char *target, char *targetstartp, char *targetendp,
 		char *msg, BCallBack callback);
+int split_onig(bregonig *rx, char *target, char *targetendp, int limit, char *msg);
+
 
 int regexec_onig(bregonig *rx, char *stringarg,
 	register char *strend,	/* pointer to null at end of string */
@@ -83,5 +86,38 @@ int regexec_onig(bregonig *rx, char *stringarg,
 	int one_shot,   /* if not match then break without proceed str pointer */
 	char *msg);		/* fatal error message */
 
+
+
+#define isALNUM(c)   (isascii(c) && (isalpha(c) || isdigit(c) || c == '_'))
+#define isIDFIRST(c) (isascii(c) && (isalpha(c) || (c) == '_'))
+#define isALPHA(c)   (isascii(c) && isalpha(c))
+#define isSPACE(c)   (isascii(c) && isspace(c))
+#define isDIGIT(c)   (isascii(c) && isdigit(c))
+#define isUPPER(c)   (isascii(c) && isupper(c))
+#define isLOWER(c)   (isascii(c) && islower(c))
+#define toUPPER(c)   toupper(c)
+#define toLOWER(c)   tolower(c)
+
+#define PMf_USED		0x0001		/* pm has been used once already */
+#define PMf_ONCE		0x0002		/* use pattern only once per reset */
+#define PMf_SCANFIRST	0x0004		/* initial constant not anchored */
+#define PMf_ALL			0x0008		/* initial constant is whole pat */
+#define PMf_SKIPWHITE	0x0010		/* skip leading whitespace for split */
+#define PMf_FOLD		0x0020		/* case insensitivity */
+#define PMf_CONST		0x0040		/* subst replacement is constant */
+#define PMf_KEEP		0x0080		/* keep 1st runtime pattern forever */
+#define PMf_GLOBAL		0x0100		/* pattern had a g modifier */
+#define PMf_RUNTIME		0x0200		/* pattern coming in on the stack */
+#define PMf_EVAL		0x0400		/* evaluating replacement as expr */
+#define PMf_WHITE		0x0800		/* pattern is \s+ */
+#define PMf_MULTILINE	0x1000		/* assume multiple lines */
+#define PMf_SINGLELINE	0x2000		/* assume single line */
+#define PMf_KANJI		0x4000		/* KANJI mode */
+#define PMf_EXTENDED	0x8000		/* chuck embedded whitespace */
+#define PMf_SUBSTITUTE	0x010000	/* substitute */
+#define PMf_TRANSLATE	0x020000	/* translate  */
+#define PMf_TRANS_COMPLEMENT	0x040000	/* translate complement */
+#define PMf_TRANS_DELETE		0x080000	/* translate delete */
+#define PMf_TRANS_SQUASH		0x100000	/* translate squash */
 
 #endif /* BREGONIG_H_ */

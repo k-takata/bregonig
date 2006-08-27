@@ -31,7 +31,7 @@
 #include <mbstring.h>
 #include <oniguruma.h>
 #include "bregexp.h"
-#include "global.h"
+//#include "global.h"
 #include "bregonig.h"
 #include "mem_vc6.h"
 #include "dbgtrace.h"
@@ -57,21 +57,22 @@ char *BRegexpVersion(void)
 	return version;
 }
 
-int BMatch_s(char *str, char *target, char *targetstartp, char *targetendp,
-		int one_shot,
-		BREGEXP **rxp, char *msg)
+
+int check_params(const char *str, const char *target, const char *targetstartp,
+		const char *targetendp,
+		BREGEXP **rxp, bool trans, char *msg, int *pplen)
 {
-TRACE1("BMatch(): %s\n", str);
-	set_new_throw_bad_alloc();
-	
 	if (msg == NULL)		// no message area
 		return -1;
 	msg[0] = '\0';			// ensure no error
+TRACE3("str:%s, len:%d, len:%d\n", str, targetendp-target, targetendp-targetstartp);
+TRACE1("rxp:0x%08x\n", rxp);
 	
 	if (rxp == NULL) {
 		strcpy(msg, "invalid BREGEXP parameter");
 		return -1;
 	}
+TRACE1("rx:0x%08x\n", *rxp);
 	if (target == NULL || targetstartp == NULL || targetendp == NULL
 		|| targetstartp >= targetendp || target > targetstartp) { // bad targer parameter ?
 		strcpy(msg, "invalid target parameter");
@@ -80,21 +81,42 @@ TRACE1("BMatch(): %s\n", str);
 	
 	
 	int plen = (str == NULL) ? 0 : strlen(str);
+	*pplen = plen;
 	
 	bregonig *rx = static_cast<bregonig*>(*rxp);
-	if (rx == NULL) {
-		if (plen == 0) {	// null string
+	if (plen == 0) {	// null string
+		if (rx == NULL) {
 			strcpy(msg, "invalid reg parameter");
 			return -1;
 		}
-	} else {
-		if (plen && (rx->paraendp - rx->parap != plen
+	} else if (rx) {
+		if ((trans == !(rx->pmflags & PMf_TRANSLATE)
+				|| rx->paraendp - rx->parap != plen
 				|| memcmp(str,rx->parap,plen) != 0)) {
 			// differ from the previous pattern
 			delete rx;
-			rx = NULL;
+			*rxp = NULL;
+TRACE0("delete rx\n");
 		}
 	}
+//	*rxp = rx;
+	return 0;
+}
+
+
+int BMatch_s(char *str, char *target, char *targetstartp, char *targetendp,
+		int one_shot,
+		BREGEXP **rxp, char *msg)
+{
+TRACE1("BMatch(): %s\n", str);
+	set_new_throw_bad_alloc();
+	
+	int plen;
+	if (check_params(str, target, targetstartp, targetendp,
+			rxp, false, msg, &plen) < 0) {
+		return -1;
+	}
+	bregonig *rx = static_cast<bregonig*>(*rxp);
 	if (rx == NULL) {
 		rx = compile_onig(str, plen, msg);
 		if (rx == NULL) {
@@ -107,6 +129,10 @@ TRACE1("BMatch(): %s\n", str);
 	if (rx->outp) {
 		delete [] rx->outp;
 		rx->outp = NULL;
+	}
+	
+	if (rx->prelen == 0) {			// no string
+		return 0;
 	}
 	
 	int err_code = regexec_onig(rx, targetstartp, targetendp, target,
@@ -155,37 +181,12 @@ int BSubst_s(char *str, char *target, char *targetstartp, char *targetendp,
 TRACE1("BSubst(): %s\n", str);
 	set_new_throw_bad_alloc();
 	
-	if (msg == NULL)		// no message area
-		return -1;
-	msg[0] = '\0';			// ensure no error
-	
-	if (rxp == NULL) {
-		strcpy(msg, "invalid BREGEXP parameter");
+	int plen;
+	if (check_params(str, target, targetstartp, targetendp,
+			rxp, false, msg, &plen) < 0) {
 		return -1;
 	}
-	if (target == NULL || targetstartp == NULL || targetendp == NULL
-		|| targetstartp >= targetendp || target > targetstartp) { // bad targer parameter ?
-		strcpy(msg, "invalid target parameter");
-		return -1;
-	}
-	
-	
-	int plen = (str == NULL) ? 0 : strlen(str);
-	
 	bregonig *rx = static_cast<bregonig*>(*rxp);
-	if (rx == NULL) {
-		if (plen == 0) {	// null string
-			strcpy(msg, "invalid reg parameter");
-			return -1;
-		}
-	} else {
-		if (plen && (rx->paraendp - rx->parap != plen
-				|| memcmp(str,rx->parap,plen) != 0)) {
-			// differ from the previous pattern
-			delete rx;
-			rx = NULL;
-		}
-	}
 	if (rx == NULL) {
 		rx = compile_onig(str, plen, msg);
 		if (rx == NULL) {
@@ -200,9 +201,14 @@ TRACE1("BSubst(): %s\n", str);
 		rx->outp = NULL;
 	}
 	
+	if (rx->prelen == 0) {			// no string
+		return 0;
+	}
+	
 	if (rx->pmflags & PMf_SUBSTITUTE) {
 		return subst_onig(rx,target,targetstartp,targetendp,msg,callback);
 	}
+TRACE0("Match in Subst");
 #if 0
 	int err_code = regexec_onig(rx, targetstartp,targetendp,target,0,1,0,msg);
 	if (err_code > 0 && rx->nparens && rx->endp[1] > rx->startp[1]) {
@@ -248,29 +254,56 @@ int BSubstEx(char *str, char *targetbegp, char *target, char *targetendp,
 int BTrans(char *str, char *target, char *targetendp,
 		BREGEXP **rxp, char *msg)
 {
+TRACE1("BTrans(): %s\n", str);
 	set_new_throw_bad_alloc();
 	
-	if (msg == NULL)		// no message area
+	int plen;
+	if (check_params(str, target, target/*startp*/, targetendp,
+			rxp, true, msg, &plen) < 0) {
 		return -1;
+	}
+	
+	
+	
 	
 	strcpy(msg, "BTrans: not implemented");
 	return -1;
 }
 
+
 int BSplit(char *str, char *target, char *targetendp,
 		int limit, BREGEXP **rxp, char *msg)
 {
+TRACE1("BSplit(): %s\n", str);
 	set_new_throw_bad_alloc();
 	
-	if (msg == NULL)		// no message area
+	int plen;
+	if (check_params(str, target, target/*startp*/, targetendp,
+			rxp, false, msg, &plen) < 0) {
 		return -1;
+	}
+	bregonig *rx = static_cast<bregonig*>(*rxp);
+	if (rx == NULL) {
+		rx = compile_onig(str, plen, msg);
+		if (rx == NULL) {
+			*rxp = NULL;
+			return -1;
+		}
+	}
+	*rxp = rx;
 	
-	strcpy(msg, "BSplit: not implemented");
-	return -1;
+	if (rx->splitp) {
+		delete [] rx->splitp;
+		rx->splitp = NULL;
+	}
+	
+	int ctr = split_onig(rx,target,targetendp,limit,msg);
+	return msg[0] == '\0' ? ctr : -1;
 }
 
 void BRegfree(BREGEXP *rx)
 {
+TRACE1("BRegfree(): rx=0x%08x\n", rx);
 	if (rx) {
 		delete static_cast<bregonig*>(rx);
 	}
@@ -295,9 +328,9 @@ bregonig::~bregonig()
 	if (outp) {
 		delete [] outp;
 	}
-//	if (splitp) {
-//		delete [] splitp;
-//	}
+	if (splitp) {
+		delete [] splitp;
+	}
 	if (parap) {
 		delete [] parap;
 	}
@@ -337,6 +370,8 @@ int onig_err_to_bregexp_msg(int err_code, OnigErrorInfo* err_info, char *msg)
 bregonig *compile_onig(const char *ptn, int plen, char *msg)
 {
 TRACE0("compile_onig()\n");
+TRACE1("ptn:%s\n", ptn);
+TRACE1("plen:%d\n", plen);
 	char *parap = new (std::nothrow) char[plen+1];	// parameter copy
 	if (parap == NULL) {
 		strcpy(msg, "precompile out of space");
@@ -474,6 +509,7 @@ TRACE0("compile_onig()\n");
 			option, enc, /*ONIG_SYNTAX_PERL_NG*/&OnigSyntaxPerl_NG_EX, &err_info);
 	
 	if (err_code != ONIG_NORMAL) {
+TRACE0("Error: onig_new()\n");
 		onig_err_to_bregexp_msg(err_code, &err_info, msg);
 		delete rx;
 		delete [] parap;
@@ -483,6 +519,7 @@ TRACE0("compile_onig()\n");
 	rx->parap = parap;
 	rx->paraendp = parap + plen;
 	rx->pmflags = flag;
+	rx->prelen = resend - res;
 	
 	if (type == 's') {						// substitute
 		rx->pmflags |= PMf_SUBSTITUTE;
@@ -491,6 +528,7 @@ TRACE0("compile_onig()\n");
 		rx->prerependp = rpend;
 	}
 	
+TRACE1("rx:0x%08x\n", rx);
 	return rx;
 }
 

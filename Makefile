@@ -17,27 +17,33 @@ LDFLAGS = /DLL /nologo
 CPPFLAGS = $(CPPFLAGS) /D_DEBUG
 !endif
 
+OBJS = subst.obj bsplit.obj
+BROBJS = bregonig.obj $(OBJS)
+K2OBJS = k2regexp.obj $(OBJS)
+
 
 all : bregonig.dll k2regexp.dll
 
 
-bregonig.dll : bregonig.obj subst.obj $(ONIG_LIB)
+bregonig.dll : $(BROBJS) $(ONIG_LIB)
 	$(LD) $** /out:$@ $(LDFLAGS)
 
-k2regexp.dll : k2regexp.obj subst.obj $(ONIG_LIB)
+k2regexp.dll : $(K2OBJS) $(ONIG_LIB)
 	$(LD) $** /out:$@ $(LDFLAGS)
 
 
-bregonig.obj : bregonig.cpp bregexp.h bregonig.h mem_vc6.h dbgtrace.h global.h $(ONIG_DIR)/oniguruma.h
+bregonig.obj : bregonig.cpp bregexp.h bregonig.h mem_vc6.h dbgtrace.h $(ONIG_DIR)/oniguruma.h
 
-k2regexp.obj : bregonig.cpp bregexp.h bregonig.h mem_vc6.h dbgtrace.h global.h $(ONIG_DIR)/oniguruma.h
+k2regexp.obj : bregonig.cpp bregexp.h bregonig.h mem_vc6.h dbgtrace.h $(ONIG_DIR)/oniguruma.h
 	$(CC) $(CPPFLAGS) /c /D_K2REGEXP_ /Fo$@ bregonig.cpp
 
 
-subst.obj : subst.cpp bregexp.h bregonig.h mem_vc6.h dbgtrace.h global.h $(ONIG_DIR)/oniguruma.h
+subst.obj : subst.cpp bregexp.h bregonig.h mem_vc6.h dbgtrace.h $(ONIG_DIR)/oniguruma.h
+
+bsplit.obj : bsplit.cpp bregexp.h bregonig.h mem_vc6.h dbgtrace.h $(ONIG_DIR)/oniguruma.h
 
 
 clean :
-	del bregonig.obj subst.obj bregonig.lib bregonig.dll bregonig.exp
+	del $(BROBJS) bregonig.lib bregonig.dll bregonig.exp
 	del k2regexp.obj k2regexp.lib k2regexp.dll k2regexp.exp
 

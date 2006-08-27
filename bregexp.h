@@ -4,7 +4,7 @@
 */
 /*
  *	2002.08.24	modified by K2
- *	2006.08.23	modified by K.Takata
+ *	2006.08.28	modified by K.Takata
  */
 
 
@@ -33,7 +33,7 @@ typedef struct bregexp {
 } BREGEXP;
 
 #if defined(_BREGEXP_) || defined(_K2REGEXP_)
-typedef int (__stdcall *BCallBack)(int, int, int);
+typedef int (__stdcall *BCallBack)(int kind, int value, int index);
 #endif
 
 #if defined(__cplusplus)

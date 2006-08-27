@@ -28,7 +28,7 @@
 #include <mbstring.h>
 #include <oniguruma.h>
 #include "bregexp.h"
-#include "global.h"
+//#include "global.h"
 #include "bregonig.h"
 #include "mem_vc6.h"
 #include "dbgtrace.h"
@@ -57,6 +57,7 @@ char *realloc_buf(char *buf, int oldlen, int newlen, char *msg)
 int subst_onig(bregonig *rx, char *target, char *targetstartp, char *targetendp,
 		char *msg, BCallBack callback)
 {
+//TRACE0("subst_onig()\n");
 	char *orig,*m,*c;
 	char *s = target;
 	int len = targetendp - target;
@@ -440,8 +441,8 @@ TRACE0("compile_rep\n");
 		}
 	}
 	if (!special) {		// no special char found
-		delete [] repstr->startp;
-		delete [] repstr->dlen;
+	//	delete [] repstr->startp;	// deleted by the deconstructor
+	//	delete [] repstr->dlen;		// deleted by the deconstructor
 		delete repstr;
 		return NULL;
 	}
