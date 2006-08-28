@@ -14,7 +14,7 @@
 
 
 #define BREGONIG_VERSION_MAJOR	0
-#define BREGONIG_VERSION_MINOR	1
+#define BREGONIG_VERSION_MINOR	4
 #define BREGONIG_VERSION_PREFIX	""
 
 
@@ -86,6 +86,11 @@ int regexec_onig(bregonig *rx, char *stringarg,
 	int one_shot,   /* if not match then break without proceed str pointer */
 	char *msg);		/* fatal error message */
 
+
+int trans(bregonig *rx, char *target, char *targetendp, char *msg);
+
+bregonig *trcomp(char *res, char *resend, char *rp, char *rpend,
+		int flag, char *msg);
 
 
 #define isALNUM(c)   (isascii(c) && (isalpha(c) || isdigit(c) || c == '_'))

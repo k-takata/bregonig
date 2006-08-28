@@ -91,17 +91,6 @@ int subst_onig(bregonig *rx, char *target, char *targetstartp, char *targetendp,
 		m = rx->startp[0];
 		len = m - s;
 		if (blen <= copycnt + len) {
-		/*
-			char *tp = new (std::nothrow) char[blen + len + SUBST_BUF_SIZE];
-			if (tp == NULL) {
-				strcpy(msg,"out of space buf");
-				delete [] buf;
-				return 0;
-			}
-			memcpy(tp,buf,copycnt);
-			delete [] buf;
-			buf = tp; blen += len + SUBST_BUF_SIZE;
-		*/
 			blen += len + SUBST_BUF_SIZE;
 			buf = realloc_buf(buf, copycnt, blen, msg);
 			if (buf == NULL)
@@ -121,17 +110,6 @@ int subst_onig(bregonig *rx, char *target, char *targetstartp, char *targetendp,
 				int dlen = rep->dlen[i]; 
 				if (rep->startp[i] && dlen) { 
 					if (blen <= copycnt + dlen) {
-					/*
-						char *tp = new (std::nothrow) char[blen + dlen + SUBST_BUF_SIZE];
-						if (tp == NULL) {
-							strcpy(msg,"out of space buf");
-							delete [] buf;
-							return 0;
-						}
-						memcpy(tp,buf,copycnt);
-						delete [] buf;
-						buf = tp; blen += dlen + SUBST_BUF_SIZE;
-					*/
 						blen += dlen + SUBST_BUF_SIZE;
 						buf = realloc_buf(buf, copycnt, blen, msg);
 						if (buf == NULL)
@@ -145,17 +123,6 @@ int subst_onig(bregonig *rx, char *target, char *targetstartp, char *targetendp,
 					// \digits or $&
 					len = rx->endp[dlen] - rx->startp[dlen];
 					if (blen <= copycnt + len) {
-					/*
-						char *tp = new (std::nothrow) char[blen + len + SUBST_BUF_SIZE];
-						if (tp == NULL) {
-							strcpy(msg,"out of space buf");
-							delete [] buf;
-							return 0;
-						}
-						memcpy(tp,buf,copycnt);
-						delete [] buf;
-						buf = tp; blen += len + SUBST_BUF_SIZE;
-					*/
 						blen += len + SUBST_BUF_SIZE;
 						buf = realloc_buf(buf, copycnt, blen, msg);
 						if (buf == NULL)
@@ -169,17 +136,6 @@ int subst_onig(bregonig *rx, char *target, char *targetstartp, char *targetendp,
 		} else {
 			if (clen) {		// no special char
 				if (blen <= copycnt + clen) {
-				/*
-					char *tp = new (std::nothrow) char[blen + clen + SUBST_BUF_SIZE];
-					if (tp == NULL) {
-						strcpy(msg,"out of space buf");
-						delete [] buf;
-						return 0;
-					}
-					memcpy(tp,buf,copycnt);
-					delete [] buf;
-					buf = tp; blen += clen + SUBST_BUF_SIZE;
-				*/
 					blen += clen + SUBST_BUF_SIZE;
 					buf = realloc_buf(buf, copycnt, blen, msg);
 					if (buf == NULL)
@@ -200,17 +156,6 @@ int subst_onig(bregonig *rx, char *target, char *targetstartp, char *targetendp,
 //	len = rx->subend - s;
 	len = targetendp - s;	// ???
 	if (blen <= copycnt + len) {
-	/*
-		char *tp = new (std::nothrow) char[blen + len + 1];
-		if (tp == NULL) {
-			strcpy(msg,"out of space buf");
-			delete [] buf;
-			return 0;
-		}
-		memcpy(tp,buf,copycnt);
-		delete [] buf;
-		buf = tp;
-	*/
 		buf = realloc_buf(buf, copycnt, blen + len + 1, msg);
 		if (buf == NULL)
 			return 0;

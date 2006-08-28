@@ -17,7 +17,7 @@ LDFLAGS = /DLL /nologo
 CPPFLAGS = $(CPPFLAGS) /D_DEBUG
 !endif
 
-OBJS = subst.obj bsplit.obj
+OBJS = subst.obj bsplit.obj btrans.obj sv.obj
 BROBJS = bregonig.obj $(OBJS)
 K2OBJS = k2regexp.obj $(OBJS)
 
@@ -41,6 +41,10 @@ k2regexp.obj : bregonig.cpp bregexp.h bregonig.h mem_vc6.h dbgtrace.h $(ONIG_DIR
 subst.obj : subst.cpp bregexp.h bregonig.h mem_vc6.h dbgtrace.h $(ONIG_DIR)/oniguruma.h
 
 bsplit.obj : bsplit.cpp bregexp.h bregonig.h mem_vc6.h dbgtrace.h $(ONIG_DIR)/oniguruma.h
+
+btrans.obj : btrans.cpp bregexp.h bregonig.h mem_vc6.h dbgtrace.h sv.h $(ONIG_DIR)/oniguruma.h
+
+sv.obj : sv.cpp sv.h
 
 
 clean :

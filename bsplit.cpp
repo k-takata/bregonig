@@ -3,7 +3,7 @@
 //   Split front-end  
 ////////////////////////////////////////////////////////////////////////////////
 //  1999.11.24   update by Tatsuo Baba
-//  2006.08.28   update by K.Takata
+//  2006.08.29   update by K.Takata
 //
 //  You may distribute under the terms of either the GNU General Public
 //  License or the Artistic License, as specified in the perl_license.txt file.
@@ -51,7 +51,7 @@ int split_onig(bregonig *rx, char *target, char *targetendp, int limit, char *ms
 		int blen = 2*len + 3;
 		if (limit == 1)
 			blen = 5;
-		char **buf = new char*[blen];
+		char **buf = new (std::nothrow) char*[blen];
 		int copycnt = 0;
 		if (buf == NULL) {
 			strcpy(msg,"out of space buf");
@@ -87,7 +87,7 @@ int split_onig(bregonig *rx, char *target, char *targetendp, int limit, char *ms
 
 	// now ready
 	int blen = 256;				// initial size
-	char **buf = new char*[blen];
+	char **buf = new (std::nothrow) char*[blen];
 	int copycnt = 0;
 	if (buf == NULL) {
 		strcpy(msg,"out of space buf");
@@ -113,7 +113,7 @@ int split_onig(bregonig *rx, char *target, char *targetendp, int limit, char *ms
 		m = rx->startp[0];
 		len = m - s;
 		if (blen <= copycnt + 3) {
-			char **tp = new char*[blen + 256];
+			char **tp = new (std::nothrow) char*[blen + 256];
 			if (tp == NULL) {
 				strcpy(msg,"out of space buf");
 				delete [] buf;
@@ -132,7 +132,7 @@ int split_onig(bregonig *rx, char *target, char *targetendp, int limit, char *ms
 //	len = rx->subend - s;
 	len = targetendp - s;	// ???
 	if (blen <= copycnt + 3) {
-		char **tp = new char*[blen + 3];
+		char **tp = new (std::nothrow) char*[blen + 3];
 		if (tp == NULL) {
 			strcpy(msg,"out of space buf");
 			delete [] buf;

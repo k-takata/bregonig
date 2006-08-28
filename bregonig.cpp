@@ -140,7 +140,7 @@ TRACE1("BMatch(): %s\n", str);
 #if 0
 	if (err_code > 0 && rx->nparens && rx->endp[1] > rx->startp[1]) {
 		int len = rx->endp[1] - rx->startp[1];
-		char *tp = new char[len+1];
+		char *tp = new (std::nothrow) char[len+1];
 		if (tp == NULL) {
 			strcpy(msg,"match out of space");
 			return -1;
@@ -213,7 +213,7 @@ TRACE0("Match in Subst");
 	int err_code = regexec_onig(rx, targetstartp,targetendp,target,0,1,0,msg);
 	if (err_code > 0 && rx->nparens && rx->endp[1] > rx->startp[1]) {
 		int len = rx->endp[1] - rx->startp[1];
-		char *tp = new char[len+1];
+		char *tp = new (std::nothrow) char[len+1];
 		if (tp == NULL) {
 			strcpy(msg,"match out of space");
 			return -1;
@@ -262,12 +262,30 @@ TRACE1("BTrans(): %s\n", str);
 			rxp, true, msg, &plen) < 0) {
 		return -1;
 	}
+	bregonig *rx = static_cast<bregonig*>(*rxp);
+	if (rx == NULL) {
+		rx = compile_onig(str, plen, msg);
+		if (rx == NULL) {
+			*rxp = NULL;
+			return -1;
+		}
+	}
+	*rxp = rx;
 	
+	if (rx->outp) {				// free old result string
+		delete [] rx->outp;
+		rx->outp = NULL;
+	}
 	
+	if (!(rx->pmflags & PMf_TRANSLATE)) { 
+		delete rx;
+		*rxp = NULL;	
+		strcpy(msg,"no translate parameter");
+		return -1;
+	}
 	
-	
-	strcpy(msg, "BTrans: not implemented");
-	return -1;
+	int matched = trans(rx,target,targetendp,msg);
+	return msg[0] == '\0' ? matched: -1;
 }
 
 
@@ -334,9 +352,9 @@ bregonig::~bregonig()
 	if (parap) {
 		delete [] parap;
 	}
-//	if (transtblp) {
-//		delete [] transtblp;
-//	}
+	if (transtblp) {
+		delete [] transtblp;
+	}
 	if (startp) {
 		delete [] startp;
 	}
@@ -487,13 +505,14 @@ TRACE1("plen:%d\n", plen);
 	TRACE1("rpend: %s\r\n", rpend);
 	
 	if (type == 't') {
-	//	rx->pmflags |= PMf_TRANSLATE;
-		
-		
-		// NOT IMPLEMENTED
-		
-		delete [] parap;
-		return NULL;
+		bregonig *rx = trcomp(res,resend,rp,rpend,flag,msg);
+		if (rx == NULL) {
+			delete [] parap;
+			return NULL;
+		}
+		rx->parap = parap;
+		rx->paraendp = rx->parap + plen;
+		return rx;
 	}
 	
 	
