@@ -231,7 +231,7 @@ TRACE0("parse_digit\n");
 
 REPSTR *compile_rep(bregonig *rx, const char *str, const char *strend)
 {
-TRACE0("compile_rep\n");
+TRACE0("compile_rep()\n");
 	rx->pmflags |= PMf_CONST;	/* default */
 	int len = strend - str;
 	if (len < 2)				// no special char
@@ -239,169 +239,177 @@ TRACE0("compile_rep\n");
 	register const char *p = str;
 	register const char *pend = strend;
 	
-	REPSTR *repstr = (REPSTR*) new char[len + sizeof(REPSTR)];
-	memset(repstr, 0, len + sizeof(REPSTR));
-	char *dst = repstr->data;
-	repstr->count = 20;		// default \digits count in string 
-	repstr->startp = new char*[repstr->count];
-	repstr->dlen = new int[repstr->count];
-	int cindex = 0;
-	char ender, prvch;
-	int numlen;
-	char *olddst = dst;
-	bool special = false;		// found special char
-	while (p < pend) {
-		if (*p != '\\' && *p != '$') {	// magic char ?
-			if (iskanji(*p))			// no
-				*dst++ = *p++;
-			*dst++ = *p++;
-			continue;
-		}
-		if (p+1 >= pend) {		// end of the pattern
-			*dst++ = *p++;
-			break;
-		}
-		
-		prvch = *p++;
-		if (prvch == '$') {
-			switch (*p) {
-			case '&':	// $&
-		//	case '0':	// $0
-				special = true;
-				set_repstr(repstr, 0, &cindex, &dst, &olddst);
-				p++;
-				break;
-		/*
-			case '+':	// $+
-				special = true;
-				break;
-			case '`':	// $`
-				special = true;
-				break;
-			case '\'':	// $'
-				special = true;
-				break;
-			case '^':	// $^N
-				special = true;
-				break;
-		*/
-			case '{':	// ${nn}
-				special = true;
-				if (!isDIGIT(*++p)) {
-					// SYNTAX ERROR
-				}
-				p = parse_digit(p, repstr, &cindex, &dst, &olddst);
-				if (*p == '}') {
-					p++;
-				} else {
-					// SYNTAX ERROR
-				}
-				break;
-			default:
-				if (isDIGIT(*p) && *p != '0') {
-					special = true;
-					p = parse_digit(p, repstr, &cindex, &dst, &olddst);
-				} else {
-					*dst++ = prvch;
+	REPSTR *repstr = NULL;
+	try {
+		repstr = (REPSTR*) new char[len + sizeof(REPSTR)];
+		memset(repstr, 0, len + sizeof(REPSTR));
+		char *dst = repstr->data;
+		repstr->count = 20;		// default \digits count in string 
+		repstr->startp = new char*[repstr->count];
+		repstr->dlen = new int[repstr->count];
+		int cindex = 0;
+		char ender, prvch;
+		int numlen;
+		char *olddst = dst;
+		bool special = false;		// found special char
+		while (p < pend) {
+			if (*p != '\\' && *p != '$') {	// magic char ?
+				if (iskanji(*p))			// no
 					*dst++ = *p++;
-				}
+				*dst++ = *p++;
+				continue;
+			}
+			if (p+1 >= pend) {		// end of the pattern
+				*dst++ = *p++;
 				break;
 			}
-			continue;
-		}
-		
-		
-		// now prvch == '\\'
-		
-		special = true;
-		if (isDIGIT(*p)) {
-			if (*p == '0'
-					/* || (isDIGIT(p[1]) && atoi(p) >= rx->nparens)*/) {
-				// '\0nn'
-				ender = (char) scan_oct(p, 3, &numlen);
-				p += numlen;
-			} else {
-			//	num = atoi(p);
-			//	if (num > 9 && num >= rx->nparens) {
-			//		*dst++ = *p++;
-			//	} else {	// \digit found
-					p = parse_digit(p, repstr, &cindex, &dst, &olddst);
-			//	}
-			}
-		} else {
+			
 			prvch = *p++;
-			switch (prvch) {
-			case 'n':
-				ender = '\n';
-				break;
-			case 'r':
-				ender = '\r';
-				break;
-			case 't':
-				ender = '\t';
-				break;
-			case 'f':
-				ender = '\f';
-				break;
-			case 'e':
-				ender = '\033';
-				break;
-			case 'a':
-				ender = '\a';
-				break;
-			case 'v':
-				ender = '\v';
-				break;
-			case 'b':
-				ender = '\b';
-				break;
-			case 'x':	// '\xHH', '\x{HH}'
-				if (isxdigit(*p)) {		// '\xHH'
-					ender = (char) scan_hex(p, 2, &numlen);
-					p += numlen;
-				}
-				else if (*p == '{') {	// '\x{HH}'
-					unsigned int code = scan_hex(p, 4, &numlen);
-					p += numlen;
-					if (*p != '}') {
+			if (prvch == '$') {
+				switch (*p) {
+				case '&':	// $&
+			//	case '0':	// $0
+					special = true;
+					set_repstr(repstr, 0, &cindex, &dst, &olddst);
+					p++;
+					break;
+			/*
+				case '+':	// $+
+					special = true;
+					break;
+				case '`':	// $`
+					special = true;
+					break;
+				case '\'':	// $'
+					special = true;
+					break;
+				case '^':	// $^N
+					special = true;
+					break;
+			*/
+				case '{':	// ${nn}
+					special = true;
+					if (!isDIGIT(*++p)) {
 						// SYNTAX ERROR
-					} else {
-						if (code > 0xff)
-							*dst++ = code >> 16;
-						ender = (char) code;
-						p++;
 					}
+					p = parse_digit(p, repstr, &cindex, &dst, &olddst);
+					if (*p == '}') {
+						p++;
+					} else {
+						// SYNTAX ERROR
+					}
+					break;
+				default:
+					if (isDIGIT(*p) && *p != '0') {
+						special = true;
+						p = parse_digit(p, repstr, &cindex, &dst, &olddst);
+					} else {
+						*dst++ = prvch;
+						*dst++ = *p++;
+					}
+					break;
 				}
-				break;
-			case 'c':	// '\cx'	(ex. '\c[' == Ctrl-[ == '\x1b')
-				ender = *p++;
-				ender = toupper((unsigned char) ender);
-				ender ^= 64;
-				break;
-			default:	// '/', '\\' and the other char
-				ender = prvch;
-				break;
+				continue;
 			}
-			*dst++ = ender;
+			
+			
+			// now prvch == '\\'
+			
+			special = true;
+			if (isDIGIT(*p)) {
+				if (*p == '0'
+						/* || (isDIGIT(p[1]) && atoi(p) >= rx->nparens)*/) {
+					// '\0nn'
+					ender = (char) scan_oct(p, 3, &numlen);
+					p += numlen;
+				} else {
+				//	num = atoi(p);
+				//	if (num > 9 && num >= rx->nparens) {
+				//		*dst++ = *p++;
+				//	} else {	// \digit found
+						p = parse_digit(p, repstr, &cindex, &dst, &olddst);
+				//	}
+				}
+			} else {
+				prvch = *p++;
+				switch (prvch) {
+				case 'n':
+					ender = '\n';
+					break;
+				case 'r':
+					ender = '\r';
+					break;
+				case 't':
+					ender = '\t';
+					break;
+				case 'f':
+					ender = '\f';
+					break;
+				case 'e':
+					ender = '\033';
+					break;
+				case 'a':
+					ender = '\a';
+					break;
+				case 'v':
+					ender = '\v';
+					break;
+				case 'b':
+					ender = '\b';
+					break;
+				case 'x':	// '\xHH', '\x{HH}'
+					if (isxdigit(*p)) {		// '\xHH'
+						ender = (char) scan_hex(p, 2, &numlen);
+						p += numlen;
+					}
+					else if (*p == '{') {	// '\x{HH}'
+						unsigned int code = scan_hex(p, 4, &numlen);
+						p += numlen;
+						if (*p != '}') {
+							// SYNTAX ERROR
+						} else {
+							if (code > 0xff)
+								*dst++ = code >> 16;
+							ender = (char) code;
+							p++;
+						}
+					}
+					break;
+				case 'c':	// '\cx'	(ex. '\c[' == Ctrl-[ == '\x1b')
+					ender = *p++;
+					ender = toupper((unsigned char) ender);
+					ender ^= 64;
+					break;
+				default:	// '/', '\\' and the other char
+					ender = prvch;
+					break;
+				}
+				*dst++ = ender;
+			}
 		}
+		if (!special) {		// no special char found
+		//	delete [] repstr->startp;	// deleted by the deconstructor
+		//	delete [] repstr->dlen;		// deleted by the deconstructor
+			delete repstr;
+			return NULL;
+		}
+		
+		rx->pmflags &= ~PMf_CONST;	/* off known replacement string */
+		
+		
+		if (dst - olddst > 0) {
+			repstr->startp[cindex] = olddst;
+			repstr->dlen[cindex++] = dst - olddst;
+		}
+		repstr->count = cindex;
+		
+		return repstr;
 	}
-	if (!special) {		// no special char found
-	//	delete [] repstr->startp;	// deleted by the deconstructor
-	//	delete [] repstr->dlen;		// deleted by the deconstructor
+	catch (std::exception& ex) {
+TRACE0("out of space in compile_rep()\n");
 		delete repstr;
-		return NULL;
+		throw ex;
 	}
-	
-	rx->pmflags &= ~PMf_CONST;	/* off known replacement string */
-	
-	
-	if (dst - olddst > 0) {
-		repstr->startp[cindex] = olddst;
-		repstr->dlen[cindex++] = dst - olddst;
-	}
-	repstr->count = cindex;
-	
-	return repstr;
 }
 
 

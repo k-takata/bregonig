@@ -33,6 +33,7 @@
 #include "bregexp.h"
 //#include "global.h"
 #include "bregonig.h"
+#include "version.h"
 #include "mem_vc6.h"
 #include "dbgtrace.h"
 
@@ -190,6 +191,7 @@ TRACE1("BSubst(): %s\n", str);
 	if (rx == NULL) {
 		rx = compile_onig(str, plen, msg);
 		if (rx == NULL) {
+TRACE0("rx == NULL\n");
 			*rxp = NULL;
 			return -1;
 		}
@@ -541,10 +543,17 @@ TRACE0("Error: onig_new()\n");
 	rx->prelen = resend - res;
 	
 	if (type == 's') {						// substitute
-		rx->pmflags |= PMf_SUBSTITUTE;
-		rx->repstr = compile_rep(rx, rp, rpend);	// compile replace string
-		rx->prerepp = rp;
-		rx->prerependp = rpend;
+		try {
+			rx->pmflags |= PMf_SUBSTITUTE;
+			rx->repstr = compile_rep(rx, rp, rpend);	// compile replace string
+			rx->prerepp = rp;
+			rx->prerependp = rpend;
+		} catch (std::exception& ex) {
+			delete rx;
+		//	delete [] parap;		// deleted by the deconstructor of rx
+			strcpy(msg, ex.what());
+			return NULL;
+		}
 	}
 	
 TRACE1("rx:0x%08x\n", rx);

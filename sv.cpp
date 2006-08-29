@@ -14,6 +14,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
+#include <new>
+#include "mem_vc6.h"
 
 
 #define KANJI
@@ -316,9 +318,9 @@ void sv_setpvn(register SV *sv, register char *ptr, register STRLEN len);
 void sv_grow(SV* sv,int len)
 {
 	len += 512;
-	char *ptr = new char[len];
+	char *ptr = new (std::nothrow) char[len];
 	if (ptr == NULL)
-		throw "lack of memory";
+		throw std::bad_alloc("lack of memory");
 
 	memcpy(ptr,sv->xpv_pv,sv->xpv_cur);
 	ptr[sv->xpv_cur] = '\0';
@@ -450,9 +452,9 @@ void fbm_compile(SV *sv, int iflag)
 SV *newSVpv(char *s, STRLEN len)
 {
     register SV *sv;
-    sv = (SV*) new char[sizeof(SV)];
+    sv = new (std::nothrow) SV;
 	if (sv == NULL)
-		throw "lack of memory";
+		throw std::bad_alloc("lack of memory");
 	memset(sv,0,sizeof(SV));
 	
     SvREFCNT(sv) = 1;

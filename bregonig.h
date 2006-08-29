@@ -13,17 +13,11 @@
 #define BREGONIG_H_
 
 
-#define BREGONIG_VERSION_MAJOR	0
-#define BREGONIG_VERSION_MINOR	4
-#define BREGONIG_VERSION_PREFIX	""
-
-
-
 typedef struct repstr {
 	int  count;		/* entry counter */
 	char **startp;	/* start address  if <256 \digit	*/
 	int  *dlen;		/* data length	*/
-	char data[1];	/* data start   */
+	char data[1];	/* data start	*/
 	
 	repstr() {}
 	~repstr() { delete [] startp; delete [] dlen; }

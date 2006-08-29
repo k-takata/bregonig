@@ -4,7 +4,7 @@
 //   translate front-end
 ////////////////////////////////////////////////////////////////////////////////
 //  1999.11.24   update by Tatsuo Baba
-//  2006.08.29   update by K.Takata
+//  2006.08.30   update by K.Takata
 //
 //  You may distribute under the terms of either the GNU General Public
 //  License or the Artistic License, as specified in the perl_license.txt file.
@@ -50,8 +50,8 @@ bregonig *trcomp(char *str, char *strend, char *rp, char *rpend,
 	int rlen = rpend - rp;
 	if (slen < 1)
 		return NULL;
-    register char *p = str;
-    register char *pend = strend;
+	register char *p = str;
+	register char *pend = strend;
 
 //	bregonig *rx = (bregonig*) new char[sizeof(bregonig)];
 	bregonig *rx = new (std::nothrow) bregonig();
@@ -63,86 +63,100 @@ bregonig *trcomp(char *str, char *strend, char *rp, char *rpend,
 //	memset(rx,0,sizeof(bregonig));
 	rx->pmflags = flag | PMf_TRANSLATE;
 
-	SV *tstr = cvchar(str,strend);
-	SV *rstr = cvchar(rp,rpend);
+	SV *tstr = NULL;
+	SV *rstr = NULL;
 
+	/* the even index holds the t-char(in 2byte), and the odd index
+	   holds the r-char(in 2 byte) if t-char is to be removed, then
+	   r-char is -2. */
+	register U16 *tbl = NULL;
 
-
-    int tlen = SvCUR(tstr);
-    rlen = SvCUR(rstr);
-    register U8 *t = (U8*)SvPVX(tstr);
-    register U8 *r = (U8*)SvPVX(rstr);
-
-    register int i; /* indexes t */
-    register int j; /* indexes j */
-    register int k; /* indexes tbl */
-    int lastrch = -1;
-    int tbl_size = 256;
-      
-    int del_char;
-    int complement;
-    int kanji;
-
-    /* the even index holds the t-char(in 2byte), and the odd index
-       holds the r-char(in 2 byte) if t-char is to be removed, then
-       r-char is -2. */
-    register U16 *tbl;
-
-	tbl = new U16[tbl_size];
-
-    
-    complement	= rx->pmflags & PMf_TRANS_COMPLEMENT;
-    del_char	= rx->pmflags & PMf_TRANS_DELETE;
-    kanji	= rx->pmflags & PMf_KANJI;
-
-    for (i = 0, j = 0, k = 0; i < tlen; ) {
-		U32 tch, rch;
-		if (kanji && iskanji(t[i]) && i < tlen-1) {
-			tch = ((U8)t[i] <<8) | (U8)t[i+1];
-			i+=2;
-		} else {
-			tch = (U8)t[i]; 
-			i++;
-		}
-		if (j >= rlen) {
-			if (del_char) rch = (unsigned)-2;
-			else rch = lastrch;
-		} else {
-			if (kanji && iskanji(r[j]) && j < rlen-1) {
-				rch = ((U8)r[j] <<8) | (U8)r[j+1];
-				j += 2;
+	try {
+		tstr = cvchar(str,strend);
+		rstr = cvchar(rp,rpend);
+	
+	
+		int tlen = SvCUR(tstr);
+		rlen = SvCUR(rstr);
+		register U8 *t = (U8*)SvPVX(tstr);
+		register U8 *r = (U8*)SvPVX(rstr);
+	
+		register int i; /* indexes t */
+		register int j; /* indexes j */
+		register int k; /* indexes tbl */
+		int lastrch = -1;
+		int tbl_size = 256;
+		
+		int del_char;
+		int complement;
+		int kanji;
+	
+		tbl = new U16[tbl_size];
+	
+		
+		complement	= rx->pmflags & PMf_TRANS_COMPLEMENT;
+		del_char	= rx->pmflags & PMf_TRANS_DELETE;
+		kanji	= rx->pmflags & PMf_KANJI;
+	
+		for (i = 0, j = 0, k = 0; i < tlen; ) {
+			U32 tch, rch;
+			if (kanji && iskanji(t[i]) && i < tlen-1) {
+				tch = ((U8)t[i] <<8) | (U8)t[i+1];
+				i+=2;
 			} else {
-				rch = (U8)r[j];
-				j++;
+				tch = (U8)t[i]; 
+				i++;
 			}
-			lastrch = rch;
+			if (j >= rlen) {
+				if (del_char) rch = (unsigned)-2;
+				else rch = lastrch;
+			} else {
+				if (kanji && iskanji(r[j]) && j < rlen-1) {
+					rch = ((U8)r[j] <<8) | (U8)r[j+1];
+					j += 2;
+				} else {
+					rch = (U8)r[j];
+					j++;
+				}
+				lastrch = rch;
+			}
+			if (k >= tbl_size) {
+				U16 *tp = new U16[tbl_size+256];
+				memcpy(tp,tbl,tbl_size * sizeof(U16));
+				delete [] tbl;
+				tbl = tp;
+				tbl_size += 256;
+			}
+			tbl[k++] = tch;
+			tbl[k++] = rch;
 		}
 		if (k >= tbl_size) {
-			U16 *tp = new U16[tbl_size+256];
+			U16 *tp = new U16[tbl_size+4];
 			memcpy(tp,tbl,tbl_size * sizeof(U16));
 			delete [] tbl;
 			tbl = tp;
-			tbl_size += 256;
+			tbl_size += 4;
 		}
-		tbl[k++] = tch;
-		tbl[k++] = rch;
+		/* mark the end */
+		tbl[k++] = (U16)-1;
+		tbl[k++] = (U16)-1;
+		rx->transtblp = (char*)tbl;
+		sv_free(tstr);
+		sv_free(rstr);
+	
+		return rx;
 	}
-	if (k >= tbl_size) {
-		U16 *tp = new U16[tbl_size+4];
-		memcpy(tp,tbl,tbl_size * sizeof(U16));
-		delete [] tbl;
-		tbl = tp;
-		tbl_size += 4;
-    }
-    /* mark the end */
-    tbl[k++] = (U16)-1;
-    tbl[k++] = (U16)-1;
-    rx->transtblp = (char*)tbl;
-    sv_free(tstr);
-    sv_free(rstr);
-
-	return rx;
-
+	catch (std::exception& ex) {
+TRACE0("out of space in trcomp()\n");
+		if (tstr)
+			sv_free(tstr);
+		if (rstr)
+			sv_free(rstr);
+		delete tbl;
+		delete rx;
+		strcpy(msg, ex.what());
+		return NULL;
+	}
 }
 
 static SV *cvchar(char *str, char *strend)
@@ -263,12 +277,12 @@ static char specchar(char *p, int *next)
 	case 'c':
 		ender = *p++;
 		if (isLOWER(ender))
-		    ender = toUPPER(ender);
+			ender = toUPPER(ender);
 		ender ^= 64;
 		break;
 	case '0':
 		--p;
-	    ender = (char)scan_oct(p, 3, &numlen);
+		ender = (char)scan_oct(p, 3, &numlen);
 		break;
 	case '\0':
 		/* FALL THROUGH */
@@ -284,87 +298,97 @@ void sv_catkanji(SV *sv,U32 tch);
 
 int trans(bregonig *rx, char *target, char *targetendp, char *msg)
 {
-    register short *tbl;
-    register U8 *s;
-    register U8 *send;
-    register int matches = 0;
-    register int squash = rx->pmflags & PMf_TRANS_SQUASH;
-    int len;
-    U32 last_rch;
-    // This variable need, doesn't it?
-    // replase sv ;
-    SV *dest_sv = newSVpv("",0);
-
-    int del_char = rx->pmflags & PMf_TRANS_DELETE;
-    int complement = rx->pmflags & PMf_TRANS_COMPLEMENT;
-    int kanji = rx->pmflags & PMf_KANJI;
-
-
-    tbl = (short*)rx->transtblp;
-    s = (U8*)target;
-	len = targetendp - target;
-    if (!len)
-		return 0;
-    send = s + len;
-    while (s < send) {
-		U32 tch, rch;
-		U8 *next_s;
-		U16 *tp;
-		int matched;
-		if (kanji && iskanji(*s) && s < send-1) {
-		    tch = ((U8) *s)<<8 | ((U8) *(s+1));
-		    next_s = s+2;
-		} else {
-		    tch = *(U8*)s;
-		    next_s = s+1;
-		}
-		/* look for ch in tbl */
-		if (!complement) {
-			for (tp = (U16*)tbl; *tp != (U16)(-1); tp += 2) {
-				if (*tp == tch) break;
-			}
-			matched = (*tp != (U16)(-1));
-			rch = tp[1];
-		} else {
-			for (tp = (U16*)tbl; *tp != (U16)(-1); tp += 2) {
-				if (*tp == tch) break;
-			}
-			matched = (*tp == (U16)(-1));
-			rch = (U16)(del_char ? -2 : -1);
-		}
-
+	register short *tbl;
+	register U8 *s;
+	register U8 *send;
+	register int matches = 0;
+	register int squash = rx->pmflags & PMf_TRANS_SQUASH;
+	int len;
+	U32 last_rch;
+	// This variable need, doesn't it?
+	// replase sv ;
+	SV *dest_sv = NULL;
+	try {
+		dest_sv = newSVpv("",0);
 	
-		if (!matched) {
-			sv_catkanji(dest_sv, tch);
-		} else {
-			matches++;
-			if (rch == (U16)(-2)) {
-			/* delete this character */
-			} else if (squash) {
-				if (last_rch == (rch==(U16)(-1)?tch:rch)) {
-					;	// delete this char
-				} else {
-					sv_catkanji(dest_sv, rch == (U16)(-1) ? tch : rch);
-//					matches++;
-			}
+		int del_char = rx->pmflags & PMf_TRANS_DELETE;
+		int complement = rx->pmflags & PMf_TRANS_COMPLEMENT;
+		int kanji = rx->pmflags & PMf_KANJI;
+	
+	
+		tbl = (short*)rx->transtblp;
+		s = (U8*)target;
+		len = targetendp - target;
+		if (!len)
+			return 0;
+		send = s + len;
+		while (s < send) {
+			U32 tch, rch;
+			U8 *next_s;
+			U16 *tp;
+			int matched;
+			if (kanji && iskanji(*s) && s < send-1) {
+				tch = ((U8) *s)<<8 | ((U8) *(s+1));
+				next_s = s+2;
 			} else {
-				sv_catkanji(dest_sv, rch==(U16)(-1) ? tch : rch);
-//				matches++;
+				tch = *(U8*)s;
+				next_s = s+1;
 			}
-		}
-		last_rch = ((rch==(U16)(-1)||rch==(U16)(-2)) ? tch : rch);
-		s = next_s;
-    }
-//    matches += (s-(U8*)target) - dlen;	/* account for disappeared chars */
+			/* look for ch in tbl */
+			if (!complement) {
+				for (tp = (U16*)tbl; *tp != (U16)(-1); tp += 2) {
+					if (*tp == tch) break;
+				}
+				matched = (*tp != (U16)(-1));
+				rch = tp[1];
+			} else {
+				for (tp = (U16*)tbl; *tp != (U16)(-1); tp += 2) {
+					if (*tp == tch) break;
+				}
+				matched = (*tp == (U16)(-1));
+				rch = (U16)(del_char ? -2 : -1);
+			}
 	
-
-    rx->outp = SvPVX(dest_sv);
-    rx->outendp = rx->outp + SvCUR(dest_sv);
-	dest_sv->xpv_pv = NULL;
-	sv_free(dest_sv);
-
-
-	return matches;
+		
+			if (!matched) {
+				sv_catkanji(dest_sv, tch);
+			} else {
+				matches++;
+				if (rch == (U16)(-2)) {
+				/* delete this character */
+				} else if (squash) {
+					if (last_rch == (rch==(U16)(-1)?tch:rch)) {
+						;	// delete this char
+					} else {
+						sv_catkanji(dest_sv, rch == (U16)(-1) ? tch : rch);
+	//					matches++;
+					}
+				} else {
+					sv_catkanji(dest_sv, rch==(U16)(-1) ? tch : rch);
+	//				matches++;
+				}
+			}
+			last_rch = ((rch==(U16)(-1)||rch==(U16)(-2)) ? tch : rch);
+			s = next_s;
+		}
+	//	matches += (s-(U8*)target) - dlen;	/* account for disappeared chars */
+		
+	
+		rx->outp = SvPVX(dest_sv);
+		rx->outendp = rx->outp + SvCUR(dest_sv);
+		dest_sv->xpv_pv = NULL;
+		sv_free(dest_sv);
+	
+	
+		return matches;
+	}
+	catch (std::exception& ex) {
+TRACE0("out of space in trans()\n");
+		if (dest_sv)
+			sv_free(dest_sv);
+		strcpy(msg, ex.what());
+		return -1;
+	}
 }
 
 void sv_catkanji(SV *sv, U32 tch)
@@ -378,4 +402,4 @@ void sv_catkanji(SV *sv, U32 tch)
 	ch[1] = (char)tch;
 	sv_catpvn(sv,ch,2);
 	return ;
-}     
+}
