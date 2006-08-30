@@ -210,6 +210,7 @@ TRACE0("rx == NULL\n");
 	if (rx->pmflags & PMf_SUBSTITUTE) {
 		return subst_onig(rx,target,targetstartp,targetendp,msg,callback);
 	}
+	// unusual case
 TRACE0("Match in Subst");
 #if 0
 	int err_code = regexec_onig(rx, targetstartp,targetendp,target,0,1,0,msg);
@@ -499,12 +500,13 @@ TRACE1("plen:%d\n", plen);
 	}
 	
 	
-	
+/*
 	TRACE1("parap: %s\r\n", parap);
 	TRACE1("res: %s\r\n", res);
 	TRACE1("resend: %s\r\n", resend);
 	TRACE1("rp: %s\r\n", rp);
 	TRACE1("rpend: %s\r\n", rpend);
+*/
 	
 	if (type == 't') {
 		bregonig *rx = trcomp(res,resend,rp,rpend,flag,msg);
@@ -571,14 +573,21 @@ int regexec_onig(bregonig *rx, char *stringarg,
 {
 TRACE1("one_shot: %d\n", one_shot);
 	int err_code;
-	if (one_shot) {
-		err_code = onig_match(rx->reg, (UChar*) strbeg, (UChar*) strend,
-				(UChar*) stringarg, rx->region,
-				ONIG_OPTION_NONE);
-	} else {
-		err_code = onig_search(rx->reg, (UChar*) strbeg, (UChar*) strend,
-				(UChar*) stringarg, (UChar*) strend, rx->region,
-				ONIG_OPTION_NONE);
+	__try {
+		if (one_shot) {
+			err_code = onig_match(rx->reg, (UChar*) strbeg, (UChar*) strend,
+					(UChar*) stringarg, rx->region,
+					ONIG_OPTION_NONE);
+		} else {
+			err_code = onig_search(rx->reg, (UChar*) strbeg, (UChar*) strend,
+					(UChar*) stringarg, (UChar*) strend, rx->region,
+					ONIG_OPTION_NONE);
+		}
+	} __except (EXCEPTION_EXECUTE_HANDLER) {	// catch NULL pointer exception
+OutputDebugString("bregonig.dll: fatal error\n");
+		// Multithread BUG???
+		// should be fixed
+		return -1;
 	}
 	if (err_code >= 0) {
 		/* FOUND */

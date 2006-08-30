@@ -10,7 +10,7 @@ ONIG_LIB = $(ONIG_DIR)/onig_s.lib
 #CPPFLAGS = /O2 /W3 /GX /LD /nologo /I$(ONIG_DIR) /DONIG_EXTERN=extern
 CPPFLAGS = /O2 /W3 /EHsc /LD /nologo /I$(ONIG_DIR) /DONIG_EXTERN=extern /MT
 LD = link
-LDFLAGS = /DLL /nologo
+LDFLAGS = /DLL /nologo /MAP
 
 
 !ifdef DEBUG
@@ -54,6 +54,6 @@ sv.obj : sv.cpp sv.h
 
 
 clean :
-	del $(BROBJS) bregonig.lib bregonig.dll bregonig.exp
-	del k2regexp.obj k2regexp.res k2regexp.lib k2regexp.dll k2regexp.exp
+	del $(BROBJS) bregonig.lib bregonig.dll bregonig.exp bregonig.map
+	del k2regexp.obj k2regexp.res k2regexp.lib k2regexp.dll k2regexp.exp k2regexp.map
 
