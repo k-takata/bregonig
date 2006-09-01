@@ -573,7 +573,7 @@ int regexec_onig(bregonig *rx, char *stringarg,
 {
 TRACE1("one_shot: %d\n", one_shot);
 	int err_code;
-	__try {
+	try {
 		if (one_shot) {
 			err_code = onig_match(rx->reg, (UChar*) strbeg, (UChar*) strend,
 					(UChar*) stringarg, rx->region,
@@ -583,12 +583,14 @@ TRACE1("one_shot: %d\n", one_shot);
 					(UChar*) stringarg, (UChar*) strend, rx->region,
 					ONIG_OPTION_NONE);
 		}
-	} __except (EXCEPTION_EXECUTE_HANDLER) {	// catch NULL pointer exception
+#if 1
+	} catch (...) {	// catch NULL pointer exception. need /EHa option
 OutputDebugString("bregonig.dll: fatal error\n");
 		// Multithread BUG???
 		// should be fixed
 		return -1;
 	}
+#endif
 	if (err_code >= 0) {
 		/* FOUND */
 		if (rx->startp) {

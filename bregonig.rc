@@ -28,8 +28,8 @@ LANGUAGE LANG_JAPANESE, SUBLANG_DEFAULT
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 0,6,0,0
- PRODUCTVERSION 0,6,0,0
+ FILEVERSION 0,7,0,0
+ PRODUCTVERSION 0,7,0,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -51,7 +51,7 @@ BEGIN
 #else
             VALUE "FileDescription", "Bregexp.dll å›ä∑ ê≥ãKï\åª DLL\0"
 #endif
-            VALUE "FileVersion", "0.06\0"
+            VALUE "FileVersion", "0.07\0"
             VALUE "InternalName", "bregonig.dll\0"
             VALUE "LegalCopyright", "Copyright (C) 2006 K.Takata\0"
             VALUE "LegalTrademarks", "\0"
@@ -62,7 +62,7 @@ BEGIN
 #endif
             VALUE "PrivateBuild", "\0"
             VALUE "ProductName", "bregonig.dll\0"
-            VALUE "ProductVersion", "0.06\0"
+            VALUE "ProductVersion", "0.07\0"
             VALUE "SpecialBuild", "\0"
         END
     END

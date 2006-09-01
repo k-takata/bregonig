@@ -7,8 +7,9 @@
 ONIG_DIR = ../onig-4.4.1-mt
 ONIG_LIB = $(ONIG_DIR)/onig_s.lib
 
-#CPPFLAGS = /O2 /W3 /GX /LD /nologo /I$(ONIG_DIR) /DONIG_EXTERN=extern
-CPPFLAGS = /O2 /W3 /EHsc /LD /nologo /I$(ONIG_DIR) /DONIG_EXTERN=extern /MT
+#CPPFLAGS = /O2 /W3 /GX /LD /nologo /I$(ONIG_DIR) /DONIG_EXTERN=extern /MT
+#CPPFLAGS = /O2 /W3 /EHsc /LD /nologo /I$(ONIG_DIR) /DONIG_EXTERN=extern /MT
+CPPFLAGS = /O2 /W3 /EHac /LD /nologo /I$(ONIG_DIR) /DONIG_EXTERN=extern /MT
 LD = link
 LDFLAGS = /DLL /nologo /MAP
 
