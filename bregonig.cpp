@@ -47,6 +47,27 @@ OnigSyntaxType OnigSyntaxPerl_NG_EX = {
 };
 
 
+
+BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
+{
+	switch (fdwReason) {
+	case DLL_PROCESS_ATTACH:
+		break;
+	case DLL_PROCESS_DETACH:
+		if (lpvReserved == NULL) {	// called via FreeLibrary()
+			onig_end();
+		}
+		break;
+		
+	case DLL_THREAD_ATTACH:
+		break;
+	case DLL_THREAD_DETACH:
+		break;
+	}
+	return TRUE;
+}
+
+
 char *BRegexpVersion(void)
 {
 	static char version[256];
@@ -346,24 +367,12 @@ bregonig::~bregonig()
 	if (reg) {
 		onig_free(reg);
 	}
-	if (outp) {
-		delete [] outp;
-	}
-	if (splitp) {
-		delete [] splitp;
-	}
-	if (parap) {
-		delete [] parap;
-	}
-	if (transtblp) {
-		delete [] transtblp;
-	}
-	if (startp) {
-		delete [] startp;
-	}
-//	if (endp) {
-//		delete [] endp;
-//	}
+	delete [] outp;
+	delete [] splitp;
+	delete [] parap;
+	delete [] transtblp;
+	delete [] startp;
+//	delete [] endp;
 	if (repstr) {
 		delete repstr;
 	}

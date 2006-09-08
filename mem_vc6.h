@@ -52,10 +52,10 @@ inline void set_new_throw_bad_alloc()
 
 inline void *operator new(size_t cb, const std::nothrow_t&) throw()
 {
-	char *p;
+	void *p;
 	try {
-		p = new char[cb];
-	} catch (std::bad_alloc) {
+		p = ::operator new (cb);
+	} catch (const std::bad_alloc&) {
 		p = 0;
 	}
 	return p;
@@ -63,7 +63,7 @@ inline void *operator new(size_t cb, const std::nothrow_t&) throw()
 
 inline void operator delete(void *p, const std::nothrow_t&) throw()
 {
-	delete p;
+	::operator delete (p);
 }
 
 

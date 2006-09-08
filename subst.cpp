@@ -130,7 +130,6 @@ int subst_onig(bregonig *rx, char *target, char *targetstartp, char *targetendp,
 					}
 					memcpy(buf+copycnt, rx->startp[dlen], len);
 					copycnt += len;
-		
 				}
 			}
 		} else {
@@ -187,15 +186,16 @@ TRACE0("set_repstr\n");
 	char *olddst = *polddst;
 	
 	if (/*num > 0 &&*/ cindex >= repstr->count - 2) {
-		char **p1 = new char*[repstr->count + 10];
+		int newcount = repstr->count + 10;
+		char **p1 = new char*[newcount];
 		memcpy(p1, repstr->startp, repstr->count * sizeof(char*));
 		delete [] repstr->startp;
 		repstr->startp = p1;
-		int *p2 = new int[repstr->count + 10];
+		int *p2 = new int[newcount];
 		memcpy(p2, repstr->dlen, repstr->count * sizeof(int));
 		delete [] repstr->dlen;
 		repstr->dlen = p2;
-		repstr->count += 10;
+		repstr->count = newcount;
 	}
 	
 	if (dst - olddst <= 0) {
@@ -241,12 +241,10 @@ TRACE0("compile_rep()\n");
 	
 	REPSTR *repstr = NULL;
 	try {
-		repstr = (REPSTR*) new char[len + sizeof(REPSTR)];
-		memset(repstr, 0, len + sizeof(REPSTR));
+		repstr = new (len) REPSTR;
+	//	memset(repstr, 0, len + sizeof(REPSTR));
 		char *dst = repstr->data;
-		repstr->count = 20;		// default \digits count in string 
-		repstr->startp = new char*[repstr->count];
-		repstr->dlen = new int[repstr->count];
+		repstr->init(20);		// default \digits count in string
 		int cindex = 0;
 		char ender, prvch;
 		int numlen;
@@ -322,11 +320,13 @@ TRACE0("compile_rep()\n");
 					// '\0nn'
 					ender = (char) scan_oct(p, 3, &numlen);
 					p += numlen;
+				//	*dst++ = ender;
 				} else {
 				//	num = atoi(p);
 				//	if (num > 9 && num >= rx->nparens) {
 				//		*dst++ = *p++;
-				//	} else {	// \digit found
+				//	} else {
+						// \digit found
 						p = parse_digit(p, repstr, &cindex, &dst, &olddst);
 				//	}
 				}

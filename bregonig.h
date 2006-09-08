@@ -19,8 +19,21 @@ typedef struct repstr {
 	int  *dlen;		/* data length	*/
 	char data[1];	/* data start	*/
 	
-	repstr() {}
+	repstr() { count = 0; startp = 0; dlen = 0; }
 	~repstr() { delete [] startp; delete [] dlen; }
+	
+	void init(int cnt) {
+		count = cnt;		// default \digits count in string
+		startp = new char*[cnt];
+		dlen = new int[cnt];
+	}
+	
+	static void *operator new(size_t cb, size_t data_size) {
+		return ::operator new (cb + data_size);
+	}
+	static void operator delete(void *p, size_t data_size) {
+		::operator delete (p);
+	}
 } REPSTR;
 
 
