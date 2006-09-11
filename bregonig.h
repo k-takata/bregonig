@@ -105,6 +105,7 @@ bregonig *trcomp(char *res, char *resend, char *rp, char *rpend,
 #define isALPHA(c)   (isascii(c) && isalpha(c))
 #define isSPACE(c)   (isascii(c) && isspace(c))
 #define isDIGIT(c)   (isascii(c) && isdigit(c))
+#define isXDIGIT(c)  (isascii(c) && isxdigit(c))
 #define isUPPER(c)   (isascii(c) && isupper(c))
 #define isLOWER(c)   (isascii(c) && islower(c))
 #define toUPPER(c)   toupper(c)

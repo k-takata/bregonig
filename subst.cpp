@@ -358,7 +358,7 @@ TRACE0("compile_rep()\n");
 					ender = '\b';
 					break;
 				case 'x':	// '\xHH', '\x{HH}'
-					if (isxdigit(*p)) {		// '\xHH'
+					if (isXDIGIT(*p)) {		// '\xHH'
 						ender = (char) scan_hex(p, 2, &numlen);
 						p += numlen;
 					}
@@ -377,6 +377,8 @@ TRACE0("compile_rep()\n");
 					break;
 				case 'c':	// '\cx'	(ex. '\c[' == Ctrl-[ == '\x1b')
 					ender = *p++;
+					if (ender == '\\')
+						ender = *p++;
 					ender = toupper((unsigned char) ender);
 					ender ^= 64;
 					break;
