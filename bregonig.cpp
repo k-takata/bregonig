@@ -301,7 +301,7 @@ TRACE1("BTrans(): %s\n", str);
 		rx->outp = NULL;
 	}
 	
-	if (!(rx->pmflags & PMf_TRANSLATE)) { 
+	if (!(rx->pmflags & PMf_TRANSLATE)) {
 		delete rx;
 		*rxp = NULL;	
 		strcpy(msg,"no translate parameter");
@@ -577,7 +577,7 @@ int regexec_onig(bregonig *rx, char *stringarg,
 	char *strbeg,	/* real beginning of string */
 	int minend,		/* end of match must be at least minend after stringarg */
 	int safebase,	/* no need to remember string in subbase */
-	int one_shot,   /* if not match then break without proceed str pointer */
+	int one_shot,	/* if not match then break without proceed str pointer */
 	char *msg)		/* fatal error message */
 {
 TRACE1("one_shot: %d\n", one_shot);

@@ -137,9 +137,9 @@ static unsigned char freq[] = {	/* letter frequencies for mixed English/C */
 
 void sv_free(register SV *sv)
 {
-	if (sv->xpv_pv) 
-		delete [] sv->xpv_pv; 
-	delete sv; 
+	if (sv->xpv_pv)
+		delete [] sv->xpv_pv;
+	delete sv;
 }
 
 
@@ -519,7 +519,7 @@ kproc:
 	int k = 0;
     while (big <= bigend) {
 	if (k) {
-		big++; k = 0; 
+		big++; k = 0;
 		continue;
 	}
 	k = iskanji(*big);

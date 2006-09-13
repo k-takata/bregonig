@@ -42,7 +42,7 @@ static SV *cvchar(char *str, char *strend);
 static char specchar(char* p,int *next);
 
 
-// compile translate string 
+// compile translate string
 bregonig *trcomp(char *str, char *strend, char *rp, char *rpend,
 		int flag, char *msg)
 {
@@ -104,7 +104,7 @@ bregonig *trcomp(char *str, char *strend, char *rp, char *rpend,
 				tch = ((U8)t[i] <<8) | (U8)t[i+1];
 				i+=2;
 			} else {
-				tch = (U8)t[i]; 
+				tch = (U8)t[i];
 				i++;
 			}
 			if (j >= rlen) {
@@ -168,7 +168,7 @@ static SV *cvchar(char *str, char *strend)
 	char *p = str;
 	char *pend = strend;
 	SV *dst = newSVpv("",0);
-	while (p < pend) { 
+	while (p < pend) {
 		if (*p != '\\' && *p != '-') {	// no magic char ?
 			lastch = *p;
 			if (iskanji(*p)) {		// kanji ?

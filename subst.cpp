@@ -39,7 +39,7 @@ unsigned long scan_hex(const char *start, int len, int *retlen);
 //unsigned long scan_dec(const char *start, int len, int *retlen);
 
 
-
+/*
 char *realloc_buf(char *buf, int oldlen, int newlen, char *msg)
 {
 	char *tp = new (std::nothrow) char[newlen];
@@ -52,6 +52,44 @@ char *realloc_buf(char *buf, int oldlen, int newlen, char *msg)
 	delete [] buf;
 	return tp;
 }
+*/
+
+char *bufcat(char *buf, int *copycnt, const char *src, int len,
+		int *blen, int bufsize, char *msg)
+{
+	if (*blen <= *copycnt + len) {
+		*blen += len + bufsize;
+		char *tp = new (std::nothrow) char[*blen];
+		if (tp == NULL) {
+			strcpy(msg,"out of space buf");
+			delete [] buf;
+			return NULL;
+		}
+		memcpy(tp, buf, *copycnt);
+		delete [] buf;
+		buf = tp;
+	}
+	if (len) {
+		memcpy(buf + *copycnt, src, len);
+		*copycnt += len;
+	}
+	return buf;
+}
+
+
+int dec2oct(int dec)
+{
+	int i, j;
+	if (dec > 377)
+		return -1;
+	i = dec % 10;
+	if (i > 7)
+		return -1;
+	j = (dec / 10) % 10;
+	if (j > 7)
+		return -1;
+	return i + j*8 + (dec/100)*64;
+}
 
 
 int subst_onig(bregonig *rx, char *target, char *targetstartp, char *targetendp,
@@ -61,17 +99,17 @@ int subst_onig(bregonig *rx, char *target, char *targetstartp, char *targetendp,
 	char *orig,*m,*c;
 	char *s = target;
 	int len = targetendp - target;
-    char *strend = s + len;
-    int maxiters = (strend - s) + 10;
+	char *strend = s + len;
+	int maxiters = (strend - s) + 10;
 	int iters = 0;
 	int clen;
-    orig = m = s;
+	orig = m = s;
 	s = targetstartp;	// added by K2
-    int once = !(rx->pmflags & PMf_GLOBAL);
+	bool once = !(rx->pmflags & PMf_GLOBAL);
 	c = rx->prerepp;
 	clen = rx->prerependp - c;
 	// 
-    if (regexec_onig(rx, s, strend, orig, 0,1,0,msg) <= 0)
+	if (regexec_onig(rx, s, strend, orig, 0,1,0,msg) <= 0)
 		return 0;
 	int blen = len + clen + SUBST_BUF_SIZE;
 	char *buf = new (std::nothrow) char[blen];
@@ -90,6 +128,10 @@ int subst_onig(bregonig *rx, char *target, char *targetstartp, char *targetendp,
 		}
 		m = rx->startp[0];
 		len = m - s;
+		buf = bufcat(buf, &copycnt, s, len, &blen, SUBST_BUF_SIZE, msg);
+		if (buf == NULL)
+			return 0;
+	/*
 		if (blen <= copycnt + len) {
 			blen += len + SUBST_BUF_SIZE;
 			buf = realloc_buf(buf, copycnt, blen, msg);
@@ -100,15 +142,22 @@ int subst_onig(bregonig *rx, char *target, char *targetstartp, char *targetendp,
 			memcpy(buf+copycnt, s, len);
 			copycnt += len;
 		}
+	*/
 		s = rx->endp[0];
-		if (!(rx->pmflags & PMf_CONST)) {	// we have \digits or $& 
+		if (!(rx->pmflags & PMf_CONST)) {	// we have \digits or $&
 			//	ok start magic
 			REPSTR *rep = rx->repstr;
 //			ASSERT(rep);
 			for (int i = 0;i < rep->count;i++) {
+				int j;
 				// normal char
-				int dlen = rep->dlen[i]; 
-				if (rep->startp[i] && dlen) { 
+				int dlen = rep->dlen[i];
+				if (rep->startp[i] && ((int) rep->startp[i] > 1) && dlen) {
+					buf = bufcat(buf, &copycnt, rep->startp[i], dlen, &blen,
+							SUBST_BUF_SIZE, msg);
+					if (buf == NULL)
+						return 0;
+				/*
 					if (blen <= copycnt + dlen) {
 						blen += dlen + SUBST_BUF_SIZE;
 						buf = realloc_buf(buf, copycnt, blen, msg);
@@ -117,11 +166,17 @@ int subst_onig(bregonig *rx, char *target, char *targetstartp, char *targetendp,
 					}
 					memcpy(buf+copycnt, rep->startp[i], dlen);
 					copycnt += dlen;
+				*/
 				}
 				
 				else if (dlen <= rx->nparens && rx->startp[dlen] && rx->endp[dlen]) {
-					// \digits or $&
+					// \digits, $digits or $&
 					len = rx->endp[dlen] - rx->startp[dlen];
+					buf = bufcat(buf, &copycnt, rx->startp[dlen], len, &blen,
+							SUBST_BUF_SIZE, msg);
+					if (buf == NULL)
+						return 0;
+				/*
 					if (blen <= copycnt + len) {
 						blen += len + SUBST_BUF_SIZE;
 						buf = realloc_buf(buf, copycnt, blen, msg);
@@ -130,10 +185,36 @@ int subst_onig(bregonig *rx, char *target, char *targetstartp, char *targetendp,
 					}
 					memcpy(buf+copycnt, rx->startp[dlen], len);
 					copycnt += len;
+				*/
+				}
+				
+				else if ((10<=dlen && (j=dec2oct(dlen)) > 0)
+						&& dlen > rx->nparens && ((int) rep->startp[i] == 1)) {
+					// \nnn
+					char ch = (char) j;
+					buf = bufcat(buf, &copycnt, &ch, 1, &blen,
+							SUBST_BUF_SIZE, msg);
+					if (buf == NULL)
+						return 0;
+				/*
+					if (blen <= copycnt + 1) {
+						blen += 1 + SUBST_BUF_SIZE;
+						buf = realloc_buf(buf, copycnt, blen, msg);
+						if (buf == NULL)
+							return 0;
+					}
+					memcpy(buf+copycnt, &ch, 1);
+					copycnt += 1;
+				*/
 				}
 			}
 		} else {
 			if (clen) {		// no special char
+				buf = bufcat(buf, &copycnt, c, clen, &blen,
+						SUBST_BUF_SIZE, msg);
+				if (buf == NULL)
+					return 0;
+			/*
 				if (blen <= copycnt + clen) {
 					blen += clen + SUBST_BUF_SIZE;
 					buf = realloc_buf(buf, copycnt, blen, msg);
@@ -142,8 +223,8 @@ int subst_onig(bregonig *rx, char *target, char *targetstartp, char *targetendp,
 				}
 				memcpy(buf+copycnt, c, clen);
 				copycnt += clen;
+			*/
 			}
-
 		}
 		subst_count++;
 		if (once)
@@ -154,6 +235,10 @@ int subst_onig(bregonig *rx, char *target, char *targetstartp, char *targetendp,
 	} while (regexec_onig(rx, s, strend, orig, s == m, 1,0,msg) > 0);
 //	len = rx->subend - s;
 	len = targetendp - s;	// ???
+	buf = bufcat(buf, &copycnt, s, len, &blen, 1, msg);
+	if (buf == NULL)
+		return 0;
+/*
 	if (blen <= copycnt + len) {
 		buf = realloc_buf(buf, copycnt, blen + len + 1, msg);
 		if (buf == NULL)
@@ -163,6 +248,7 @@ int subst_onig(bregonig *rx, char *target, char *targetstartp, char *targetendp,
 		memcpy(buf+copycnt, s, len);
 		copycnt += len;
 	}
+*/
 	if (copycnt) {
 		rx->outp = buf;
 		rx->outendp = buf + copycnt;
@@ -178,11 +264,11 @@ int subst_onig(bregonig *rx, char *target, char *targetstartp, char *targetendp,
 
 
 int set_repstr(REPSTR *repstr, int num,
-		int *pcindex, char **pdst, char **polddst)
+		int *pcindex, char *dst, char **polddst, bool bksl = false)
 {
 TRACE0("set_repstr\n");
 	int cindex = *pcindex;
-	char *dst = *pdst;
+//	char *dst = *pdst;
 	char *olddst = *polddst;
 	
 	if (/*num > 0 &&*/ cindex >= repstr->count - 2) {
@@ -198,32 +284,46 @@ TRACE0("set_repstr\n");
 		repstr->count = newcount;
 	}
 	
+/*
 	if (dst - olddst <= 0) {
-		repstr->dlen[cindex] = num;	// paren number
-		repstr->startp[cindex++] = NULL;	// try later
+		repstr->dlen[cindex] = num;		// paren number
+		repstr->startp[cindex++] = NULL;
 	} else {
 		repstr->startp[cindex] = olddst;
 		repstr->dlen[cindex++] = dst - olddst;
-		repstr->dlen[cindex] = num;
-		repstr->startp[cindex++] = NULL;	// try later
+		repstr->dlen[cindex] = num;		// paren number
+		repstr->startp[cindex++] = NULL;
 	}
+*/
+	if (dst - olddst > 0) {
+		repstr->startp[cindex] = olddst;
+		repstr->dlen[cindex++] = dst - olddst;
+	}
+	repstr->dlen[cindex] = num;		// paren number
+	if (bksl) {
+		repstr->startp[cindex] = (char *) 1;	// \digit
+	} else {
+		repstr->startp[cindex] = NULL;			// $digit
+	}
+	cindex++;
+	
 	olddst = dst;
 	
 	*pcindex = cindex;
-	*pdst = dst;
+//	*pdst = dst;
 	*polddst = olddst;
 	return 0;
 }
 
 
 char *parse_digit(const char *str, REPSTR *repstr, int *pcindex,
-		char **pdst, char **polddst)
+		char *dst, char **polddst, bool bksl = false)
 {
 TRACE0("parse_digit\n");
 	char *s;
 	int num = (int) strtoul(str, &s, 10);
 	
-	set_repstr(repstr, num, pcindex, pdst, polddst);
+	set_repstr(repstr, num, pcindex, dst, polddst, bksl);
 	
 	return s;
 }
@@ -268,7 +368,7 @@ TRACE0("compile_rep()\n");
 				case '&':	// $&
 			//	case '0':	// $0
 					special = true;
-					set_repstr(repstr, 0, &cindex, &dst, &olddst);
+					set_repstr(repstr, 0, &cindex, dst, &olddst);
 					p++;
 					break;
 			/*
@@ -287,12 +387,13 @@ TRACE0("compile_rep()\n");
 			*/
 				case '{':	// ${nn}
 					special = true;
-					if (!isDIGIT(*++p)) {
-						// SYNTAX ERROR
-					}
-					p = parse_digit(p, repstr, &cindex, &dst, &olddst);
-					if (*p == '}') {
-						p++;
+					if (isDIGIT(*++p)) {
+						p = parse_digit(p, repstr, &cindex, dst, &olddst);
+						if (*p == '}') {
+							p++;
+						} else {
+							// SYNTAX ERROR
+						}
 					} else {
 						// SYNTAX ERROR
 					}
@@ -300,7 +401,7 @@ TRACE0("compile_rep()\n");
 				default:
 					if (isDIGIT(*p) && *p != '0') {
 						special = true;
-						p = parse_digit(p, repstr, &cindex, &dst, &olddst);
+						p = parse_digit(p, repstr, &cindex, dst, &olddst);
 					} else {
 						*dst++ = prvch;
 						*dst++ = *p++;
@@ -327,7 +428,7 @@ TRACE0("compile_rep()\n");
 				//		*dst++ = *p++;
 				//	} else {
 						// \digit found
-						p = parse_digit(p, repstr, &cindex, &dst, &olddst);
+						p = parse_digit(p, repstr, &cindex, dst, &olddst, true);
 				//	}
 				}
 			} else {
@@ -377,7 +478,7 @@ TRACE0("compile_rep()\n");
 					break;
 				case 'c':	// '\cx'	(ex. '\c[' == Ctrl-[ == '\x1b')
 					ender = *p++;
-					if (ender == '\\')
+					if (ender == '\\')	// '\c\x' == '\cx'
 						ender = *p++;
 					ender = toupper((unsigned char) ender);
 					ender ^= 64;
