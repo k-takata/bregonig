@@ -38,13 +38,15 @@
 #include "dbgtrace.h"
 
 
-//OnigSyntaxType OnigSyntaxPerl_NG_EX = *ONIG_SYNTAX_PERL_NG;
+OnigSyntaxType OnigSyntaxPerl_NG_EX = *ONIG_SYNTAX_PERL_NG;
+/*
 OnigSyntaxType OnigSyntaxPerl_NG_EX = {
 	ONIG_SYNTAX_PERL_NG->op,
 	ONIG_SYNTAX_PERL_NG->op2,
 	ONIG_SYNTAX_PERL_NG->behavior | ONIG_SYN_DIFFERENT_LEN_ALT_LOOK_BEHIND,
 	ONIG_SYNTAX_PERL_NG->options,
 };
+*/
 
 
 
@@ -52,6 +54,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
 	switch (fdwReason) {
 	case DLL_PROCESS_ATTACH:
+		OnigSyntaxPerl_NG_EX.behavior |= ONIG_SYN_DIFFERENT_LEN_ALT_LOOK_BEHIND;
 		break;
 	case DLL_PROCESS_DETACH:
 		if (lpvReserved == NULL) {	// called via FreeLibrary()
@@ -71,10 +74,11 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 char *BRegexpVersion(void)
 {
 	static char version[256];
-	sprintf(version, "bregonig.dll Ver.%d.%02d%s %s with Oniguruma %s",
+//	sprintf(version, "bregonig.dll Ver.%d.%02d%s %s with Oniguruma %s",
+	sprintf(version, "bregonig.dll Ver.%d.%02d%s with Oniguruma %s",
 			BREGONIG_VERSION_MAJOR, BREGONIG_VERSION_MINOR,
 			BREGONIG_VERSION_PREFIX,
-			__DATE__, onig_version());
+			/*__DATE__,*/ onig_version());
 	
 	return version;
 }
