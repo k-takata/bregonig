@@ -55,7 +55,9 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 	switch (fdwReason) {
 	case DLL_PROCESS_ATTACH:
 		OnigSyntaxPerl_NG_EX.behavior |= ONIG_SYN_DIFFERENT_LEN_ALT_LOOK_BEHIND;
+		onig_init();
 		break;
+		
 	case DLL_PROCESS_DETACH:
 		if (lpvReserved == NULL) {	// called via FreeLibrary()
 			onig_end();
