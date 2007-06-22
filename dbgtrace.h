@@ -2,7 +2,7 @@
  *	dbgtrace.h
  */
 /*
- * Copyright (C) 2006  K.Takata
+ * Copyright (C) 2006-2007  K.Takata
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -35,41 +35,80 @@
 
 /*** Debugging Routines ***/
 
-#ifdef _DEBUG
-#pragma comment(lib, "user32.lib")
+#if defined(__cplusplus) || defined(_MSC_VER)
+#ifdef __cplusplus
+inline
+#else /* __cplusplus */
+__inline
+#endif /* __cplusplus */
+void TRACEx_(LPCTSTR msg, ...)
+{
+	TCHAR buf_[1024];
+	va_list ap;
+	va_start(ap, msg);
+	wvsprintf(buf_, msg, ap);
+	va_end(ap);
+	OutputDebugString(buf_);
+}
+#endif /* __cplusplus || _MSC_VER */
 
-#define TRACE0(msg)	\
-	{	\
-		TCHAR buf_[1024]; wsprintf(buf_, TEXT("%s"), msg); \
-		OutputDebugString(buf_);	\
-	}
+#if defined(_DEBUG) || defined(DEBUG)
+#pragma comment(lib, "user32.lib")
+#include <stdarg.h>
+
+#define TRACE0(msg)	OutputDebugString(msg)
 #define TRACE1(msg, p1)	\
-	{	\
+	do {	\
 		TCHAR buf_[1024]; wsprintf(buf_, msg, p1); \
 		OutputDebugString(buf_);	\
-	}
+	} while(0)
 #define TRACE2(msg, p1, p2)	\
-	{	\
+	do {	\
 		TCHAR buf_[1024]; wsprintf(buf_, msg, p1, p2); \
 		OutputDebugString(buf_);	\
-	}
+	} while(0)
 #define TRACE3(msg, p1, p2, p3)	\
-	{	\
+	do {	\
 		TCHAR buf_[1024]; wsprintf(buf_, msg, p1, p2, p3); \
 		OutputDebugString(buf_);	\
-	}
+	} while(0)
 #define TRACE4(msg, p1, p2, p3, p4)	\
-	{	\
+	do {	\
 		TCHAR buf_[1024]; wsprintf(buf_, msg, p1, p2, p3, p4); \
 		OutputDebugString(buf_);	\
-	}
-#else
+	} while(0)
+#if defined(__cplusplus) || defined(_MSC_VER)
+#define TRACE	TRACEx_
+#endif /* __cplusplus || _MSC_VER */
+
+/*
+#define ASSERT(x)	\
+	do {	\
+		if (!(x)) { \
+			TRACE2(TEXT("Assertion failed! in %s (%d)\n"), __FILE__, __LINE__); \
+			DebugBreak(); \
+		}	\
+	} while(0)
+#define VERIFY(x)	ASSERT(x)
+*/
+
+#else /*_DEBUG */
+
 #define TRACE0(msg)
 #define TRACE1(msg, p1)
 #define TRACE2(msg, p1, p2)
 #define TRACE3(msg, p1, p2, p3)
 #define TRACE4(msg, p1, p2, p3, p4)
-#endif
+#if defined(__cplusplus) || defined(_MSC_VER)
+#define TRACE	1 ? (void) 0 : TRACEx_
+#endif /* __cplusplus || _MSC_VER */
+
+/*
+#define ASSERT(x)	((void) 0)
+#define VERIFY(x)	((void) x)
+*/
+
+#endif /* _DEBUG */
 
 
 /*

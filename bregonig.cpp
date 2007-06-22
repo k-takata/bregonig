@@ -2,7 +2,7 @@
  *	bregonig.cpp
  */
 /*
- *	Copyright (C) 2006  K.Takata
+ *	Copyright (C) 2006-2007  K.Takata
  *
  *	You may distribute under the terms of either the GNU General Public
  *	License or the Artistic License, as specified in the perl_license.txt file.
@@ -54,6 +54,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
 	switch (fdwReason) {
 	case DLL_PROCESS_ATTACH:
+		OnigSyntaxPerl_NG_EX.op2 |= ONIG_SYN_OP2_ESC_V_VTAB | ONIG_SYN_OP2_CCLASS_SET_OP;
 		OnigSyntaxPerl_NG_EX.behavior |= ONIG_SYN_DIFFERENT_LEN_ALT_LOOK_BEHIND;
 		onig_init();
 		break;

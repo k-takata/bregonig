@@ -61,6 +61,7 @@ unsigned char sjis_tab[256] =
 #  define SvGROW(sv,len) (SvLEN(sv) < (len) ? sv_grow(sv,len) : (void)SvPVX(sv))
 
 
+#if 0
 static unsigned char fold[] = {	/* fast case folding table */
 	0,	1,	2,	3,	4,	5,	6,	7,
 	8,	9,	10,	11,	12,	13,	14,	15,
@@ -130,6 +131,7 @@ static unsigned char freq[] = {	/* letter frequencies for mixed English/C */
 	130,	131,	132,	133,	134,	135,	136,	137,
 	138,	139,	141,	142,	143,	144,	145,	146
 };
+#endif
 
 
 
@@ -143,6 +145,7 @@ void sv_free(register SV *sv)
 }
 
 
+#if 0
 char *fbm_instr(
 unsigned char *big,
 register unsigned char *bigend,
@@ -303,6 +306,7 @@ SV *littlestr,int mline,int kmode)
     }
     return NULL;
 }
+#endif
 
 
 ////////////////////////////////////////////////////////////////////////////
@@ -377,6 +381,7 @@ BOOL sv_upgrade(register SV* sv, int mt)
 
 
 
+#if 0
 void fbm_compile(SV *sv, int iflag)
 {
     register unsigned char *s;
@@ -447,6 +452,7 @@ void fbm_compile(SV *sv, int iflag)
     BmRARE(sv) = s[rarest];
     BmPREVIOUS(sv) = rarest;
 }
+#endif
 
 
 SV *newSVpv(char *s, STRLEN len)

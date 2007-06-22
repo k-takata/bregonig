@@ -2,7 +2,7 @@
  *	subst.cpp
  */
 /*
- *	Copyright (C) 2006  K.Takata
+ *	Copyright (C) 2006-2007  K.Takata
  *
  *	You may distribute under the terms of either the GNU General Public
  *	License or the Artistic License, as specified in the perl_license.txt file.
@@ -21,6 +21,7 @@
 
 #include <windows.h>
 #include <new>
+//#include <stdexcept>
 #include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>
@@ -226,15 +227,38 @@ TRACE0("set_repstr\n");
 
 
 char *parse_digits(const char *str, REPSTR *repstr, int *pcindex,
-		char *dst, char **polddst, bool bksl = false)
+		char *dst, char **polddst, int endch = 0, bool bksl = false)
 {
 TRACE0("parse_digits\n");
 	char *s;
 	int num = (int) strtoul(str, &s, 10);
 	
+	if (endch) {
+		if (*s != endch)
+			return NULL;
+		++s;
+	}
 	set_repstr(repstr, num, pcindex, dst, polddst, bksl);
 	
 	return s;
+}
+
+
+const char *parse_groupname(bregonig *rx, const char *str, const char *strend,
+		REPSTR *repstr, int *pcindex, char *dst, char **polddst, char endch)
+{
+	const char *q = str;
+	while (q < strend && *q != endch) {
+		++q;
+	}
+	if (*q != endch) {
+		return NULL;
+	}
+	int num = onig_name_to_backref_number(rx->reg,
+			(UChar*) str, (UChar*) q, NULL);
+	if (num > 0)
+		set_repstr(repstr, num, pcindex, dst, polddst);
+	return q+1;
 }
 
 
@@ -299,25 +323,25 @@ TRACE0("compile_rep()\n");
 					++p;
 					if (isDIGIT(*p)) {
 						// ${nn}
-						p = parse_digits(p, repstr, &cindex, dst, &olddst);
-						if (*p == '}') {
-							p++;
+						char *q = parse_digits(p, repstr, &cindex, dst, &olddst, '}');
+						if (q != NULL) {
+							p = q;
 						} else {
 							// SYNTAX ERROR
+						//	throw std::invalid_argument("} not found");
+							*dst++ = prvch;
+							--p;
 						}
 					} else {
 						// ${name}
-						const char *q = p;
-						while (q < pend && *q != '}')
-							++q;
-						if (*q == '}') {
-							int num = onig_name_to_backref_number(rx->reg,
-									(UChar*) p, (UChar*) q, NULL);
-							if (num > 0)
-								set_repstr(repstr, num, &cindex, dst, &olddst);
-							p = ++q;
+						const char *q = parse_groupname(rx, p, pend, repstr,
+								&cindex, dst, &olddst, '}');
+						if (q != NULL) {
+							p = q;
 						} else {
 							// SYNTAX ERROR
+							*dst++ = prvch;
+							--p;
 						}
 					}
 					break;
@@ -346,7 +370,7 @@ TRACE0("compile_rep()\n");
 					*dst++ = ender;
 				} else {
 					// \digits found
-					p = parse_digits(p, repstr, &cindex, dst, &olddst, true);
+					p = parse_digits(p, repstr, &cindex, dst, &olddst, 0, true);
 				}
 			} else {
 				prvch = *p++;
@@ -380,17 +404,23 @@ TRACE0("compile_rep()\n");
 						ender = (char) scan_hex(p, 2, &numlen);
 						p += numlen;
 					}
-					else if (*p == '{') {	// '\x{HH}'
-						unsigned int code = scan_hex(p, 4, &numlen);
-						p += numlen;
-						if (*p != '}') {
-							// SYNTAX ERROR
-						} else {
-							if (code > 0xff)
-								*dst++ = code >> 16;
-							ender = (char) code;
-							p++;
+					else {
+						const char *q = p;
+						if (*p == '{') {	// '\x{HH}'
+							unsigned int code = scan_hex(++p, 8, &numlen);
+							p += numlen;
+							if (*p == '}') {
+								if (code > 0xff) {
+									*dst++ = code >> 8;
+								}
+								ender = (char) code;
+								p++;
+								break;
+							}
 						}
+						// SYNTAX ERROR
+						ender = prvch;
+						p = q;
 					}
 					break;
 				case 'c':	// '\cx'	(ex. '\c[' == Ctrl-[ == '\x1b')
@@ -400,24 +430,18 @@ TRACE0("compile_rep()\n");
 					ender = toupper((unsigned char) ender);
 					ender ^= 64;
 					break;
-				case 'k':	// \k<name>
-					if (*p++ == '<') {
-						const char *q = p;
-						while (q < pend && *q != '>')
-							++q;
-						if (*q == '>') {
-							int num = onig_name_to_backref_number(rx->reg,
-									(UChar*) p, (UChar*) q, NULL);
-							if (num > 0)
-								set_repstr(repstr, num, &cindex, dst, &olddst);
-							p = ++q;
-						} else {
-							// SYNTAX ERROR
+				case 'k':	// \k<name>, \k'name'
+					if (*p == '<' || *p == '\'') {
+						const char endch = (*p == '<') ? '>' : '\'';
+						const char *q = parse_groupname(rx, p+1, pend, repstr,
+								&cindex, dst, &olddst, endch);
+						if (q != NULL) {
+							p = q;
+							continue;
 						}
-						continue;
-					} else {
-						// SYNTAX ERROR
 					}
+					// SYNTAX ERROR
+					ender = prvch;
 					break;
 				default:	// '/', '\\' and the other char
 					ender = prvch;
@@ -447,7 +471,7 @@ TRACE0("compile_rep()\n");
 	catch (std::exception& ex) {
 TRACE0("out of space in compile_rep()\n");
 		delete repstr;
-		throw ex;
+		throw;
 	}
 }
 

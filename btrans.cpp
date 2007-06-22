@@ -39,7 +39,8 @@ int trans(bregonig *rx, char *target, char *targetendp, char *msg);
 bregonig *trcomp(char *res, char *resend, char *rp, char *rpend,
 		int flag, char *msg);
 static SV *cvchar(char *str, char *strend);
-static char specchar(char* p,int *next);
+static U16 specchar(char* p,int *next);
+void sv_catkanji(SV *sv,U32 tch);
 
 
 // compile translate string
@@ -207,16 +208,19 @@ static SV *cvchar(char *str, char *strend)
 				sv_catpvn(dst,tp,p - tp);
 				continue;
 			}
-			int clen = toch > 255 ? 2 :1;
+//			int clen = toch > 255 ? 2 :1;
 			for (lastch++;toch >= lastch;lastch++) {
+/*
 				if (clen ==1)
-					sv_catpvn(dst,(char*)&lastch,clen);
+					sv_catpvn(dst,(TCHAR*)&lastch,clen);
 				else {
-					char ch[2];
+					TCHAR ch[2];
 					ch[0] = lastch >> 8;
-					ch[1] = (char)lastch;
+					ch[1] = (TCHAR)lastch;
 					sv_catpvn(dst,ch,clen);
 				}
+*/
+				sv_catkanji(dst,lastch);
 			}
 			lastch--;
 			continue;
@@ -228,7 +232,8 @@ static SV *cvchar(char *str, char *strend)
 			continue;
 		}
 		ender = specchar(p,&next);
-		sv_catpvn(dst,&ender,1);
+//		sv_catpvn(dst,&ender,1);
+		sv_catkanji(dst,ender);
 		lastch = ender;
 		p += next;
 	}
@@ -238,9 +243,9 @@ static SV *cvchar(char *str, char *strend)
 }
 
 
-static char specchar(char *p, int *next)
+static U16 specchar(char *p, int *next)
 {
-	char ender;		
+	U16 ender;		
 	int numlen = 0;		
 	switch (*p++) {
 	case '/':
@@ -272,17 +277,35 @@ static char specchar(char *p, int *next)
 		ender = '\b';
 		break;
 	case 'x':
-		ender = (char)scan_hex(p, 2, &numlen);
+		if (isXDIGIT(*p)) {		// '\xHH'
+			ender = (U8)scan_hex(p, 2, &numlen);
+		}
+		else {
+			if (*p == '{') {	// '\x{HH}'
+				U16 code = scan_hex(++p, 8, &numlen);
+				if (p[numlen] == '}') {
+					ender = code;
+					numlen += 2;
+					break;
+				}
+			}
+			// SYNTAX ERROR
+			ender = p[-1];
+			numlen = 0;
+		}
 		break;
 	case 'c':
 		ender = *p++;
 		if (isLOWER(ender))
 			ender = toUPPER(ender);
 		ender ^= 64;
+		++numlen;
 		break;
-	case '0':
+	case '0':	case '1':	case '2':	case '3':
+	case '4':	case '5':	case '6':	case '7':
 		--p;
 		ender = (char)scan_oct(p, 3, &numlen);
+		--numlen;
 		break;
 	case '\0':
 		/* FALL THROUGH */
@@ -293,7 +316,6 @@ static char specchar(char *p, int *next)
 	return ender;
 }
 
-void sv_catkanji(SV *sv,U32 tch);
 
 
 int trans(bregonig *rx, char *target, char *targetendp, char *msg)

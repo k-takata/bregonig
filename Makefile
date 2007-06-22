@@ -1,10 +1,10 @@
 #
 # Makefile for bregonig.dll
 #
-#  Copyright (C) 2006  K.Takata
+#  Copyright (C) 2006-2007  K.Takata
 #
 
-ONIG_DIR = ../onig-5.5.2-mt
+ONIG_DIR = ../onig-5.8.0-mt
 ONIG_LIB = $(ONIG_DIR)/onig_s.lib
 
 #CPPFLAGS = /O2 /W3 /GX /LD /nologo /I$(ONIG_DIR) /DONIG_EXTERN=extern /MT
