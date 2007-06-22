@@ -5,44 +5,47 @@
 //                     Author Tatsuo Baba
 //
 #include <stdio.h>
+#include <tchar.h>
+#include <locale.h>
 #include <bregexp.h>
-int main(int argc,char *argv[])
+int _tmain(int argc,TCHAR *argv[])
 {
-	char fname[512],line[4096];
-	char msg[80],*p1;	
+	TCHAR fname[512],line[4096],*p1;
+	char msg[80];	
     FILE *fp;
 	int len,ctr;
 	BREGEXP *rxp = 0;
-	char dmy[] = " ";
+	TCHAR dmy[] = _T(" ");
+	setlocale(LC_ALL, "");
     if (argc < 2) {
-		puts ("usage /regstr/ [file]\n  if omitted assume /usr/dict/words");
+		_putts (_T("usage /regstr/ [file]\n  if omitted assume /usr/dict/words"));
 		return 0;
 	}
-	strcpy(fname,"/usr/dict/words");
+	_tcscpy(fname,_T("/usr/dict/words"));
 	if (argc > 2)
-		strcpy(fname,argv[2]);
+		_tcscpy(fname,argv[2]);
 	p1 = argv[1];
-    fp = fopen(fname,"r");
+    fp = _tfopen(fname,_T("r"));
     if (!fp) {
-		printf ("file cant open  %s\n",fname);
+		_tprintf (_T("file cant open  %s\n"),fname);
 		return 0;
 	}
    	BMatch(p1,dmy,dmy+1,&rxp,msg);	// compile using dummy 
     if (msg[0]) {
-		printf ("parse error  %s\n",msg);
+		_tprintf (_T("parse error  %s\n"),msg);
 		return 0;
 	}
     ctr = 0;
-    while(fgets(line,sizeof(line),fp)) {
-		len = strlen(line);
+    while(_fgetts(line,sizeof(line),fp)) {
+		len = _tcslen(line);
    		if (len && BMatch(p1,line,line+len,&rxp,msg)) {
             ctr++;
             line[len-1] = 0;
-			puts(line);
+			_putts(line);
 		}
 	}
 	fclose(fp); 
 
-	printf("%ld lines(s) greped\n",ctr);
+	_tprintf(_T("%ld lines(s) greped\n"),ctr);
 	return 0;
 }

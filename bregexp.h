@@ -18,18 +18,31 @@
 #define BREGCONST	const
 #endif
 
+
+#ifdef UNICODE
+#define BMatch		BMatchW
+#define BSubst		BSubstW
+#define BMatchEx	BMatchExW
+#define BSubstEx	BSubstExW
+#define BTrans		BTransW
+#define BSplit		BSplitW
+#define BRegfree	BRegfreeW
+//#define BRegexpVersion	BRegexpVersionW
+#endif /* UNICODE */
+
+
 typedef struct bregexp {
-        BREGCONST char *outp;   /* result string start ptr  */
-        BREGCONST char *outendp;/* result string end ptr    */
-        BREGCONST int  splitctr;/* split result counter     */
-        BREGCONST char **splitp;/* split result pointer ptr     */
-        int rsv1;               /* reserved for external use    */
-        char *parap;            /* parameter start ptr ie. "s/xxxxx/yy/gi"  */
-        char *paraendp;         /* parameter end ptr     */
-        char *transtblp;        /* translate table ptr   */
-        char **startp;          /* match string start ptr   */
-        char **endp;            /* match string end ptr     */
-        int nparens;            /* number of parentheses */
+	BREGCONST TCHAR *outp;		/* result string start ptr  */
+	BREGCONST TCHAR *outendp;	/* result string end ptr    */
+	BREGCONST int  splitctr;	/* split result counter     */
+	BREGCONST TCHAR **splitp;	/* split result pointer ptr     */
+	int rsv1;					/* reserved for external use    */
+	TCHAR *parap;				/* parameter start ptr ie. "s/xxxxx/yy/gi"  */
+	TCHAR *paraendp;			/* parameter end ptr     */
+	TCHAR *transtblp;			/* translate table ptr   */
+	TCHAR **startp;				/* match string start ptr   */
+	TCHAR **endp;				/* match string end ptr     */
+	int nparens;				/* number of parentheses */
 } BREGEXP;
 
 #if defined(_BREGEXP_) || defined(_K2REGEXP_)
@@ -44,36 +57,36 @@ extern "C"
 #ifdef _K2REGEXP_
 /* K2Editor */
 BREGEXPAPI
-int BMatch(char *str, char *target, char *targetstartp, char *targetendp,
+int BMatch(TCHAR *str, TCHAR *target, TCHAR *targetstartp, TCHAR *targetendp,
 		int one_shot,
 		BREGEXP **rxp, char *msg);
 BREGEXPAPI
-int BSubst(char *str, char *target, char *targetstartp, char *targetendp,
+int BSubst(TCHAR *str, TCHAR *target, TCHAR *targetstartp, TCHAR *targetendp,
 		BREGEXP **rxp, char *msg, BCallBack callback);
 #else
 /* Original */
 BREGEXPAPI
-int BMatch(char *str, char *target, char *targetendp,
+int BMatch(TCHAR *str, TCHAR *target, TCHAR *targetendp,
 		BREGEXP **rxp, char *msg);
 BREGEXPAPI
-int BSubst(char *str, char *target, char *targetendp,
+int BSubst(TCHAR *str, TCHAR *target, TCHAR *targetendp,
 		BREGEXP **rxp, char *msg);
 
 /* Sakura Editor */
 BREGEXPAPI
-int BMatchEx(char *str, char *targetbegp, char *target, char *targetendp,
+int BMatchEx(TCHAR *str, TCHAR *targetbegp, TCHAR *target, TCHAR *targetendp,
 		BREGEXP **rxp, char *msg);
 BREGEXPAPI
-int BSubstEx(char *str, char *targetbegp, char *target, char *targetendp,
+int BSubstEx(TCHAR *str, TCHAR *targetbegp, TCHAR *target, TCHAR *targetendp,
 		BREGEXP **rxp, char *msg);
 #endif
 
 
 BREGEXPAPI
-int BTrans(char *str, char *target, char *targetendp,
+int BTrans(TCHAR *str, TCHAR *target, TCHAR *targetendp,
 		BREGEXP **rxp, char *msg);
 BREGEXPAPI
-int BSplit(char *str, char *target, char *targetendp,
+int BSplit(TCHAR *str, TCHAR *target, TCHAR *targetendp,
 		int limit, BREGEXP **rxp, char *msg);
 BREGEXPAPI
 void BRegfree(BREGEXP *rx);

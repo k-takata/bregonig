@@ -27,6 +27,7 @@
 #include <ctype.h>
 #include <string.h>
 #include <mbstring.h>
+#include <tchar.h>
 #include <oniguruma.h>
 #include "bregexp.h"
 //#include "global.h"
@@ -35,28 +36,36 @@
 #include "dbgtrace.h"
 
 
-unsigned long scan_oct(const char *start, int len, int *retlen);
-unsigned long scan_hex(const char *start, int len, int *retlen);
-//unsigned long scan_dec(const char *start, int len, int *retlen);
+#ifdef UNICODE
+using namespace unicode;
+namespace unicode {
+#else
+using namespace ansi;
+namespace ansi {
+#endif
+
+unsigned long scan_oct(const TCHAR *start, int len, int *retlen);
+unsigned long scan_hex(const TCHAR *start, int len, int *retlen);
+//unsigned long scan_dec(const TCHAR *start, int len, int *retlen);
 
 
-char *bufcat(char *buf, int *copycnt, const char *src, int len,
+TCHAR *bufcat(TCHAR *buf, int *copycnt, const TCHAR *src, int len,
 		int *blen, int bufsize, char *msg)
 {
 	if (*blen <= *copycnt + len) {
 		*blen += len + bufsize;
-		char *tp = new (std::nothrow) char[*blen];
+		TCHAR *tp = new (std::nothrow) TCHAR[*blen];
 		if (tp == NULL) {
 			strcpy(msg,"out of space buf");
 			delete [] buf;
 			return NULL;
 		}
-		memcpy(tp, buf, *copycnt);
+		memcpy(tp, buf, *copycnt * sizeof(TCHAR));
 		delete [] buf;
 		buf = tp;
 	}
 	if (len) {
-		memcpy(buf + *copycnt, src, len);
+		memcpy(buf + *copycnt, src, len * sizeof(TCHAR));
 		*copycnt += len;
 	}
 	return buf;
@@ -78,14 +87,14 @@ int dec2oct(int dec)
 }
 
 
-int subst_onig(bregonig *rx, char *target, char *targetstartp, char *targetendp,
+int subst_onig(bregonig *rx, TCHAR *target, TCHAR *targetstartp, TCHAR *targetendp,
 		char *msg, BCallBack callback)
 {
-//TRACE0("subst_onig()\n");
-	char *orig,*m,*c;
-	char *s = target;
+//TRACE0(_T("subst_onig()\n"));
+	TCHAR *orig,*m,*c;
+	TCHAR *s = target;
 	int len = targetendp - target;
-	char *strend = s + len;
+	TCHAR *strend = s + len;
 	int maxiters = (strend - s) + 10;
 	int iters = 0;
 	int clen;
@@ -98,7 +107,7 @@ int subst_onig(bregonig *rx, char *target, char *targetstartp, char *targetendp,
 	if (regexec_onig(rx, s, strend, orig, 0,1,0,msg) <= 0)
 		return 0;
 	int blen = len + clen + SUBST_BUF_SIZE;
-	char *buf = new (std::nothrow) char[blen];
+	TCHAR *buf = new (std::nothrow) TCHAR[blen];
 	int copycnt = 0;
 	if (buf == NULL) {
 		strcpy(msg,"out of space buf");
@@ -145,7 +154,7 @@ int subst_onig(bregonig *rx, char *target, char *targetstartp, char *targetendp,
 				else if ((10<=dlen && (j=dec2oct(dlen)) > 0)
 						&& dlen > rx->nparens && ((int) rep->startp[i] == 1)) {
 					// \nnn
-					char ch = (char) j;
+					TCHAR ch = (TCHAR) j;
 					buf = bufcat(buf, &copycnt, &ch, 1, &blen,
 							SUBST_BUF_SIZE, msg);
 					if (buf == NULL)
@@ -187,16 +196,16 @@ int subst_onig(bregonig *rx, char *target, char *targetstartp, char *targetendp,
 
 
 int set_repstr(REPSTR *repstr, int num,
-		int *pcindex, char *dst, char **polddst, bool bksl = false)
+		int *pcindex, TCHAR *dst, TCHAR **polddst, bool bksl = false)
 {
-TRACE0("set_repstr\n");
+TRACE0(_T("set_repstr\n"));
 	int cindex = *pcindex;
-	char *olddst = *polddst;
+	TCHAR *olddst = *polddst;
 	
 	if (/*num > 0 &&*/ cindex >= repstr->count - 2) {
 		int newcount = repstr->count + 10;
-		char **p1 = new char*[newcount];
-		memcpy(p1, repstr->startp, repstr->count * sizeof(char*));
+		TCHAR **p1 = new TCHAR*[newcount];
+		memcpy(p1, repstr->startp, repstr->count * sizeof(TCHAR*));
 		delete [] repstr->startp;
 		repstr->startp = p1;
 		int *p2 = new int[newcount];
@@ -212,7 +221,7 @@ TRACE0("set_repstr\n");
 	}
 	repstr->dlen[cindex] = num;		// paren number
 	if (bksl) {
-		repstr->startp[cindex] = (char *) 1;	// \digits
+		repstr->startp[cindex] = (TCHAR *) 1;	// \digits
 	} else {
 		repstr->startp[cindex] = NULL;			// $digits
 	}
@@ -226,12 +235,12 @@ TRACE0("set_repstr\n");
 }
 
 
-char *parse_digits(const char *str, REPSTR *repstr, int *pcindex,
-		char *dst, char **polddst, int endch = 0, bool bksl = false)
+TCHAR *parse_digits(const TCHAR *str, REPSTR *repstr, int *pcindex,
+		TCHAR *dst, TCHAR **polddst, int endch = 0, bool bksl = false)
 {
-TRACE0("parse_digits\n");
-	char *s;
-	int num = (int) strtoul(str, &s, 10);
+TRACE0(_T("parse_digits\n"));
+	TCHAR *s;
+	int num = (int) _tcstoul(str, &s, 10);
 	
 	if (endch) {
 		if (*s != endch)
@@ -244,10 +253,10 @@ TRACE0("parse_digits\n");
 }
 
 
-const char *parse_groupname(bregonig *rx, const char *str, const char *strend,
-		REPSTR *repstr, int *pcindex, char *dst, char **polddst, char endch)
+const TCHAR *parse_groupname(bregonig *rx, const TCHAR *str, const TCHAR *strend,
+		REPSTR *repstr, int *pcindex, TCHAR *dst, TCHAR **polddst, TCHAR endch)
 {
-	const char *q = str;
+	const TCHAR *q = str;
 	while (q < strend && *q != endch) {
 		++q;
 	}
@@ -262,31 +271,33 @@ const char *parse_groupname(bregonig *rx, const char *str, const char *strend,
 }
 
 
-REPSTR *compile_rep(bregonig *rx, const char *str, const char *strend)
+REPSTR *compile_rep(bregonig *rx, const TCHAR *str, const TCHAR *strend)
 {
-TRACE0("compile_rep()\n");
+TRACE0(_T("compile_rep()\n"));
 	rx->pmflags |= PMf_CONST;	/* default */
 	int len = strend - str;
 	if (len < 2)				// no special char
 		return NULL;
-	register const char *p = str;
-	register const char *pend = strend;
+	register const TCHAR *p = str;
+	register const TCHAR *pend = strend;
 	
 	REPSTR *repstr = NULL;
 	try {
 		repstr = new (len) REPSTR;
 	//	memset(repstr, 0, len + sizeof(REPSTR));
-		char *dst = repstr->data;
+		TCHAR *dst = repstr->data;
 		repstr->init(20);		// default \digits count in string
 		int cindex = 0;
-		char ender, prvch;
+		TCHAR ender, prvch;
 		int numlen;
-		char *olddst = dst;
+		TCHAR *olddst = dst;
 		bool special = false;		// found special char
 		while (p < pend) {
 			if (*p != '\\' && *p != '$') {	// magic char ?
+#ifndef UNICODE
 				if (iskanji(*p))			// no
 					*dst++ = *p++;
+#endif
 				*dst++ = *p++;
 				continue;
 			}
@@ -323,7 +334,7 @@ TRACE0("compile_rep()\n");
 					++p;
 					if (isDIGIT(*p)) {
 						// ${nn}
-						char *q = parse_digits(p, repstr, &cindex, dst, &olddst, '}');
+						TCHAR *q = parse_digits(p, repstr, &cindex, dst, &olddst, '}');
 						if (q != NULL) {
 							p = q;
 						} else {
@@ -334,7 +345,7 @@ TRACE0("compile_rep()\n");
 						}
 					} else {
 						// ${name}
-						const char *q = parse_groupname(rx, p, pend, repstr,
+						const TCHAR *q = parse_groupname(rx, p, pend, repstr,
 								&cindex, dst, &olddst, '}');
 						if (q != NULL) {
 							p = q;
@@ -365,7 +376,7 @@ TRACE0("compile_rep()\n");
 			if (isDIGIT(*p)) {
 				if (*p == '0') {
 					// '\0nn'
-					ender = (char) scan_oct(p, 3, &numlen);
+					ender = (TCHAR) scan_oct(p, 3, &numlen);
 					p += numlen;
 					*dst++ = ender;
 				} else {
@@ -401,25 +412,33 @@ TRACE0("compile_rep()\n");
 					break;
 				case 'x':	// '\xHH', '\x{HH}'
 					if (isXDIGIT(*p)) {		// '\xHH'
-						ender = (char) scan_hex(p, 2, &numlen);
+						ender = (TCHAR) scan_hex(p, 2, &numlen);
 						p += numlen;
 					}
 					else {
-						const char *q = p;
+						const TCHAR *q = p;
 						if (*p == '{') {	// '\x{HH}'
 							unsigned int code = scan_hex(++p, 8, &numlen);
 							p += numlen;
 							if (*p == '}') {
+#ifdef UNICODE
+								if (code > 0xffff) {	// Surrogate Pair
+									unsigned int c = code - 0x10000;
+									*dst++ = (c >> 10) | 0xd800;
+									code = (c & 0x3ff) | 0xdc00;
+								}
+#else
 								if (code > 0xff) {
 									*dst++ = code >> 8;
 								}
-								ender = (char) code;
+#endif
+								ender = (TCHAR) code;
 								p++;
 								break;
 							}
 						}
 						// SYNTAX ERROR
-						ender = prvch;
+						ender = 'x';
 						p = q;
 					}
 					break;
@@ -427,13 +446,13 @@ TRACE0("compile_rep()\n");
 					ender = *p++;
 					if (ender == '\\')	// '\c\x' == '\cx'
 						ender = *p++;
-					ender = toupper((unsigned char) ender);
+					ender = toupper((TBYTE) ender);
 					ender ^= 64;
 					break;
 				case 'k':	// \k<name>, \k'name'
 					if (*p == '<' || *p == '\'') {
-						const char endch = (*p == '<') ? '>' : '\'';
-						const char *q = parse_groupname(rx, p+1, pend, repstr,
+						const TCHAR endch = (*p == '<') ? '>' : '\'';
+						const TCHAR *q = parse_groupname(rx, p+1, pend, repstr,
 								&cindex, dst, &olddst, endch);
 						if (q != NULL) {
 							p = q;
@@ -469,7 +488,7 @@ TRACE0("compile_rep()\n");
 		return repstr;
 	}
 	catch (std::exception& ex) {
-TRACE0("out of space in compile_rep()\n");
+TRACE0(_T("out of space in compile_rep()\n"));
 		delete repstr;
 		throw;
 	}
@@ -478,9 +497,9 @@ TRACE0("out of space in compile_rep()\n");
 
 
 unsigned long
-scan_oct(const char *start, int len, int *retlen)
+scan_oct(const TCHAR *start, int len, int *retlen)
 {
-	register const char *s = start;
+	register const TCHAR *s = start;
 	register unsigned long retval = 0;
 	
 	while (len && *s >= '0' && *s <= '7') {
@@ -492,17 +511,17 @@ scan_oct(const char *start, int len, int *retlen)
 	return retval;
 }
 
-//static char hexdigit[] = "0123456789abcdef0123456789ABCDEFx";
-static char hexdigit[] = "0123456789abcdef0123456789ABCDEF";
+//static TCHAR hexdigit[] = "0123456789abcdef0123456789ABCDEFx";
+static TCHAR hexdigit[] = _T("0123456789abcdef0123456789ABCDEF");
 
 unsigned long
-scan_hex(const char *start, int len, int *retlen)
+scan_hex(const TCHAR *start, int len, int *retlen)
 {
-	register const char *s = start;
+	register const TCHAR *s = start;
 	register unsigned long retval = 0;
-	char *tmp;
+	TCHAR *tmp;
 	
-	while (len-- && *s && (tmp = strchr(hexdigit, *s))) {
+	while (len-- && *s && (tmp = _tcschr(hexdigit, *s))) {
 		retval <<= 4;
 		retval |= (tmp - hexdigit) & 15;
 		s++;
@@ -513,14 +532,15 @@ scan_hex(const char *start, int len, int *retlen)
 
 /*
 unsigned long
-scan_dec(const char *start, int len, int *retlen)
+scan_dec(const TCHAR *start, int len, int *retlen)
 {
-	char *s;
+	TCHAR *s;
 	unsigned long retval;
 	
-	retval = strtoul(start, &s, 10);
+	retval = _tcstoul(start, &s, 10);
 	*retlen = s - start;
 	return retval;
 }
 */
 
+} // namespace

@@ -9,6 +9,12 @@
 //	2006.08.29	updated by K.Takata
 
 
+#ifdef UNICODE
+namespace unicode {
+#else
+namespace ansi {
+#endif
+
 #ifndef TRUE
 //#define BOOL int
 #define TRUE 1
@@ -51,12 +57,12 @@ struct sv {
     int		sv_refcnt;	/* how many references to us */
     int		sv_flags;	/* what we are */
 //    struct xpvbm     sv_xpv;		/* struct xpvbm */ 
-    char*	xpv_pv;		/* pointer to malloced string */
+    TCHAR*	xpv_pv;		/* pointer to malloced string */
     int		xpv_cur;		/* length of xpv_pv as a C string */
     int		xpv_len;		/* allocated size */
     int		xbm_useful;	/* is this constant pattern being useful? */
     int		xbm_previous;	/* how many characters in string before rare? */
-    char	xbm_rare;	/* rarest character in string */
+    TCHAR	xbm_rare;	/* rarest character in string */
 };
 
 typedef struct sv SV;
@@ -249,23 +255,26 @@ typedef struct sv SV;
 #define SSPOPDPTR (savestack[--savestack_ix].any_dptr)
 
 
-char *ninstr(register char *big,register char *bigend,char *little,
-char *lend,int kmode);
-char * fbm_instr(unsigned char*,register unsigned char *,SV*,int mline,int kmode);
+TCHAR *ninstr(register TCHAR *big,register TCHAR *bigend,TCHAR *little,
+TCHAR *lend,int kmode);
+//TCHAR * fbm_instr(unsigned TCHAR*,register unsigned TCHAR *,SV*,int mline,int kmode);
+TCHAR * fbm_instr(TBYTE*,register TBYTE *,SV*,int mline,int kmode);
 BOOL sv_upgrade(register SV*, int);// sv.spp
-SV *newSVpv(char*,int);//sv.cpp
-void sv_catpvn(register SV*,register char*,register int);//sv.cpp
-void sv_setpvn(register SV*,register char*,register int);//sv.cpp
+SV *newSVpv(TCHAR*,int);//sv.cpp
+void sv_catpvn(register SV*,register TCHAR*,register int);//sv.cpp
+void sv_setpvn(register SV*,register TCHAR*,register int);//sv.cpp
 void sv_setsv(SV*,SV*);//sv.cpp
 
 void fbm_compile (SV* sv, int iflag);
 void	sv_free (SV* sv);
-char*	savepvn (char* sv, int len);
-unsigned long scan_hex(const char*, int,int*);
-unsigned long scan_oct(const char*, int,int*);
+TCHAR*	savepvn (TCHAR* sv, int len);
+unsigned long scan_hex(const TCHAR*, int,int*);
+unsigned long scan_oct(const TCHAR*, int,int*);
 
 #ifndef iskanji
 #include <mbstring.h>
 //BOOL iskanji(int c);
 #define iskanji(c)	_ismbblead(c)
 #endif
+
+} // namespace

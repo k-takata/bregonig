@@ -20,7 +20,8 @@ RFLAGS = $(RFLAGS) /D_DEBUG
 !endif
 
 OBJS = subst.obj bsplit.obj btrans.obj sv.obj
-BROBJS = bregonig.obj bregonig.res $(OBJS)
+WOBJS = substw.obj bsplitw.obj btransw.obj svw.obj
+BROBJS = bregonig.obj bregonigw.obj bregonig.res $(OBJS) $(WOBJS)
 K2OBJS = k2regexp.obj k2regexp.res $(OBJS)
 
 
@@ -36,10 +37,16 @@ k2regexp.dll : $(K2OBJS) $(ONIG_LIB)
 
 bregonig.obj : bregonig.cpp bregexp.h bregonig.h mem_vc6.h dbgtrace.h version.h $(ONIG_DIR)/oniguruma.h
 
+bregonigw.obj : bregonig.cpp bregexp.h bregonig.h mem_vc6.h dbgtrace.h version.h $(ONIG_DIR)/oniguruma.h
+	$(CC) $(CPPFLAGS) /c /DUNICODE /D_UNICODE /Fo$@ bregonig.cpp
+
 bregonig.res : bregonig.rc
 
 k2regexp.obj : bregonig.cpp bregexp.h bregonig.h mem_vc6.h dbgtrace.h version.h $(ONIG_DIR)/oniguruma.h
 	$(CC) $(CPPFLAGS) /c /D_K2REGEXP_ /Fo$@ bregonig.cpp
+
+#k2regexpw.obj : bregonig.cpp bregexp.h bregonig.h mem_vc6.h dbgtrace.h version.h $(ONIG_DIR)/oniguruma.h
+#	$(CC) $(CPPFLAGS) /c /D_K2REGEXP_ /DUNICODE /D_UNICODE /Fo$@ bregonig.cpp
 
 k2regexp.res : bregonig.rc
 	$(RC) $(RFLAGS) /D_K2REGEXP_ /Fo$@ /r $**
@@ -47,11 +54,23 @@ k2regexp.res : bregonig.rc
 
 subst.obj : subst.cpp bregexp.h bregonig.h mem_vc6.h dbgtrace.h $(ONIG_DIR)/oniguruma.h
 
+substw.obj : subst.cpp bregexp.h bregonig.h mem_vc6.h dbgtrace.h $(ONIG_DIR)/oniguruma.h
+	$(CC) $(CPPFLAGS) /c /DUNICODE /D_UNICODE /Fo$@ subst.cpp
+
 bsplit.obj : bsplit.cpp bregexp.h bregonig.h mem_vc6.h dbgtrace.h $(ONIG_DIR)/oniguruma.h
+
+bsplitw.obj : bsplit.cpp bregexp.h bregonig.h mem_vc6.h dbgtrace.h $(ONIG_DIR)/oniguruma.h
+	$(CC) $(CPPFLAGS) /c /DUNICODE /D_UNICODE /Fo$@ bsplit.cpp
 
 btrans.obj : btrans.cpp bregexp.h bregonig.h mem_vc6.h dbgtrace.h sv.h $(ONIG_DIR)/oniguruma.h
 
+btransw.obj : btrans.cpp bregexp.h bregonig.h mem_vc6.h dbgtrace.h sv.h $(ONIG_DIR)/oniguruma.h
+	$(CC) $(CPPFLAGS) /c /DUNICODE /D_UNICODE /Fo$@ btrans.cpp
+
 sv.obj : sv.cpp sv.h
+
+svw.obj : sv.cpp sv.h
+	$(CC) $(CPPFLAGS) /c /DUNICODE /D_UNICODE /Fo$@ sv.cpp
 
 
 clean :

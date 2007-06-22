@@ -30,14 +30,22 @@
 #include "dbgtrace.h"
 
 
-int split_onig(bregonig *rx, char *target, char *targetendp, int limit, char *msg)
+#ifdef UNICODE
+using namespace unicode;
+namespace unicode {
+#else
+using namespace ansi;
+namespace ansi {
+#endif
+
+int split_onig(bregonig *rx, TCHAR *target, TCHAR *targetendp, int limit, char *msg)
 {
-	char *orig,*m;
-	char *s = target;
+	TCHAR *orig,*m;
+	TCHAR *s = target;
 	int len = targetendp - target;
 	if (len < 1)
 		return -1;
-	char *strend = s + len;
+	TCHAR *strend = s + len;
 	int maxiters = (strend - s) + 10;
 	int iters = 0;
 	orig = m = s;
@@ -51,7 +59,7 @@ int split_onig(bregonig *rx, char *target, char *targetendp, int limit, char *ms
 		int blen = 2*len + 3;
 		if (limit == 1)
 			blen = 5;
-		char **buf = new (std::nothrow) char*[blen];
+		TCHAR **buf = new (std::nothrow) TCHAR*[blen];
 		int copycnt = 0;
 		if (buf == NULL) {
 			strcpy(msg,"out of space buf");
@@ -64,11 +72,14 @@ int split_onig(bregonig *rx, char *target, char *targetendp, int limit, char *ms
 				buf[copycnt++] = strend;
 				break;
 			}
+#ifndef UNICODE
 			if (kanjiflag && iskanji(*s)) {
 				buf[copycnt++] = s;
 				s += 2;
 				buf[copycnt++] = s;
-			} else {
+			} else
+#endif
+			{
 				buf[copycnt++] = s++;
 				buf[copycnt++] = s;
 			}
@@ -87,7 +98,7 @@ int split_onig(bregonig *rx, char *target, char *targetendp, int limit, char *ms
 
 	// now ready
 	int blen = 256;				// initial size
-	char **buf = new (std::nothrow) char*[blen];
+	TCHAR **buf = new (std::nothrow) TCHAR*[blen];
 	int copycnt = 0;
 	if (buf == NULL) {
 		strcpy(msg,"out of space buf");
@@ -113,13 +124,13 @@ int split_onig(bregonig *rx, char *target, char *targetendp, int limit, char *ms
 		m = rx->startp[0];
 		len = m - s;
 		if (blen <= copycnt + 3) {
-			char **tp = new (std::nothrow) char*[blen + 256];
+			TCHAR **tp = new (std::nothrow) TCHAR*[blen + 256];
 			if (tp == NULL) {
 				strcpy(msg,"out of space buf");
 				delete [] buf;
 				return -1;
 			}
-			memcpy(tp,buf,copycnt*sizeof(char*));
+			memcpy(tp,buf,copycnt*sizeof(TCHAR*));
 			delete [] buf;
 			buf = tp; blen += 256;
 		}
@@ -132,13 +143,13 @@ int split_onig(bregonig *rx, char *target, char *targetendp, int limit, char *ms
 //	len = rx->subend - s;
 	len = targetendp - s;	// ???
 	if (blen <= copycnt + 3) {
-		char **tp = new (std::nothrow) char*[blen + 3];
+		TCHAR **tp = new (std::nothrow) TCHAR*[blen + 3];
 		if (tp == NULL) {
 			strcpy(msg,"out of space buf");
 			delete [] buf;
 			return -1;
 		}
-		memcpy(tp,buf,copycnt*sizeof(char*));
+		memcpy(tp,buf,copycnt*sizeof(TCHAR*));
 		delete [] buf;
 		buf = tp;
 	}
@@ -159,3 +170,4 @@ int split_onig(bregonig *rx, char *target, char *targetendp, int limit, char *ms
 }
 
 
+} // namespace
