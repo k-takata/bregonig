@@ -4,7 +4,7 @@
 #  Copyright (C) 2006-2007  K.Takata
 #
 
-ONIG_DIR = ../onig-5.8.0-mt
+ONIG_DIR = ../onig-5.8.0-mt-sl
 ONIG_LIB = $(ONIG_DIR)/onig_s.lib
 
 #CPPFLAGS = /O2 /W3 /GX /LD /nologo /I$(ONIG_DIR) /DONIG_EXTERN=extern /MT
@@ -36,13 +36,13 @@ k2regexp.dll : $(K2OBJS) $(ONIG_LIB)
 
 bregonig.obj : bregonig.cpp bregexp.h bregonig.h mem_vc6.h dbgtrace.h version.h $(ONIG_DIR)/oniguruma.h
 
-bregonig.res : bregonig.rc
+bregonig.res : bregonig.rc version.h
 
 k2regexp.obj : bregonig.cpp bregexp.h bregonig.h mem_vc6.h dbgtrace.h version.h $(ONIG_DIR)/oniguruma.h
 	$(CC) $(CPPFLAGS) /c /D_K2REGEXP_ /Fo$@ bregonig.cpp
 
-k2regexp.res : bregonig.rc
-	$(RC) $(RFLAGS) /D_K2REGEXP_ /Fo$@ /r $**
+k2regexp.res : bregonig.rc version.h
+	$(RC) $(RFLAGS) /D_K2REGEXP_ /Fo$@ /r bregonig.rc
 
 
 subst.obj : subst.cpp bregexp.h bregonig.h mem_vc6.h dbgtrace.h $(ONIG_DIR)/oniguruma.h
