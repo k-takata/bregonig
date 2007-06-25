@@ -53,8 +53,28 @@ bregonig *trcomp(TCHAR *res, TCHAR *resend, TCHAR *rp, TCHAR *rpend,
 static SV *cvchar(TCHAR *str, TCHAR *strend);
 static TWORD specchar(TCHAR* p,int *next);
 void sv_catkanji(SV *sv,U32 tch);
-static bool is_surrogate_pair(const WCHAR *s);
-static U32 get_codepoint(const WCHAR *s);
+
+
+static inline int is_char_pair(const TBYTE *s)
+{
+#ifdef UNICODE
+	if (((s[0] & 0xfc00) == 0xd800) && ((s[1] & 0xfc00) == 0xdc00)) {
+		return true;
+	}
+	return false;
+#else
+	return iskanji(*s);
+#endif
+}
+
+static inline TWORD get_codepoint(const TBYTE *s)
+{
+#ifdef UNICODE
+	return (((s[0] - 0xd800) << 10) | (s[1] - 0xdc00)) + 0x10000;
+#else
+	return ((U8)s[0] <<8) | (U8)s[1];
+#endif
+}
 
 
 // compile translate string
@@ -68,7 +88,7 @@ bregonig *trcomp(TCHAR *str, TCHAR *strend, TCHAR *rp, TCHAR *rpend,
 	register TCHAR *p = str;
 	register TCHAR *pend = strend;
 
-//	bregonig *rx = (bregonig*) new TCHAR[sizeof(bregonig)];
+//	bregonig *rx = (bregonig*) new char[sizeof(bregonig)];
 	bregonig *rx = new (std::nothrow) bregonig();
 	if (rx == NULL) {
 		strcpy(msg,"out of space trcomp");
@@ -111,23 +131,18 @@ bregonig *trcomp(TCHAR *str, TCHAR *strend, TCHAR *rp, TCHAR *rpend,
 		
 		complement	= rx->pmflags & PMf_TRANS_COMPLEMENT;
 		del_char	= rx->pmflags & PMf_TRANS_DELETE;
+#ifdef UNICODE
+		kanji	= 1;
+#else
 		kanji	= rx->pmflags & PMf_KANJI;
+#endif
 	
 		for (i = 0, j = 0, k = 0; i < tlen; ) {
 			U32 tch, rch;
-#ifdef UNICODE
-			// Surrogate Pair
-			if (i < tlen-1 && is_surrogate_pair(t + i)) {
-				tch = get_codepoint(t + i);
+			if (kanji && i < tlen-1 && is_char_pair(t+i)) {
+				tch = get_codepoint(t+i);
 				i+=2;
-			} else
-#else
-			if (kanji && iskanji(t[i]) && i < tlen-1) {
-				tch = ((U8)t[i] <<8) | (U8)t[i+1];
-				i+=2;
-			} else
-#endif
-			{
+			} else {
 				tch = (TBYTE)t[i];
 				i++;
 			}
@@ -135,19 +150,10 @@ bregonig *trcomp(TCHAR *str, TCHAR *strend, TCHAR *rp, TCHAR *rpend,
 				if (del_char) rch = (unsigned)-2;
 				else rch = lastrch;
 			} else {
-#ifdef UNICODE
-				// Surrogate Pair
-				if (j < rlen-1 && is_surrogate_pair(r + j)) {
-					rch = get_codepoint(r + j);
+				if (kanji && j < rlen-1 && is_char_pair(r+j)) {
+					rch = get_codepoint(r+j);
 					j += 2;
-				} else
-#else
-				if (kanji && iskanji(r[j]) && j < rlen-1) {
-					rch = ((U8)r[j] <<8) | (U8)r[j+1];
-					j += 2;
-				} else
-#endif
-				{
+				} else {
 					rch = (TBYTE)r[j];
 					j++;
 				}
@@ -204,18 +210,11 @@ static SV *cvchar(TCHAR *str, TCHAR *strend)
 	while (p < pend) {
 		if (*p != '\\' && *p != '-') {	// no magic char ?
 			lastch = *p;
-#ifdef UNICODE
-			if (is_surrogate_pair(p)) {	// Surrogate Pair
-				lastch = get_codepoint(p);
+			if (is_char_pair((TBYTE*)p)) {	// Surrogate Pair or kanji ?
+				lastch = get_codepoint((TBYTE*)p);
+				sv_catkanji(dst,lastch);
 				p++;
 			} else
-#else
-			if (iskanji(*p)) {		// kanji ?
-				lastch = ((U8)*p <<8) | (U8)p[1];
-				sv_catpvn(dst,p,2);
-				p++;
-			} else
-#endif
 				sv_catpvn(dst,p,1);
 			p++;
 			continue;
@@ -228,18 +227,10 @@ static SV *cvchar(TCHAR *str, TCHAR *strend)
 		if (p[-1] == '-') {		// - ?
 			TCHAR* tp = p -1;
 			TWORD toch;
-#ifdef UNICODE
-			if (is_surrogate_pair(p)) {	// Surrogate Pair
-				toch = get_codepoint(p);
+			if (is_char_pair((TBYTE*)p)) {	// Surrogate Pair or kanji ?
+				toch = get_codepoint((TBYTE*)p);
 				p += 2;
-			} else
-#else
-			if (iskanji(*p)) {		// kanji ?
-				toch = ((U8)*p <<8) | (U8)p[1];
-				p += 2;
-			} else
-#endif
-			{
+			} else {
 				toch = *p++;
 				if (p[-1] == '\\') {
 					if (p +1 >= pend) {
@@ -382,7 +373,11 @@ int trans(bregonig *rx, TCHAR *target, TCHAR *targetendp, char *msg)
 	
 		int del_char = rx->pmflags & PMf_TRANS_DELETE;
 		int complement = rx->pmflags & PMf_TRANS_COMPLEMENT;
+#ifdef UNICODE
+		int kanji = 1;
+#else
 		int kanji = rx->pmflags & PMf_KANJI;
+#endif
 	
 	
 		tbl = (short*)rx->transtblp;
@@ -396,19 +391,10 @@ int trans(bregonig *rx, TCHAR *target, TCHAR *targetendp, char *msg)
 			TBYTE *next_s;
 			TWORD *tp;
 			int matched;
-#ifdef UNICODE
-			// Surrogate Pair
-			if (s < send-1 && is_surrogate_pair(s)) {
+			if (kanji && s < send-1 && is_char_pair(s)) {
 				tch = get_codepoint(s);
 				next_s = s+2;
-			} else
-#else
-			if (kanji && iskanji(*s) && s < send-1) {
-				tch = ((U8) *s)<<8 | ((U8) *(s+1));
-				next_s = s+2;
-			} else
-#endif
-			{
+			} else {
 				tch = *(TBYTE*)s;
 				next_s = s+1;
 			}
@@ -485,32 +471,15 @@ void sv_catkanji(SV *sv, U32 tch)
 	return ;
 #else
 	if (tch < 256) {
-		sv_catpvn(sv,(TCHAR*)&tch,1);
+		sv_catpvn(sv,(char*)&tch,1);
 		return ;
 	}
-	TCHAR ch[2];
+	char ch[2];
 	ch[0] = tch >> 8;
-	ch[1] = (TCHAR)tch;
+	ch[1] = (char)tch;
 	sv_catpvn(sv,ch,2);
 	return ;
 #endif
 }
-
-
-#ifdef UNICODE
-static bool is_surrogate_pair(const WCHAR *s)
-{
-	if (((s[0] & 0xfc00) == 0xd800) && ((s[1] & 0xfc00) == 0xdc00)) {
-		return true;
-	}
-	return false;
-}
-
-static U32 get_codepoint(const WCHAR *s)
-{
-	return (((s[0] - 0xd800) << 10) | (s[1] - 0xdc00)) + 0x10000;
-}
-
-#endif
 
 } // namespace

@@ -1,6 +1,7 @@
 //Microsoft Developer Studio generated resource script.
 //
 #include "resource.h"
+#include "version.h"
 
 #define APSTUDIO_READONLY_SYMBOLS
 /////////////////////////////////////////////////////////////////////////////
@@ -28,8 +29,8 @@ LANGUAGE LANG_JAPANESE, SUBLANG_DEFAULT
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2,0,0,0
- PRODUCTVERSION 2,0,0,0
+ FILEVERSION BREGONIG_VERSION_MAJOR,BREGONIG_VERSION_MINOR,0,0
+ PRODUCTVERSION BREGONIG_VERSION_MAJOR,BREGONIG_VERSION_MINOR,0,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -51,7 +52,7 @@ BEGIN
 #else
             VALUE "FileDescription", "Bregexp.dll å›ä∑ ê≥ãKï\åª DLL\0"
 #endif
-            VALUE "FileVersion", "2.00 beta1\0"
+            VALUE "FileVersion", BREGONIG_VERSION_STRING "\0"
             VALUE "InternalName", "bregonig.dll\0"
             VALUE "LegalCopyright", "Copyright (C) 2006-2007 K.Takata\0"
             VALUE "LegalTrademarks", "\0"
@@ -62,7 +63,7 @@ BEGIN
 #endif
             VALUE "PrivateBuild", "\0"
             VALUE "ProductName", "bregonig.dll\0"
-            VALUE "ProductVersion", "2.00 beta1\0"
+            VALUE "ProductVersion", BREGONIG_VERSION_STRING "\0"
             VALUE "SpecialBuild", "\0"
         END
     END
