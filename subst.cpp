@@ -44,21 +44,27 @@ using namespace ansi;
 namespace ansi {
 #endif
 
+enum casetype {
+	CASE_NONE, CASE_UPPER, CASE_LOWER
+};
+
+
 unsigned long scan_oct(const TCHAR *start, int len, int *retlen);
 unsigned long scan_hex(const TCHAR *start, int len, int *retlen);
 //unsigned long scan_dec(const TCHAR *start, int len, int *retlen);
 
 
 TCHAR *bufcat(TCHAR *buf, int *copycnt, const TCHAR *src, int len,
-		int *blen, int bufsize, char *msg)
+		int *blen, int bufsize = SUBST_BUF_SIZE)
 {
 	if (*blen <= *copycnt + len) {
 		*blen += len + bufsize;
 		TCHAR *tp = new (std::nothrow) TCHAR[*blen];
 		if (tp == NULL) {
-			strcpy(msg,"out of space buf");
+		//	strcpy(msg,"out of space buf");
 			delete [] buf;
-			return NULL;
+			throw std::bad_alloc();
+		//	return NULL;
 		}
 		memcpy(tp, buf, *copycnt * sizeof(TCHAR));
 		delete [] buf;
@@ -106,90 +112,85 @@ int subst_onig(bregonig *rx, TCHAR *target, TCHAR *targetstartp, TCHAR *targeten
 	// 
 	if (regexec_onig(rx, s, strend, orig, 0,1,0,msg) <= 0)
 		return 0;
-	int blen = len + clen + SUBST_BUF_SIZE;
-	TCHAR *buf = new (std::nothrow) TCHAR[blen];
-	int copycnt = 0;
-	if (buf == NULL) {
+	try {
+		int blen = len + clen + SUBST_BUF_SIZE;
+		TCHAR *buf = new TCHAR[blen];
+		int copycnt = 0;
+		// now ready to go
+		int subst_count = 0;
+		do {
+			if (iters++ > maxiters) {
+				delete [] buf;
+				strcpy(msg,"Substitution loop");
+				return 0;
+			}
+			m = rx->startp[0];
+			len = m - s;
+			buf = bufcat(buf, &copycnt, s, len, &blen);
+			s = rx->endp[0];
+			if (!(rx->pmflags & PMf_CONST)) {	// we have \digits or $&
+				//	ok start magic
+				REPSTR *rep = rx->repstr;
+	//			ASSERT(rep);
+				for (int i = 0; i < rep->count; i++) {
+					int j;
+					// normal char
+					int dlen = rep->dlen[i];
+					if (rep->is_normal_string(i) && dlen) {
+						buf = bufcat(buf, &copycnt, rep->startp[i], dlen, &blen);
+					}
+					
+					else if (0 <= dlen && dlen <= rx->nparens
+							&& rx->startp[dlen] && rx->endp[dlen]) {
+						// \digits, $digits or $&
+						len = rx->endp[dlen] - rx->startp[dlen];
+						buf = bufcat(buf, &copycnt, rx->startp[dlen], len, &blen);
+					}
+					
+					else if (dlen == -1 && ((dlen = rx->nparens) > 0)
+							&& rx->startp[dlen] && rx->endp[dlen]) {
+						// $+
+						len = rx->endp[dlen] - rx->startp[dlen];
+						buf = bufcat(buf, &copycnt, rx->startp[dlen], len, &blen);
+					}
+					
+					else if ((10<=dlen && (j=dec2oct(dlen)) > 0)
+							&& dlen > rx->nparens && rep->is_backslash(i)) {
+						// \nnn
+						TCHAR ch = (TCHAR) j;
+						buf = bufcat(buf, &copycnt, &ch, 1, &blen);
+					}
+				}
+			} else {
+				if (clen) {		// no special char
+					buf = bufcat(buf, &copycnt, c, clen, &blen);
+				}
+			}
+			subst_count++;
+			if (once)
+				break;
+			if (callback)
+				if (!callback(CALLBACK_KIND_REPLACE, subst_count, s - orig))
+					break;
+		} while (regexec_onig(rx, s, strend, orig, s == m, 1,0,msg) > 0);
+	//	len = rx->subend - s;
+		len = targetendp - s;	// ???
+		buf = bufcat(buf, &copycnt, s, len, &blen, 1);
+		if (copycnt) {
+			rx->outp = buf;
+			rx->outendp = buf + copycnt;
+			*(rx->outendp) = '\0';
+		}
+		else
+			delete [] buf;
+		
+		return subst_count;
+	}
+	catch (std::bad_alloc& /*ex*/) {
+TRACE0(_T("out of space in subst_onig()\n"));
 		strcpy(msg,"out of space buf");
 		return 0;
 	}
-	// now ready to go
-	int subst_count = 0;
-	do {
-		if (iters++ > maxiters) {
-			delete [] buf;
-			strcpy(msg,"Substitution loop");
-			return 0;
-		}
-		m = rx->startp[0];
-		len = m - s;
-		buf = bufcat(buf, &copycnt, s, len, &blen, SUBST_BUF_SIZE, msg);
-		if (buf == NULL)
-			return 0;
-		s = rx->endp[0];
-		if (!(rx->pmflags & PMf_CONST)) {	// we have \digits or $&
-			//	ok start magic
-			REPSTR *rep = rx->repstr;
-//			ASSERT(rep);
-			for (int i = 0; i < rep->count; i++) {
-				int j;
-				// normal char
-				int dlen = rep->dlen[i];
-				if (rep->startp[i] && ((int) rep->startp[i] > 1) && dlen) {
-					buf = bufcat(buf, &copycnt, rep->startp[i], dlen, &blen,
-							SUBST_BUF_SIZE, msg);
-					if (buf == NULL)
-						return 0;
-				}
-				
-				else if (dlen <= rx->nparens && rx->startp[dlen] && rx->endp[dlen]) {
-					// \digits, $digits or $&
-					len = rx->endp[dlen] - rx->startp[dlen];
-					buf = bufcat(buf, &copycnt, rx->startp[dlen], len, &blen,
-							SUBST_BUF_SIZE, msg);
-					if (buf == NULL)
-						return 0;
-				}
-				
-				else if ((10<=dlen && (j=dec2oct(dlen)) > 0)
-						&& dlen > rx->nparens && ((int) rep->startp[i] == 1)) {
-					// \nnn
-					TCHAR ch = (TCHAR) j;
-					buf = bufcat(buf, &copycnt, &ch, 1, &blen,
-							SUBST_BUF_SIZE, msg);
-					if (buf == NULL)
-						return 0;
-				}
-			}
-		} else {
-			if (clen) {		// no special char
-				buf = bufcat(buf, &copycnt, c, clen, &blen,
-						SUBST_BUF_SIZE, msg);
-				if (buf == NULL)
-					return 0;
-			}
-		}
-		subst_count++;
-		if (once)
-			break;
-		if (callback)
-			if (!callback(CALLBACK_KIND_REPLACE, subst_count, s - orig))
-				break;
-	} while (regexec_onig(rx, s, strend, orig, s == m, 1,0,msg) > 0);
-//	len = rx->subend - s;
-	len = targetendp - s;	// ???
-	buf = bufcat(buf, &copycnt, s, len, &blen, 1, msg);
-	if (buf == NULL)
-		return 0;
-	if (copycnt) {
-		rx->outp = buf;
-		rx->outendp = buf + copycnt;
-		*(rx->outendp) = '\0';
-	}
-	else
-		delete [] buf;
-	
-	return subst_count;
 }
 
 
@@ -235,16 +236,21 @@ TRACE0(_T("set_repstr\n"));
 }
 
 
-TCHAR *parse_digits(const TCHAR *str, REPSTR *repstr, int *pcindex,
-		TCHAR *dst, TCHAR **polddst, int endch = 0, bool bksl = false)
+const TCHAR *parse_digits(const TCHAR *str, REPSTR *repstr, int *pcindex,
+		TCHAR *dst, TCHAR **polddst, bool bksl = false)
 {
 TRACE0(_T("parse_digits\n"));
 	TCHAR *s;
+	TCHAR endch = 0;
+	if (*str == '{') {
+		++str;
+		endch = '}';
+	}
 	int num = (int) _tcstoul(str, &s, 10);
 	
 	if (endch) {
 		if (*s != endch)
-			return NULL;
+			return NULL;	// SYNTAX ERROR
 		++s;
 	}
 	set_repstr(repstr, num, pcindex, dst, polddst, bksl);
@@ -254,19 +260,52 @@ TRACE0(_T("parse_digits\n"));
 
 
 const TCHAR *parse_groupname(bregonig *rx, const TCHAR *str, const TCHAR *strend,
-		REPSTR *repstr, int *pcindex, TCHAR *dst, TCHAR **polddst, TCHAR endch)
+		REPSTR *repstr, int *pcindex, TCHAR *dst, TCHAR **polddst,
+		bool bracket = false)
 {
+	TCHAR endch;
+	switch (*str++) {
+	case '<':	endch = '>';	break;
+	case '{':	endch = '}';	break;
+	case '\'':	endch = '\'';	break;
+	default:
+		return NULL;
+	}
 	const TCHAR *q = str;
 	while (q < strend && *q != endch) {
 		++q;
 	}
 	if (*q != endch) {
-		return NULL;
+		return NULL;	// SYNTAX ERROR
 	}
+	int arrnum = 0;
+	const TCHAR *nameend = q;
+	if (bracket) {	// [n]
+		if (q[1] != '[')
+			return NULL;	// SYNTAX ERROR
+		arrnum = (int) _tcstol(q+2, (TCHAR**) &q, 10);
+		if (*q != ']' || q >= strend)
+			return NULL;	// SYNTAX ERROR
+	}
+#if 0
 	int num = onig_name_to_backref_number(rx->reg,
-			(UChar*) str, (UChar*) q, NULL);
+			(UChar*) str, (UChar*) nameend, NULL);
 	if (num > 0)
-		set_repstr(repstr, num, pcindex, dst, polddst);
+		set_repstr(repstr, num, pcindex, dst, polddst);			// rightmost group-num
+#else
+	int *num_list;
+	int num = onig_name_to_group_numbers(rx->reg,
+			(UChar*) str, (UChar*) nameend, &num_list);
+	int n = 0;
+	if (bracket) {
+		n = arrnum;
+		if (arrnum < 0) {
+			n += num;
+		}
+	}
+	if ((num > 0) && (0 <= n || n < num))
+		set_repstr(repstr, num_list[n], pcindex, dst, polddst);	// leftmost group-num
+#endif
 	return q+1;
 }
 
@@ -292,6 +331,8 @@ TRACE0(_T("compile_rep()\n"));
 		int numlen;
 		TCHAR *olddst = dst;
 		bool special = false;		// found special char
+		casetype nextchcase = CASE_NONE;
+		casetype chcase = CASE_NONE;
 		while (p < pend) {
 			if (*p != '\\' && *p != '$') {	// magic char ?
 #ifndef UNICODE
@@ -315,10 +356,36 @@ TRACE0(_T("compile_rep()\n"));
 					set_repstr(repstr, 0, &cindex, dst, &olddst);
 					p++;
 					break;
-			/*
-				case '+':	// $+
+				case '+':	// $+, $+{name}
 					special = true;
+					if (p[1] == '{') {	// $+{name}
+						const TCHAR *q = parse_groupname(rx, p+1, pend, repstr,
+								&cindex, dst, &olddst);
+						if (q != NULL) {
+							p = q;
+						} else {
+							// SYNTAX ERROR
+							*dst++ = prvch;
+						}
+					} else {			// $+
+						set_repstr(repstr, -1, &cindex, dst, &olddst);
+						p++;
+					}
 					break;
+				case '-':	// $-{name}[n]
+					special = true;
+					if (p[1] == '{') {
+						const TCHAR *q = parse_groupname(rx, p+1, pend, repstr,
+								&cindex, dst, &olddst, true);
+						if (q != NULL) {
+							p = q;
+							continue;
+						}
+					}
+					// SYNTAX ERROR
+					*dst++ = prvch;
+					break;
+			/*
 				case '`':	// $`
 					special = true;
 					break;
@@ -331,28 +398,25 @@ TRACE0(_T("compile_rep()\n"));
 			*/
 				case '{':	// ${nn}, ${name}
 					special = true;
-					++p;
-					if (isDIGIT(*p)) {
+					if (isDIGIT(p[1])) {
 						// ${nn}
-						TCHAR *q = parse_digits(p, repstr, &cindex, dst, &olddst, '}');
+						const TCHAR *q = parse_digits(p, repstr, &cindex, dst, &olddst);
 						if (q != NULL) {
 							p = q;
 						} else {
 							// SYNTAX ERROR
 						//	throw std::invalid_argument("} not found");
 							*dst++ = prvch;
-							--p;
 						}
 					} else {
 						// ${name}
 						const TCHAR *q = parse_groupname(rx, p, pend, repstr,
-								&cindex, dst, &olddst, '}');
+								&cindex, dst, &olddst);
 						if (q != NULL) {
 							p = q;
 						} else {
 							// SYNTAX ERROR
 							*dst++ = prvch;
-							--p;
 						}
 					}
 					break;
@@ -381,7 +445,7 @@ TRACE0(_T("compile_rep()\n"));
 					*dst++ = ender;
 				} else {
 					// \digits found
-					p = parse_digits(p, repstr, &cindex, dst, &olddst, 0, true);
+					p = parse_digits(p, repstr, &cindex, dst, &olddst, true);
 				}
 			} else {
 				prvch = *p++;
@@ -404,9 +468,11 @@ TRACE0(_T("compile_rep()\n"));
 				case 'a':
 					ender = '\a';
 					break;
+/*
 				case 'v':
 					ender = '\v';
 					break;
+*/
 				case 'b':
 					ender = '\b';
 					break;
@@ -417,29 +483,22 @@ TRACE0(_T("compile_rep()\n"));
 					}
 					else {
 						const TCHAR *q = p;
-						if (*p == '{') {	// '\x{HH}'
-							unsigned int code = scan_hex(++p, 8, &numlen);
-							p += numlen;
-							if (*p == '}') {
-#ifdef UNICODE
-								if (code > 0xffff) {	// Surrogate Pair
-									unsigned int c = code - 0x10000;
-									*dst++ = (c >> 10) | 0xd800;
-									code = (c & 0x3ff) | 0xdc00;
+						if (*q == '{') {	// '\x{HH}'
+							unsigned int code = scan_hex(++q, 8, &numlen);
+							q += numlen;
+							if (*q == '}') {
+								TBYTE ch[2];
+								int len = set_codepoint(code, ch);
+								if (len > 1) {
+									*dst++ = ch[0];
 								}
-#else
-								if (code > 0xff) {
-									*dst++ = code >> 8;
-								}
-#endif
-								ender = (TCHAR) code;
-								p++;
+								ender = ch[len-1];
+								p = q+1;
 								break;
 							}
 						}
 						// SYNTAX ERROR
-						ender = 'x';
-						p = q;
+						ender = prvch;
 					}
 					break;
 				case 'c':	// '\cx'	(ex. '\c[' == Ctrl-[ == '\x1b')
@@ -451,9 +510,8 @@ TRACE0(_T("compile_rep()\n"));
 					break;
 				case 'k':	// \k<name>, \k'name'
 					if (*p == '<' || *p == '\'') {
-						const TCHAR endch = (*p == '<') ? '>' : '\'';
-						const TCHAR *q = parse_groupname(rx, p+1, pend, repstr,
-								&cindex, dst, &olddst, endch);
+						const TCHAR *q = parse_groupname(rx, p, pend, repstr,
+								&cindex, dst, &olddst);
 						if (q != NULL) {
 							p = q;
 							continue;
@@ -462,6 +520,25 @@ TRACE0(_T("compile_rep()\n"));
 					// SYNTAX ERROR
 					ender = prvch;
 					break;
+			/*
+				case 'l':	// lower next
+					nextchcase = CASE_LOWER;
+					continue;
+				case 'u':	// upper next
+					nextchcase = CASE_UPPER;
+					continue;
+				case 'L':	// lower till \E
+					chcase = CASE_LOWER;
+					continue;
+				case 'U':	// upper till \E
+					chcase = CASE_UPPER;
+					continue;
+				case 'Q':	// quote
+					continue;
+				case 'E':	// end of \L/\U
+					chcase = CASE_NONE;
+					continue;
+			*/
 				default:	// '/', '\\' and the other char
 					ender = prvch;
 					break;
@@ -487,7 +564,7 @@ TRACE0(_T("compile_rep()\n"));
 		
 		return repstr;
 	}
-	catch (std::exception& ex) {
+	catch (std::exception& /*ex*/) {
 TRACE0(_T("out of space in compile_rep()\n"));
 		delete repstr;
 		throw;

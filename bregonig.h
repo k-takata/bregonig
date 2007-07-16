@@ -13,15 +13,17 @@
 #define BREGONIG_H_
 
 #ifdef UNICODE
+typedef DWORD TWORD;
 namespace unicode {
 #else
+typedef WORD TWORD;
 namespace ansi {
 #endif
 
 typedef struct repstr {
 	int  count;		/* entry counter */
 	TCHAR **startp;	/* start address  if <256 \digit	*/
-	int  *dlen;		/* data length	*/
+	int  *dlen;		/* data length / backref num	*/
 	TCHAR data[1];	/* data start	*/
 	
 	repstr() { count = 0; startp = 0; dlen = 0; }
@@ -31,6 +33,13 @@ typedef struct repstr {
 		count = cnt;		// default \digits count in string
 		startp = new TCHAR*[cnt];
 		dlen = new int[cnt];
+	}
+	
+	bool is_normal_string(int i) {
+		return ((startp[i] != NULL) && ((int) startp[i] > 1));
+	}
+	bool is_backslash(int i) {
+		return ((int) startp[i] == 1);
 	}
 	
 	static void *operator new(size_t cb, size_t data_size) {
@@ -73,6 +82,45 @@ struct bregonig : bregexp {
 
 
 #define iskanji(c)	_ismbblead(c)
+
+inline int is_char_pair(const TBYTE *s)
+{
+#ifdef UNICODE
+	if (((s[0] & 0xfc00) == 0xd800) && ((s[1] & 0xfc00) == 0xdc00)) {
+		return true;
+	}
+	return false;
+#else
+	return iskanji(*s);
+#endif
+}
+
+inline TWORD get_codepoint(const TBYTE *s)
+{
+#ifdef UNICODE
+	return (((s[0] - 0xd800) << 10) | (s[1] - 0xdc00)) + 0x10000;
+#else
+	return ((unsigned char)s[0] <<8) | (unsigned char)s[1];
+#endif
+}
+
+inline int set_codepoint(TWORD codepoint, TBYTE *s)
+{
+	TBYTE *t = s;
+#ifdef UNICODE
+	if (codepoint > 0xffff) {	// Surrogate Pair
+		unsigned int c = codepoint - 0x10000;
+		*s++ = (c >> 10) | 0xd800;
+		codepoint = (c & 0x3ff) | 0xdc00;
+	}
+#else
+	if (codepoint > 0xff) {
+		*s++ = codepoint >> 8;
+	}
+#endif
+	*s++ = (TBYTE) codepoint;
+	return s - t;
+}
 
 #define BREGEXP_MAX_ERROR_MESSAGE_LEN	80
 

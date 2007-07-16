@@ -64,7 +64,11 @@ BEGIN
             VALUE "PrivateBuild", "\0"
             VALUE "ProductName", "bregonig.dll\0"
             VALUE "ProductVersion", BREGONIG_VERSION_STRING "\0"
+#ifdef _DEBUG
+            VALUE "SpecialBuild", "Debug Build\0"
+#else
             VALUE "SpecialBuild", "\0"
+#endif
         END
     END
     BLOCK "VarFileInfo"

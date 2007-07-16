@@ -37,11 +37,9 @@
 
 
 #ifdef UNICODE
-typedef DWORD TWORD;
 using namespace unicode;
 namespace unicode {
 #else
-typedef WORD TWORD;
 using namespace ansi;
 namespace ansi {
 #endif
@@ -55,6 +53,7 @@ static TWORD specchar(TCHAR* p,int *next);
 void sv_catkanji(SV *sv,U32 tch);
 
 
+/*
 static inline int is_char_pair(const TBYTE *s)
 {
 #ifdef UNICODE
@@ -75,6 +74,7 @@ static inline TWORD get_codepoint(const TBYTE *s)
 	return ((U8)s[0] <<8) | (U8)s[1];
 #endif
 }
+*/
 
 
 // compile translate string
@@ -308,9 +308,11 @@ static TWORD specchar(TCHAR *p, int *next)
 //		ender = '\007';
 		ender = '\a';
 		break;
+/*
 	case 'v':			// added by K.Takata
 		ender = '\v';
 		break;
+*/
 	case 'b':			// added by K.Takata
 		ender = '\b';
 		break;
@@ -457,29 +459,10 @@ TRACE0(_T("out of space in trans()\n"));
 
 void sv_catkanji(SV *sv, U32 tch)
 {
-#ifdef UNICODE
-	if (tch < 65536) {
-		sv_catpvn(sv,(TCHAR*)&tch,1);
-		return ;
-	}
-	// Surrogate Pair
 	TCHAR ch[2];
-	tch -= 0x10000;
-	ch[0] = (tch >> 10)   | 0xd800;
-	ch[1] = (tch & 0x3ff) | 0xdc00;
-	sv_catpvn(sv,ch,2);
-	return ;
-#else
-	if (tch < 256) {
-		sv_catpvn(sv,(char*)&tch,1);
-		return ;
-	}
-	char ch[2];
-	ch[0] = tch >> 8;
-	ch[1] = (char)tch;
-	sv_catpvn(sv,ch,2);
-	return ;
-#endif
+	int len = set_codepoint(tch, (TBYTE*)ch);
+	sv_catpvn(sv,ch,len);
+	return;
 }
 
 } // namespace

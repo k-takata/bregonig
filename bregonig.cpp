@@ -63,8 +63,10 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
 	switch (fdwReason) {
 	case DLL_PROCESS_ATTACH:
-		OnigSyntaxPerl_NG_EX.op2 |= ONIG_SYN_OP2_ESC_V_VTAB | ONIG_SYN_OP2_CCLASS_SET_OP;
+		OnigSyntaxPerl_NG_EX.op2 |= /*ONIG_SYN_OP2_ESC_V_VTAB |*/ ONIG_SYN_OP2_CCLASS_SET_OP
+				| ONIG_SYN_OP2_PLUS_POSSESSIVE_REPEAT | ONIG_SYN_OP2_PLUS_POSSESSIVE_INTERVAL;
 		OnigSyntaxPerl_NG_EX.behavior |= ONIG_SYN_DIFFERENT_LEN_ALT_LOOK_BEHIND;
+		OnigSyntaxPerl_NG_EX.options |= ONIG_OPTION_CAPTURE_GROUP;
 		onig_init();
 		break;
 		
@@ -637,14 +639,14 @@ TRACE1(_T("one_shot: %d\n"), one_shot);
 					(UChar*) stringarg, (UChar*) strend, rx->region,
 					ONIG_OPTION_NONE);
 		}
-#if 1
 	} catch (...) {	// catch NULL pointer exception. need /EHa option
+#if 1
 OutputDebugString(_T("bregonig.dll: fatal error\n"));
 		// Multithread BUG???
 		// should be fixed
 		return -1;
-	}
 #endif
+	}
 	if (err_code >= 0) {
 		/* FOUND */
 		if (rx->startp) {

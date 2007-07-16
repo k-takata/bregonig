@@ -65,21 +65,22 @@ int split_onig(bregonig *rx, TCHAR *target, TCHAR *targetendp, int limit, char *
 			strcpy(msg,"out of space buf");
 			return -1;
 		}
+#ifdef UNICODE
 		int kanjiflag = rx->pmflags & PMf_KANJI;
+#else
+		int kanjiflag = 1;
+#endif
 		while (s < strend) {
 			if (--limit == 0) {
 				buf[copycnt++] = s;
 				buf[copycnt++] = strend;
 				break;
 			}
-#ifndef UNICODE
-			if (kanjiflag && iskanji(*s)) {
+			if (kanjiflag && is_char_pair((TBYTE*)s)) {
 				buf[copycnt++] = s;
 				s += 2;
 				buf[copycnt++] = s;
-			} else
-#endif
-			{
+			} else {
 				buf[copycnt++] = s++;
 				buf[copycnt++] = s;
 			}

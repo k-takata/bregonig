@@ -4,15 +4,28 @@
 #  Copyright (C) 2006-2007  K.Takata
 #
 
-ONIG_DIR = ../onig-5.8.0-mt-sl
+ONIG_DIR = ../onig-5.9.0-mt
+!ifdef USE_ONIG_DLL
+ONIG_LIB = $(ONIG_DIR)/onig.lib
+!else
 ONIG_LIB = $(ONIG_DIR)/onig_s.lib
+!endif
 
-#CPPFLAGS = /O2 /W3 /GX /LD /nologo /I$(ONIG_DIR) /DONIG_EXTERN=extern /MT
-#CPPFLAGS = /O2 /W3 /EHsc /LD /nologo /I$(ONIG_DIR) /DONIG_EXTERN=extern /MT
-CPPFLAGS = /O2 /W3 /EHac /LD /nologo /I$(ONIG_DIR) /DONIG_EXTERN=extern /MT
+#CPPFLAGS = /O2 /W3 /GX /LD /nologo /I$(ONIG_DIR)
+#CPPFLAGS = /O2 /W3 /EHsc /LD /nologo /I$(ONIG_DIR)
+CPPFLAGS = /O2 /W3 /EHac /LD /nologo /I$(ONIG_DIR)
 LD = link
 LDFLAGS = /DLL /nologo /MAP /opt:nowin98
 
+!ifdef USE_MSVCRT
+CPPFLAGS = $(CPPFLAGS) /MD
+!else
+CPPFLAGS = $(CPPFLAGS) /MT
+!endif
+
+!ifndef USE_ONIG_DLL
+CPPFLAGS = $(CPPFLAGS) /DONIG_EXTERN=extern
+!endif
 
 !ifdef DEBUG
 CPPFLAGS = $(CPPFLAGS) /D_DEBUG
