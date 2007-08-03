@@ -14,11 +14,13 @@
 
 #ifdef UNICODE
 typedef DWORD TWORD;
-namespace unicode {
+#define BREGONIG_NS	unicode
 #else
 typedef WORD TWORD;
-namespace ansi {
+#define BREGONIG_NS	ansi
 #endif
+
+namespace BREGONIG_NS {
 
 typedef struct repstr {
 	int  count;		/* entry counter */
@@ -36,10 +38,10 @@ typedef struct repstr {
 	}
 	
 	bool is_normal_string(int i) {
-		return ((startp[i] != NULL) && ((int) startp[i] > 1));
+		return ((startp[i] != NULL) && ((INT_PTR) startp[i] > 1));
 	}
 	bool is_backslash(int i) {
-		return ((int) startp[i] == 1);
+		return ((INT_PTR) startp[i] == 1);
 	}
 	
 	static void *operator new(size_t cb, size_t data_size) {
@@ -122,6 +124,18 @@ inline int set_codepoint(TWORD codepoint, TBYTE *s)
 	return s - t;
 }
 
+// ASCII to TCHAR string
+inline TCHAR *asc2tcs(TCHAR *dst, const char *src)
+{
+#ifdef UNICODE
+	swprintf(dst, L"%hs", src);
+	return dst;
+#else
+	return strcpy(dst, src);
+#endif
+}
+
+
 #define BREGEXP_MAX_ERROR_MESSAGE_LEN	80
 
 #define CALLBACK_KIND_REPLACE	0
@@ -130,21 +144,21 @@ inline int set_codepoint(TWORD codepoint, TBYTE *s)
 
 int check_params(const TCHAR *str, const TCHAR *target, const TCHAR *targetstartp,
 		const TCHAR *targetendp,
-		BREGEXP **rxp, bool trans, char *msg, int *pplen);
+		BREGEXP **rxp, bool trans, TCHAR *msg, int *pplen);
 int BMatch_s(TCHAR *str, TCHAR *target, TCHAR *targetstartp, TCHAR *targetendp,
 		int one_shot,
-		BREGEXP **rxp, char *msg);
+		BREGEXP **rxp, TCHAR *msg);
 int BSubst_s(TCHAR *str, TCHAR *target, TCHAR *targetstartp, TCHAR *targetendp,
-		BREGEXP **rxp, char *msg, BCallBack callback);
+		BREGEXP **rxp, TCHAR *msg, BCallBack callback);
 
-//int onig_err_to_bregexp_msg(int err_code, OnigErrorInfo* err_info, char *msg);
+int onig_err_to_bregexp_msg(int err_code, OnigErrorInfo* err_info, TCHAR *msg);
 
-bregonig *compile_onig(const TCHAR *ptn, int plen, char *msg);
+bregonig *compile_onig(const TCHAR *ptn, int plen, TCHAR *msg);
 REPSTR *compile_rep(bregonig *rx, const TCHAR *str, const TCHAR *strend);
 
 int subst_onig(bregonig *rx, TCHAR *target, TCHAR *targetstartp, TCHAR *targetendp,
-		char *msg, BCallBack callback);
-int split_onig(bregonig *rx, TCHAR *target, TCHAR *targetendp, int limit, char *msg);
+		TCHAR *msg, BCallBack callback);
+int split_onig(bregonig *rx, TCHAR *target, TCHAR *targetendp, int limit, TCHAR *msg);
 
 
 int regexec_onig(bregonig *rx, TCHAR *stringarg,
@@ -153,13 +167,13 @@ int regexec_onig(bregonig *rx, TCHAR *stringarg,
 	int minend,		/* end of match must be at least minend after stringarg */
 	int safebase,	/* no need to remember string in subbase */
 	int one_shot,	/* if not match then break without proceed str pointer */
-	char *msg);		/* fatal error message */
+	TCHAR *msg);		/* fatal error message */
 
 
-int trans(bregonig *rx, TCHAR *target, TCHAR *targetendp, char *msg);
+int trans(bregonig *rx, TCHAR *target, TCHAR *targetendp, TCHAR *msg);
 
 bregonig *trcomp(TCHAR *res, TCHAR *resend, TCHAR *rp, TCHAR *rpend,
-		int flag, char *msg);
+		int flag, TCHAR *msg);
 
 
 #define isALNUM(c)   (isascii(c) && (isalpha(c) || isdigit(c) || c == '_'))

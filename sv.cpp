@@ -32,13 +32,8 @@
 
 #include "sv.h"
 
-#ifdef UNICODE
-//using namespace unicode;
-namespace unicode {
-#else
-//using namespace ansi;
-namespace ansi {
-#endif
+//using namespace BREGONIG_NS;
+namespace BREGONIG_NS {
 
 int   kpart(TCHAR *pLim,TCHAR *pChr);
 

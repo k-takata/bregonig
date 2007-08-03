@@ -43,7 +43,7 @@ public:
 			i = m_nmax - 1;
 		if (m_rxpool[i])
 			return m_rxpool[i];
-		char msg[80];
+		TCHAR msg[80];
 		TCHAR p[] = _T(" ");
 		// Make Compile Block
 		BMatch(regstr,p,p+1,&m_rxpool[i],msg);

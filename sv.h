@@ -9,11 +9,15 @@
 //	2006.08.29	updated by K.Takata
 
 
+#ifndef BREGONIG_NS
 #ifdef UNICODE
-namespace unicode {
+#define BREGONIG_NS	unicode
 #else
-namespace ansi {
+#define BREGONIG_NS	ansi
 #endif
+#endif
+
+namespace BREGONIG_NS {
 
 #ifndef TRUE
 //#define BOOL int
@@ -256,7 +260,7 @@ typedef struct sv SV;
 
 
 TCHAR *ninstr(register TCHAR *big,register TCHAR *bigend,TCHAR *little,
-TCHAR *lend,int kmode);
+	TCHAR *lend,int kmode);
 //TCHAR * fbm_instr(unsigned TCHAR*,register unsigned TCHAR *,SV*,int mline,int kmode);
 TCHAR * fbm_instr(TBYTE*,register TBYTE *,SV*,int mline,int kmode);
 BOOL sv_upgrade(register SV*, int);// sv.spp

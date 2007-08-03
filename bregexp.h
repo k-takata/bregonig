@@ -27,14 +27,14 @@
 #define BTrans		BTransW
 #define BSplit		BSplitW
 #define BRegfree	BRegfreeW
-//#define BRegexpVersion	BRegexpVersionW
+#define BRegexpVersion	BRegexpVersionW
 #endif /* UNICODE */
 
 
 typedef struct bregexp {
 	BREGCONST TCHAR *outp;		/* result string start ptr  */
 	BREGCONST TCHAR *outendp;	/* result string end ptr    */
-	BREGCONST int  splitctr;	/* split result counter     */
+	BREGCONST int   splitctr;	/* split result counter     */
 	BREGCONST TCHAR **splitp;	/* split result pointer ptr     */
 	int rsv1;					/* reserved for external use    */
 	TCHAR *parap;				/* parameter start ptr ie. "s/xxxxx/yy/gi"  */
@@ -59,40 +59,40 @@ extern "C"
 BREGEXPAPI
 int BMatch(TCHAR *str, TCHAR *target, TCHAR *targetstartp, TCHAR *targetendp,
 		int one_shot,
-		BREGEXP **rxp, char *msg);
+		BREGEXP **rxp, TCHAR *msg);
 BREGEXPAPI
 int BSubst(TCHAR *str, TCHAR *target, TCHAR *targetstartp, TCHAR *targetendp,
-		BREGEXP **rxp, char *msg, BCallBack callback);
+		BREGEXP **rxp, TCHAR *msg, BCallBack callback);
 #else
 /* Original */
 BREGEXPAPI
 int BMatch(TCHAR *str, TCHAR *target, TCHAR *targetendp,
-		BREGEXP **rxp, char *msg);
+		BREGEXP **rxp, TCHAR *msg);
 BREGEXPAPI
 int BSubst(TCHAR *str, TCHAR *target, TCHAR *targetendp,
-		BREGEXP **rxp, char *msg);
+		BREGEXP **rxp, TCHAR *msg);
 
 /* Sakura Editor */
 BREGEXPAPI
 int BMatchEx(TCHAR *str, TCHAR *targetbegp, TCHAR *target, TCHAR *targetendp,
-		BREGEXP **rxp, char *msg);
+		BREGEXP **rxp, TCHAR *msg);
 BREGEXPAPI
 int BSubstEx(TCHAR *str, TCHAR *targetbegp, TCHAR *target, TCHAR *targetendp,
-		BREGEXP **rxp, char *msg);
+		BREGEXP **rxp, TCHAR *msg);
 #endif
 
 
 BREGEXPAPI
 int BTrans(TCHAR *str, TCHAR *target, TCHAR *targetendp,
-		BREGEXP **rxp, char *msg);
+		BREGEXP **rxp, TCHAR *msg);
 BREGEXPAPI
 int BSplit(TCHAR *str, TCHAR *target, TCHAR *targetendp,
-		int limit, BREGEXP **rxp, char *msg);
+		int limit, BREGEXP **rxp, TCHAR *msg);
 BREGEXPAPI
 void BRegfree(BREGEXP *rx);
 
 BREGEXPAPI
-char *BRegexpVersion(void);
+TCHAR *BRegexpVersion(void);
 
 
 #if defined(__cplusplus)

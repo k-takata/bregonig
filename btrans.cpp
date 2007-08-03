@@ -36,18 +36,13 @@
 //#include "intreg.h"
 
 
-#ifdef UNICODE
-using namespace unicode;
-namespace unicode {
-#else
-using namespace ansi;
-namespace ansi {
-#endif
+using namespace BREGONIG_NS;
+namespace BREGONIG_NS {
 
 int trans(bregonig *rx, TCHAR *target, TCHAR *targetendp, TCHAR *msg);
 
 bregonig *trcomp(TCHAR *res, TCHAR *resend, TCHAR *rp, TCHAR *rpend,
-		int flag, char *msg);
+		int flag, TCHAR *msg);
 static SV *cvchar(TCHAR *str, TCHAR *strend);
 static TWORD specchar(TCHAR* p,int *next);
 void sv_catkanji(SV *sv,U32 tch);
@@ -79,7 +74,7 @@ static inline TWORD get_codepoint(const TBYTE *s)
 
 // compile translate string
 bregonig *trcomp(TCHAR *str, TCHAR *strend, TCHAR *rp, TCHAR *rpend,
-		int flag, char *msg)
+		int flag, TCHAR *msg)
 {
 	int slen = strend - str;
 	int rlen = rpend - rp;
@@ -91,7 +86,7 @@ bregonig *trcomp(TCHAR *str, TCHAR *strend, TCHAR *rp, TCHAR *rpend,
 //	bregonig *rx = (bregonig*) new char[sizeof(bregonig)];
 	bregonig *rx = new (std::nothrow) bregonig();
 	if (rx == NULL) {
-		strcpy(msg,"out of space trcomp");
+		asc2tcs(msg,"out of space trcomp");
 		return NULL;
 	}
 
@@ -193,7 +188,7 @@ TRACE0(_T("out of space in trcomp()\n"));
 			sv_free(rstr);
 		delete tbl;
 		delete rx;
-		strcpy(msg, ex.what());
+		asc2tcs(msg, ex.what());
 		return NULL;
 	}
 }
@@ -358,7 +353,7 @@ static TWORD specchar(TCHAR *p, int *next)
 
 
 
-int trans(bregonig *rx, TCHAR *target, TCHAR *targetendp, char *msg)
+int trans(bregonig *rx, TCHAR *target, TCHAR *targetendp, TCHAR *msg)
 {
 	register short *tbl;
 	register TBYTE *s;
@@ -452,7 +447,7 @@ int trans(bregonig *rx, TCHAR *target, TCHAR *targetendp, char *msg)
 TRACE0(_T("out of space in trans()\n"));
 		if (dest_sv)
 			sv_free(dest_sv);
-		strcpy(msg, ex.what());
+		asc2tcs(msg, ex.what());
 		return -1;
 	}
 }

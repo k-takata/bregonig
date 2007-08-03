@@ -39,11 +39,7 @@
 #include "dbgtrace.h"
 
 
-#ifdef UNICODE
-using namespace unicode;
-#else
-using namespace ansi;
-#endif
+using namespace BREGONIG_NS;
 
 
 extern OnigSyntaxType OnigSyntaxPerl_NG_EX;
@@ -86,36 +82,34 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 #endif
 
 
-#ifndef UNICODE
-char *::BRegexpVersion(void)
+TCHAR *::BRegexpVersion(void)
 {
-	static char version[256];
+	static TCHAR version[80];
 //	sprintf(version, "bregonig.dll Ver.%d.%02d%s %s with Oniguruma %s",
-	sprintf(version, _T("bregonig.dll Ver.%d.%02d%s with Oniguruma %s"),
+	_stprintf(version, _T("bregonig.dll Ver.%d.%02d%hs with Oniguruma %hs"),
 			BREGONIG_VERSION_MAJOR, BREGONIG_VERSION_MINOR,
 			BREGONIG_VERSION_PREFIX,
 			/*__DATE__,*/ onig_version());
 	
 	return version;
 }
-#endif
 
 
 #ifdef _K2REGEXP_
 int ::BMatch(TCHAR *str, TCHAR *target, TCHAR *targetstartp, TCHAR *targetendp,
 		int one_shot,
-		BREGEXP **rxp, char *msg)
+		BREGEXP **rxp, TCHAR *msg)
 {
 	return BMatch_s(str, target, targetstartp, targetendp, one_shot, rxp, msg);
 }
 #else
 int ::BMatch(TCHAR *str, TCHAR *target, TCHAR *targetendp,
-		BREGEXP **rxp, char *msg)
+		BREGEXP **rxp, TCHAR *msg)
 {
 	return BMatch_s(str, target, target, targetendp, 0, rxp, msg);
 }
 int ::BMatchEx(TCHAR *str, TCHAR *targetbegp, TCHAR *target, TCHAR *targetendp,
-		BREGEXP **rxp, char *msg)
+		BREGEXP **rxp, TCHAR *msg)
 {
 	return BMatch_s(str, targetbegp, target, targetendp, 0, rxp, msg);
 }
@@ -124,18 +118,18 @@ int ::BMatchEx(TCHAR *str, TCHAR *targetbegp, TCHAR *target, TCHAR *targetendp,
 
 #ifdef _K2REGEXP_
 int ::BSubst(TCHAR *str, TCHAR *target, TCHAR *targetstartp, TCHAR *targetendp,
-		BREGEXP **rxp, char *msg, BCallBack callback)
+		BREGEXP **rxp, TCHAR *msg, BCallBack callback)
 {
 	return BSubst_s(str, target, targetstartp, targetendp, rxp, msg, callback);
 }
 #else
 int ::BSubst(TCHAR *str, TCHAR *target, TCHAR *targetendp,
-		BREGEXP **rxp, char *msg)
+		BREGEXP **rxp, TCHAR *msg)
 {
 	return BSubst_s(str, target, target, targetendp, rxp, msg, NULL);
 }
 int ::BSubstEx(TCHAR *str, TCHAR *targetbegp, TCHAR *target, TCHAR *targetendp,
-		BREGEXP **rxp, char *msg)
+		BREGEXP **rxp, TCHAR *msg)
 {
 	return BSubst_s(str, targetbegp, target, targetendp, rxp, msg, NULL);
 }
@@ -143,7 +137,7 @@ int ::BSubstEx(TCHAR *str, TCHAR *targetbegp, TCHAR *target, TCHAR *targetendp,
 
 
 int ::BTrans(TCHAR *str, TCHAR *target, TCHAR *targetendp,
-		BREGEXP **rxp, char *msg)
+		BREGEXP **rxp, TCHAR *msg)
 {
 TRACE1(_T("BTrans(): %s\n"), str);
 	set_new_throw_bad_alloc();
@@ -171,7 +165,7 @@ TRACE1(_T("BTrans(): %s\n"), str);
 	if (!(rx->pmflags & PMf_TRANSLATE)) {
 		delete rx;
 		*rxp = NULL;	
-		strcpy(msg,"no translate parameter");
+		asc2tcs(msg,"no translate parameter");
 		return -1;
 	}
 	
@@ -181,7 +175,7 @@ TRACE1(_T("BTrans(): %s\n"), str);
 
 
 int ::BSplit(TCHAR *str, TCHAR *target, TCHAR *targetendp,
-		int limit, BREGEXP **rxp, char *msg)
+		int limit, BREGEXP **rxp, TCHAR *msg)
 {
 TRACE1(_T("BSplit(): %s\n"), str);
 	set_new_throw_bad_alloc();
@@ -221,36 +215,22 @@ TRACE1(_T("BRegfree(): rx=0x%08x\n"), rx);
 
 
 
-int onig_err_to_bregexp_msg(int err_code, OnigErrorInfo* err_info, char *msg);
-#ifndef UNICODE
-int onig_err_to_bregexp_msg(int err_code, OnigErrorInfo* err_info, char *msg)
+
+
+namespace BREGONIG_NS {
+
+int onig_err_to_bregexp_msg(int err_code, OnigErrorInfo* err_info, TCHAR *msg)
 {
-	int ret = -1;
-	char *err_str = new (std::nothrow) char[ONIG_MAX_ERROR_MESSAGE_LEN];
-	if (err_str != NULL) {
-		ret = onig_error_code_to_str((UChar*) err_str, err_code, err_info);
-		
-		strncpy(msg, err_str, BREGEXP_MAX_ERROR_MESSAGE_LEN);
-		msg[BREGEXP_MAX_ERROR_MESSAGE_LEN-1] = '\0';
-		
-		delete [] err_str;
-	}
+	char err_str[ONIG_MAX_ERROR_MESSAGE_LEN];
+	int ret = onig_error_code_to_str((UChar*) err_str, err_code, err_info);
+	err_str[BREGEXP_MAX_ERROR_MESSAGE_LEN-1] = '\0';
+	asc2tcs(msg, err_str);
 	return ret;
 }
-#endif
-
-
-
-
-#ifdef UNICODE
-namespace unicode {
-#else
-namespace ansi {
-#endif
 
 int check_params(const TCHAR *str, const TCHAR *target, const TCHAR *targetstartp,
 		const TCHAR *targetendp,
-		BREGEXP **rxp, bool trans, char *msg, int *pplen)
+		BREGEXP **rxp, bool trans, TCHAR *msg, int *pplen)
 {
 	if (msg == NULL)		// no message area
 		return -1;
@@ -259,13 +239,13 @@ TRACE3(_T("str:%s, len:%d, len:%d\n"), str, targetendp-target, targetendp-target
 TRACE1(_T("rxp:0x%08x\n"), rxp);
 	
 	if (rxp == NULL) {
-		strcpy(msg, "invalid BREGEXP parameter");
+		asc2tcs(msg, "invalid BREGEXP parameter");
 		return -1;
 	}
 TRACE1(_T("rx:0x%08x\n"), *rxp);
 	if (target == NULL || targetstartp == NULL || targetendp == NULL
-		|| targetstartp >= targetendp || target > targetstartp) { // bad targer parameter ?
-		strcpy(msg, "invalid target parameter");
+		|| targetstartp >= targetendp || target > targetstartp) { // bad target parameter ?
+		asc2tcs(msg, "invalid target parameter");
 		return -1;
 	}
 	
@@ -276,7 +256,7 @@ TRACE1(_T("rx:0x%08x\n"), *rxp);
 	bregonig *rx = static_cast<bregonig*>(*rxp);
 	if (plen == 0) {	// null string
 		if (rx == NULL) {
-			strcpy(msg, "invalid reg parameter");
+			asc2tcs(msg, "invalid reg parameter");
 			return -1;
 		}
 	} else if (rx) {
@@ -296,7 +276,7 @@ TRACE0(_T("delete rx\n"));
 
 int BMatch_s(TCHAR *str, TCHAR *target, TCHAR *targetstartp, TCHAR *targetendp,
 		int one_shot,
-		BREGEXP **rxp, char *msg)
+		BREGEXP **rxp, TCHAR *msg)
 {
 TRACE1(_T("BMatch(): %s\n"), str);
 	set_new_throw_bad_alloc();
@@ -332,7 +312,7 @@ TRACE1(_T("BMatch(): %s\n"), str);
 		int len = rx->endp[1] - rx->startp[1];
 		TCHAR *tp = new (std::nothrow) TCHAR[len+1];
 		if (tp == NULL) {
-			strcpy(msg,"match out of space");
+			asc2tcs(msg,"match out of space");
 			return -1;
 		}
 		memcpy(tp,rx->startp[1],len*sizeof(TCHAR));
@@ -346,7 +326,7 @@ TRACE1(_T("BMatch(): %s\n"), str);
 
 
 int BSubst_s(TCHAR *str, TCHAR *target, TCHAR *targetstartp, TCHAR *targetendp,
-		BREGEXP **rxp, char *msg, BCallBack callback)
+		BREGEXP **rxp, TCHAR *msg, BCallBack callback)
 {
 TRACE1(_T("BSubst(): %s\n"), str);
 	set_new_throw_bad_alloc();
@@ -387,7 +367,7 @@ TRACE0(_T("Match in Subst"));
 		int len = rx->endp[1] - rx->startp[1];
 		TCHAR *tp = new (std::nothrow) TCHAR[len+1];
 		if (tp == NULL) {
-			strcpy(msg,"match out of space");
+			asc2tcs(msg, "match out of space");
 			return -1;
 		}
 		memcpy(tp,rx->startp[1],len*sizeof(TCHAR));
@@ -436,14 +416,14 @@ bregonig::~bregonig()
 
 
 
-bregonig *compile_onig(const TCHAR *ptn, int plen, char *msg)
+bregonig *compile_onig(const TCHAR *ptn, int plen, TCHAR *msg)
 {
 TRACE0(_T("compile_onig()\n"));
 TRACE1(_T("ptn:%s\n"), ptn);
 TRACE1(_T("plen:%d\n"), plen);
 	TCHAR *parap = new (std::nothrow) TCHAR[plen+1];	// parameter copy
 	if (parap == NULL) {
-		strcpy(msg, "precompile out of space");
+		asc2tcs(msg, "precompile out of space");
 		return NULL;
 	}
 	memcpy(parap, ptn, (plen+1)*sizeof(TCHAR));	// copy include null
@@ -454,7 +434,7 @@ TRACE1(_T("plen:%d\n"), plen);
 	TCHAR sep = '/';			// default separater
 	if (*p != '/') {
 		if (*p != 's' && *p != 'm' && memcmp(p,_T("tr"),2*sizeof(TCHAR)) != 0) {
-			strcpy(msg,"do not start 'm' or 's' or 'tr'");
+			asc2tcs(msg,"do not start 'm' or 's' or 'tr'");
 			delete [] parap;
 			return NULL;
 		}
@@ -499,7 +479,7 @@ TRACE1(_T("plen:%d\n"), plen);
 		prev = *p++;
 	}
 	if (!resend || (!rpend && type != 'm')) {
-		strcpy(msg, "unmatch separater");
+		asc2tcs(msg, "unmatch separater");
 		delete [] parap;
 		return NULL;
 	}
@@ -578,7 +558,7 @@ TRACE1(_T("plen:%d\n"), plen);
 	
 	bregonig *rx = new (std::nothrow) bregonig();
 	if (rx == NULL) {
-		strcpy(msg, "out of space regexp");
+		asc2tcs(msg, "out of space regexp");
 		delete [] parap;
 		return NULL;
 	}
@@ -609,7 +589,7 @@ TRACE0(_T("Error: onig_new()\n"));
 		} catch (std::exception& ex) {
 			delete rx;
 		//	delete [] parap;		// deleted by the deconstructor of rx
-			strcpy(msg, ex.what());
+			asc2tcs(msg, ex.what());
 			return NULL;
 		}
 	}
@@ -625,11 +605,12 @@ int regexec_onig(bregonig *rx, TCHAR *stringarg,
 	int minend,		/* end of match must be at least minend after stringarg */
 	int safebase,	/* no need to remember string in subbase */
 	int one_shot,	/* if not match then break without proceed str pointer */
-	char *msg)		/* fatal error message */
+	TCHAR *msg)		/* fatal error message */
 {
 TRACE1(_T("one_shot: %d\n"), one_shot);
 	int err_code;
 	try {
+		stringarg += minend;	// ???
 		if (one_shot) {
 			err_code = onig_match(rx->reg, (UChar*) strbeg, (UChar*) strend,
 					(UChar*) stringarg, rx->region,
@@ -656,14 +637,21 @@ OutputDebugString(_T("bregonig.dll: fatal error\n"));
 		rx->startp = new (std::nothrow) TCHAR*[rx->region->num_regs * 2];
 			/* allocate startp and endp together */
 		if (rx->startp == NULL) {
-			strcpy(msg, "out of space");
+			asc2tcs(msg, "out of space");
 			return -1;
 		}
 		rx->endp = rx->startp + rx->region->num_regs;
 		
 		for (int i = 0; i < rx->region->num_regs; i++) {
-			rx->startp[i] = strbeg/**/ + rx->region->beg[i] / sizeof(TCHAR);
-			rx->endp[i] = strbeg/**/ + rx->region->end[i] / sizeof(TCHAR);
+			if (rx->region->beg[i] != ONIG_REGION_NOTPOS) {
+				// found
+				rx->startp[i] = strbeg/**/ + rx->region->beg[i] / sizeof(TCHAR);
+				rx->endp[i] = strbeg/**/ + rx->region->end[i] / sizeof(TCHAR);
+			} else {
+				// not found
+				rx->startp[i] = NULL;
+				rx->endp[i] = NULL;
+			}
 		}
 		return 1;
 	} else if (err_code == ONIG_MISMATCH) {

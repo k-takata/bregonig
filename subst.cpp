@@ -36,13 +36,37 @@
 #include "dbgtrace.h"
 
 
-#ifdef UNICODE
-using namespace unicode;
-namespace unicode {
-#else
-using namespace ansi;
-namespace ansi {
+int dec2oct(int dec);
+int get_right_most_captured_num(OnigRegion *region);
+
+#ifndef UNICODE
+int dec2oct(int dec)
+{
+	int i, j;
+	if (dec > 377)	// 0377 == 0xFF
+		return -1;
+	i = dec % 10;
+	if (i > 7)
+		return -1;
+	j = (dec / 10) % 10;
+	if (j > 7)
+		return -1;
+	return i + j*8 + (dec/100)*64;
+}
+
+int get_right_most_captured_num(OnigRegion *region)
+{
+	for (int i = region->num_regs - 1; i > 0; i--) {
+		if (region->beg[i] != ONIG_REGION_NOTPOS)
+			return i;
+	}
+	return -1;
+}
 #endif
+
+
+using namespace BREGONIG_NS;
+namespace BREGONIG_NS {
 
 enum casetype {
 	CASE_NONE, CASE_UPPER, CASE_LOWER
@@ -61,7 +85,7 @@ TCHAR *bufcat(TCHAR *buf, int *copycnt, const TCHAR *src, int len,
 		*blen += len + bufsize;
 		TCHAR *tp = new (std::nothrow) TCHAR[*blen];
 		if (tp == NULL) {
-		//	strcpy(msg,"out of space buf");
+		//	asc2tcs(msg,"out of space buf");
 			delete [] buf;
 			throw std::bad_alloc();
 		//	return NULL;
@@ -78,25 +102,11 @@ TCHAR *bufcat(TCHAR *buf, int *copycnt, const TCHAR *src, int len,
 }
 
 
-int dec2oct(int dec)
-{
-	int i, j;
-	if (dec > 377)	// 0377 == 0xFF
-		return -1;
-	i = dec % 10;
-	if (i > 7)
-		return -1;
-	j = (dec / 10) % 10;
-	if (j > 7)
-		return -1;
-	return i + j*8 + (dec/100)*64;
-}
-
 
 int subst_onig(bregonig *rx, TCHAR *target, TCHAR *targetstartp, TCHAR *targetendp,
-		char *msg, BCallBack callback)
+		TCHAR *msg, BCallBack callback)
 {
-//TRACE0(_T("subst_onig()\n"));
+TRACE0(_T("subst_onig()\n"));
 	TCHAR *orig,*m,*c;
 	TCHAR *s = target;
 	int len = targetendp - target;
@@ -121,7 +131,8 @@ int subst_onig(bregonig *rx, TCHAR *target, TCHAR *targetstartp, TCHAR *targeten
 		do {
 			if (iters++ > maxiters) {
 				delete [] buf;
-				strcpy(msg,"Substitution loop");
+TRACE0(_T("Substitution loop\n"));
+				asc2tcs(msg,"Substitution loop");
 				return 0;
 			}
 			m = rx->startp[0];
@@ -147,11 +158,11 @@ int subst_onig(bregonig *rx, TCHAR *target, TCHAR *targetstartp, TCHAR *targeten
 						buf = bufcat(buf, &copycnt, rx->startp[dlen], len, &blen);
 					}
 					
-					else if (dlen == -1 && ((dlen = rx->nparens) > 0)
-							&& rx->startp[dlen] && rx->endp[dlen]) {
+					else if (dlen == -1
+							&& (j=get_right_most_captured_num(rx->region)) > 0) {
 						// $+
-						len = rx->endp[dlen] - rx->startp[dlen];
-						buf = bufcat(buf, &copycnt, rx->startp[dlen], len, &blen);
+						len = rx->endp[j] - rx->startp[j];
+						buf = bufcat(buf, &copycnt, rx->startp[j], len, &blen);
 					}
 					
 					else if ((10<=dlen && (j=dec2oct(dlen)) > 0)
@@ -184,11 +195,12 @@ int subst_onig(bregonig *rx, TCHAR *target, TCHAR *targetstartp, TCHAR *targeten
 		else
 			delete [] buf;
 		
+TRACE1(_T("subst_count: %d\n"), subst_count);
 		return subst_count;
 	}
 	catch (std::bad_alloc& /*ex*/) {
 TRACE0(_T("out of space in subst_onig()\n"));
-		strcpy(msg,"out of space buf");
+		asc2tcs(msg,"out of space buf");
 		return 0;
 	}
 }

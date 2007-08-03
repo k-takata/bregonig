@@ -8,7 +8,7 @@
 
 int main()
 {
-	char msg[80];	// メッセージ領域
+	TCHAR msg[80];	// メッセージ領域
 	BREGEXP *rxp = NULL;	// 必ずクリアしておくこと 
 	// 検索文字サンプル
 	TCHAR t1[] = _T(" Yokohama 045-222-1111  Osaka 06-5555-6666  Tokyo 03-1111-9999 ");
@@ -16,7 +16,7 @@ int main()
 						// 03か045 の電話番号を検索
 						// カッコ() は、それぞれの番号を記憶することを意味する
 	int pos = 0;	// 検索ポジション
-	while (BMatch(patern1,t1+pos,t1+_tcslen(t1),&rxp,msg)) {
+	while (BMatch(patern1,t1+pos,t1+_tcslen(t1),&rxp,msg) > 0) {
 		_tprintf(_T("data=%s\n"),t1+pos);		// 検索される文字
 		_tprintf(_T("found=%s\n"),rxp->startp[0]);	// マッチ文字列
 		_tprintf(_T("length=%d\n"),rxp->endp[0] - rxp->startp[0]);	// マッチ文字数
@@ -30,7 +30,7 @@ int main()
 	pos = 0;
 	TCHAR t2[] = _T(" abcdabce abcdabcd abcdabcf abcgabcg ");
 	TCHAR patern2[] = _T("/abc(.)abc\\1/");	// 検索中でのパターン記憶の例
-	while(BMatch(patern2,t2+pos,t2+_tcslen(t2),&rxp,msg)) {
+	while(BMatch(patern2,t2+pos,t2+_tcslen(t2),&rxp,msg) > 0) {
 		_tprintf(_T("data=%s\n"),t2);			// 検索される文字
 		_tprintf(_T("found=%s\n"),rxp->startp[0]);	// マッチ文字列
 		_tprintf(_T("length=%d\n"),rxp->endp[0] - rxp->startp[0]);	// マッチ文字数

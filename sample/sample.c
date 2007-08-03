@@ -11,13 +11,13 @@
 int _tmain(int argc,TCHAR *argv[])
 {
 	TCHAR fname[512],line[4096],*p1;
-	char msg[80];	
-    FILE *fp;
+	TCHAR msg[80];
+	FILE *fp;
 	int len,ctr;
 	BREGEXP *rxp = 0;
 	TCHAR dmy[] = _T(" ");
 	setlocale(LC_ALL, "");
-    if (argc < 2) {
+	if (argc < 2) {
 		_putts (_T("usage /regstr/ [file]\n  if omitted assume /usr/dict/words"));
 		return 0;
 	}
@@ -25,26 +25,26 @@ int _tmain(int argc,TCHAR *argv[])
 	if (argc > 2)
 		_tcscpy(fname,argv[2]);
 	p1 = argv[1];
-    fp = _tfopen(fname,_T("r"));
-    if (!fp) {
+	fp = _tfopen(fname,_T("r"));
+	if (!fp) {
 		_tprintf (_T("file cant open  %s\n"),fname);
 		return 0;
 	}
-   	BMatch(p1,dmy,dmy+1,&rxp,msg);	// compile using dummy 
-    if (msg[0]) {
+	BMatch(p1,dmy,dmy+1,&rxp,msg);	// compile using dummy 
+	if (msg[0]) {
 		_tprintf (_T("parse error  %s\n"),msg);
 		return 0;
 	}
-    ctr = 0;
-    while(_fgetts(line,sizeof(line),fp)) {
+	ctr = 0;
+	while(_fgetts(line,sizeof(line),fp)) {
 		len = _tcslen(line);
-   		if (len && BMatch(p1,line,line+len,&rxp,msg)) {
-            ctr++;
-            line[len-1] = 0;
+		if (len && (BMatch(p1,line,line+len,&rxp,msg) > 0)) {
+			ctr++;
+			line[len-1] = 0;
 			_putts(line);
 		}
 	}
-	fclose(fp); 
+	fclose(fp);
 
 	_tprintf(_T("%ld lines(s) greped\n"),ctr);
 	return 0;

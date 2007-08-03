@@ -30,15 +30,10 @@
 #include "dbgtrace.h"
 
 
-#ifdef UNICODE
-using namespace unicode;
-namespace unicode {
-#else
-using namespace ansi;
-namespace ansi {
-#endif
+using namespace BREGONIG_NS;
+namespace BREGONIG_NS {
 
-int split_onig(bregonig *rx, TCHAR *target, TCHAR *targetendp, int limit, char *msg)
+int split_onig(bregonig *rx, TCHAR *target, TCHAR *targetendp, int limit, TCHAR *msg)
 {
 	TCHAR *orig,*m;
 	TCHAR *s = target;
@@ -62,7 +57,7 @@ int split_onig(bregonig *rx, TCHAR *target, TCHAR *targetendp, int limit, char *
 		TCHAR **buf = new (std::nothrow) TCHAR*[blen];
 		int copycnt = 0;
 		if (buf == NULL) {
-			strcpy(msg,"out of space buf");
+			asc2tcs(msg,"out of space buf");
 			return -1;
 		}
 #ifdef UNICODE
@@ -102,7 +97,7 @@ int split_onig(bregonig *rx, TCHAR *target, TCHAR *targetendp, int limit, char *
 	TCHAR **buf = new (std::nothrow) TCHAR*[blen];
 	int copycnt = 0;
 	if (buf == NULL) {
-		strcpy(msg,"out of space buf");
+		asc2tcs(msg,"out of space buf");
 		return -1;
 	}
 	if (!regexec_onig(rx, s, strend, orig, 0,1,0,msg)) { // no split ?
@@ -119,7 +114,7 @@ int split_onig(bregonig *rx, TCHAR *target, TCHAR *targetendp, int limit, char *
 	do {
 		if (iters++ > maxiters) {
 			delete [] buf;
-			strcpy(msg,"Split loop");
+			asc2tcs(msg,"Split loop");
 			return -1;
 		}
 		m = rx->startp[0];
@@ -127,7 +122,7 @@ int split_onig(bregonig *rx, TCHAR *target, TCHAR *targetendp, int limit, char *
 		if (blen <= copycnt + 3) {
 			TCHAR **tp = new (std::nothrow) TCHAR*[blen + 256];
 			if (tp == NULL) {
-				strcpy(msg,"out of space buf");
+				asc2tcs(msg,"out of space buf");
 				delete [] buf;
 				return -1;
 			}
@@ -146,7 +141,7 @@ int split_onig(bregonig *rx, TCHAR *target, TCHAR *targetendp, int limit, char *
 	if (blen <= copycnt + 3) {
 		TCHAR **tp = new (std::nothrow) TCHAR*[blen + 3];
 		if (tp == NULL) {
-			strcpy(msg,"out of space buf");
+			asc2tcs(msg,"out of space buf");
 			delete [] buf;
 			return -1;
 		}
