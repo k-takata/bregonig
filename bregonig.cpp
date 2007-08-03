@@ -103,7 +103,7 @@ TRACE1("rxp:0x%08x\n", rxp);
 	}
 TRACE1("rx:0x%08x\n", *rxp);
 	if (target == NULL || targetstartp == NULL || targetendp == NULL
-		|| targetstartp >= targetendp || target > targetstartp) { // bad targer parameter ?
+		|| targetstartp >= targetendp || target > targetstartp) { // bad target parameter ?
 		strcpy(msg, "invalid target parameter");
 		return -1;
 	}
@@ -390,16 +390,10 @@ bregonig::~bregonig()
 
 int onig_err_to_bregexp_msg(int err_code, OnigErrorInfo* err_info, char *msg)
 {
-	int ret = -1;
-	char *err_str = new (std::nothrow) char[ONIG_MAX_ERROR_MESSAGE_LEN];
-	if (err_str != NULL) {
-		ret = onig_error_code_to_str((UChar*) err_str, err_code, err_info);
-		
-		strncpy(msg, err_str, BREGEXP_MAX_ERROR_MESSAGE_LEN);
-		msg[BREGEXP_MAX_ERROR_MESSAGE_LEN-1] = '\0';
-		
-		delete [] err_str;
-	}
+	char err_str[ONIG_MAX_ERROR_MESSAGE_LEN];
+	int ret = onig_error_code_to_str((UChar*) err_str, err_code, err_info);
+	err_str[BREGEXP_MAX_ERROR_MESSAGE_LEN-1] = '\0';
+	strcpy(msg, err_str);
 	return ret;
 }
 
@@ -590,6 +584,7 @@ int regexec_onig(bregonig *rx, char *stringarg,
 TRACE1("one_shot: %d\n", one_shot);
 	int err_code;
 	try {
+		stringarg += minend;	// ???
 		if (one_shot) {
 			err_code = onig_match(rx->reg, (UChar*) strbeg, (UChar*) strend,
 					(UChar*) stringarg, rx->region,
@@ -599,14 +594,14 @@ TRACE1("one_shot: %d\n", one_shot);
 					(UChar*) stringarg, (UChar*) strend, rx->region,
 					ONIG_OPTION_NONE);
 		}
-#if 1
 	} catch (...) {	// catch NULL pointer exception. need /EHa option
+#if 1
 OutputDebugString("bregonig.dll: fatal error\n");
 		// Multithread BUG???
 		// should be fixed
 		return -1;
-	}
 #endif
+	}
 	if (err_code >= 0) {
 		/* FOUND */
 		if (rx->startp) {
@@ -622,8 +617,15 @@ OutputDebugString("bregonig.dll: fatal error\n");
 		rx->endp = rx->startp + rx->region->num_regs;
 		
 		for (int i = 0; i < rx->region->num_regs; i++) {
-			rx->startp[i] = strbeg/**/ + rx->region->beg[i];
-			rx->endp[i] = strbeg/**/ + rx->region->end[i];
+			if (rx->region->beg[i] != ONIG_REGION_NOTPOS) {
+				// found
+				rx->startp[i] = strbeg/**/ + rx->region->beg[i];
+				rx->endp[i] = strbeg/**/ + rx->region->end[i];
+			} else {
+				// not found
+				rx->startp[i] = NULL;
+				rx->endp[i] = NULL;
+			}
 		}
 		return 1;
 	} else if (err_code == ONIG_MISMATCH) {

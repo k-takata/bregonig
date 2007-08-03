@@ -393,9 +393,11 @@ TRACE0("compile_rep()\n");
 				case 'a':
 					ender = '\a';
 					break;
+#if 1
 				case 'v':
 					ender = '\v';
 					break;
+#endif
 				case 'b':
 					ender = '\b';
 					break;
@@ -468,7 +470,7 @@ TRACE0("compile_rep()\n");
 		
 		return repstr;
 	}
-	catch (std::exception& ex) {
+	catch (std::exception& /*ex*/) {
 TRACE0("out of space in compile_rep()\n");
 		delete repstr;
 		throw;

@@ -4,7 +4,7 @@
 #  Copyright (C) 2006-2007  K.Takata
 #
 
-ONIG_DIR = ../onig-5.8.0-mt-sl
+ONIG_DIR = ../onig-5.9.0-mt
 !ifdef USE_ONIG_DLL
 ONIG_LIB = $(ONIG_DIR)/onig.lib
 !else

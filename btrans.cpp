@@ -270,9 +270,11 @@ static U16 specchar(char *p, int *next)
 //		ender = '\007';
 		ender = '\a';
 		break;
+#if 1
 	case 'v':			// added by K.Takata
 		ender = '\v';
 		break;
+#endif
 	case 'b':			// added by K.Takata
 		ender = '\b';
 		break;
