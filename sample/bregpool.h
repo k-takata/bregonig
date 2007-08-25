@@ -25,7 +25,7 @@ public:
 		delete [] m_rxpool;
 		m_rxpool = NULL;
 	};
-	BREGEXP* Get(char *regstr)
+	BREGEXP* Get(TCHAR *regstr)
 	{
 		BREGEXP *r;
 		int i;
@@ -43,8 +43,8 @@ public:
 			i = m_nmax - 1;
 		if (m_rxpool[i])
 			return m_rxpool[i];
-		char msg[80];
-		char p[] = " ";
+		TCHAR msg[80];
+		TCHAR p[] = _T(" ");
 		// Make Compile Block
 		BMatch(regstr,p,p+1,&m_rxpool[i],msg);
 		

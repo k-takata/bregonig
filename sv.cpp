@@ -10,25 +10,32 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
+#include <tchar.h>
 #include <new>
 #include "mem_vc6.h"
 
-
+#ifndef UNICODE
 #define KANJI
+#endif
 
 /* return values of kpart */
 #define KPART_KANJI_1 1 /* kanji 1st byte */
 #define KPART_KANJI_2 2 /* kanji 2nd byte */
 #define KPART_OTHER   0 /* other (ASCII) */
 
-int   kpart(char *pLim,char *pChr);
 
 #include "sv.h"
 
+//using namespace BREGONIG_NS;
+namespace BREGONIG_NS {
+
+int   kpart(TCHAR *pLim,TCHAR *pChr);
 
 
 #if 0
@@ -62,7 +69,7 @@ unsigned char sjis_tab[256] =
 
 
 #if 0
-static unsigned char fold[] = {	/* fast case folding table */
+static TBYTE fold[] = {	/* fast case folding table */
 	0,	1,	2,	3,	4,	5,	6,	7,
 	8,	9,	10,	11,	12,	13,	14,	15,
 	16,	17,	18,	19,	20,	21,	22,	23,
@@ -97,7 +104,7 @@ static unsigned char fold[] = {	/* fast case folding table */
 	248,	249,	250,	251,	252,	253,	254,	255
 };
 
-static unsigned char freq[] = {	/* letter frequencies for mixed English/C */
+static TBYTE freq[] = {	/* letter frequencies for mixed English/C */
 	1,	2,	84,	151,	154,	155,	156,	157,
 	165,	246,	250,	3,	158,	7,	18,	29,
 	40,	51,	62,	73,	85,	96,	107,	118,
@@ -135,7 +142,7 @@ static unsigned char freq[] = {	/* letter frequencies for mixed English/C */
 
 
 
-#define STRLEN int
+typedef int STRLEN;
 
 void sv_free(register SV *sv)
 {
@@ -146,28 +153,28 @@ void sv_free(register SV *sv)
 
 
 #if 0
-char *fbm_instr(
-unsigned char *big,
-register unsigned char *bigend,
+TCHAR *fbm_instr(
+TBYTE *big,
+register TBYTE *bigend,
 SV *littlestr,int mline,int kmode)
 {
-    register unsigned char *s;
+    register TBYTE *s;
     register int tmp;
     register int littlelen;
-    register unsigned char *little;
-    register unsigned char *table;
-    register unsigned char *olds;
-    register unsigned char *oldlittle;
+    register TBYTE *little;
+    register TBYTE *table;
+    register TBYTE *olds;
+    register TBYTE *oldlittle;
 #ifdef	KANJI
-    unsigned char *tops = big;
+    TBYTE *tops = big;
 #endif
 
     if (SvTYPE(littlestr) != SVt_PVBM || !SvVALID(littlestr)) {
 		int len = SvCUR(littlestr);
-		char *l = SvPVX(littlestr);
+		TCHAR *l = SvPVX(littlestr);
 		if (!len)
-		    return (char*)big;
-		return ninstr((char*)big,(char*)bigend, l, l + len,kmode);
+		    return (TCHAR*)big;
+		return ninstr((TCHAR*)big,(TCHAR*)bigend, l, l + len,kmode);
     }
 
 
@@ -178,7 +185,7 @@ SV *littlestr,int mline,int kmode)
     if (SvTAIL(littlestr) && !mline) {	/* tail anchored? */
 	if (littlelen > bigend - big)
 	    return NULL;
-	little = (unsigned char*)SvPVX(littlestr);
+	little = (TBYTE*)SvPVX(littlestr);
 	if (SvCASEFOLD(littlestr)) {	/* oops, fake it */
 	    big = bigend - littlelen;		/* just start near end */
 	    if (bigend[-1] == '\n' && little[littlelen-1] != '\n')
@@ -189,32 +196,32 @@ SV *littlestr,int mline,int kmode)
 #ifdef	KANJI
 	    if (*s == *little
 //		&& (!(hints & HINT_KANJI_STRING)
-//		    || kpart((char *)tops,(char *)s)!=KPART_KANJI_2)
-		&& (kpart((char *)tops,(char *)s)!=KPART_KANJI_2)
+//		    || kpart((TCHAR *)tops,(TCHAR *)s)!=KPART_KANJI_2)
+		&& (kpart((TCHAR *)tops,(TCHAR *)s)!=KPART_KANJI_2)
 		&& memcmp(s,little,littlelen)==0)
 #else
-	    if (*s == *little && memcmp((char*)s,(char*)little,littlelen)==0)
+	    if (*s == *little && memcmp((TCHAR*)s,(TCHAR*)little,littlelen*sizeof(TCHAR))==0)
 #endif
-		return (char*)s;		/* how sweet it is */
+		return (TCHAR*)s;		/* how sweet it is */
 	    else if (bigend[-1] == '\n' && little[littlelen-1] != '\n'
 	      && s > big) {
 		    s--;
 #ifdef	KANJI
 		if (*s == *little
 //		    && (!(hints & HINT_KANJI_STRING)
-//			|| kpart((char *)tops,(char *)s)!=KPART_KANJI_2)
+//			|| kpart((TCHAR *)tops,(TCHAR *)s)!=KPART_KANJI_2)
 		    && (
-			   kpart((char *)tops,(char *)s)!=KPART_KANJI_2)
+			   kpart((TCHAR *)tops,(TCHAR *)s)!=KPART_KANJI_2)
 		    && memcmp(s,little,littlelen)==0)
 #else
-		if (*s == *little && memcmp((char*)s,(char*)little,littlelen)==0)
+		if (*s == *little && memcmp((TCHAR*)s,(TCHAR*)little,littlelen*sizeof(TCHAR))==0)
 #endif
-		    return (char*)s;
+		    return (TCHAR*)s;
 	    }
 	    return NULL;
 	}
     }
-    table = (unsigned char*)(SvPVX(littlestr) + littlelen + 1);
+    table = (TBYTE*)(SvPVX(littlestr) + littlelen + 1);
     if (--littlelen >= bigend - big)
 	return NULL;
     s = big + littlelen;
@@ -249,9 +256,9 @@ SV *littlestr,int mline,int kmode)
 		}
 #ifdef	KANJI
 //		if ((hints & HINT_KANJI_STRING)
-//		    && kpart((char *)tops,(char *)s) == 2) {
+//		    && kpart((TCHAR *)tops,(TCHAR *)s) == 2) {
 		if (
-		       kpart((char *)tops,(char *)s) == 2) {
+		       kpart((TCHAR *)tops,(TCHAR *)s) == 2) {
 			s = olds + 1;
 			little = oldlittle;
 			if (s < bigend)
@@ -259,7 +266,7 @@ SV *littlestr,int mline,int kmode)
 			return NULL;
 		}
 #endif
-		return (char *)s;
+		return (TCHAR *)s;
 	    }
 	}
     }
@@ -292,7 +299,7 @@ SV *littlestr,int mline,int kmode)
 		    return NULL;
 		}
 #ifdef	KANJI
-		if (kpart((char *)tops,(char *)s) == 2) {
+		if (kpart((TCHAR *)tops,(TCHAR *)s) == 2) {
 		    s = olds + 1;
 		    little = oldlittle;
  		    if (s < bigend)
@@ -300,7 +307,7 @@ SV *littlestr,int mline,int kmode)
 		    return NULL;
 		}
 #endif
-		return (char *)s;
+		return (TCHAR *)s;
 	    }
 	}
     }
@@ -315,18 +322,18 @@ SV *littlestr,int mline,int kmode)
  * as temporary.
  */
 
-void sv_setpvn(register SV *sv, register char *ptr, register STRLEN len);
+void sv_setpvn(register SV *sv, register TCHAR *ptr, register STRLEN len);
 
 
 
 void sv_grow(SV* sv,int len)
 {
 	len += 512;
-	char *ptr = new (std::nothrow) char[len];
+	TCHAR *ptr = new (std::nothrow) TCHAR[len];
 	if (ptr == NULL)
 		throw std::bad_alloc("lack of memory");
 
-	memcpy(ptr,sv->xpv_pv,sv->xpv_cur);
+	memcpy(ptr,sv->xpv_pv,sv->xpv_cur*sizeof(TCHAR));
 	ptr[sv->xpv_cur] = '\0';
 	if (sv->xpv_pv)
 		delete [] sv->xpv_pv;
@@ -344,27 +351,27 @@ sv_setsv(SV *dstr, register SV *sstr)
 	int len = sstr->xpv_cur;
     SvGROW(dstr, len +1);
 
-	memcpy(dstr->xpv_pv,sstr->xpv_pv,len);
+	memcpy(dstr->xpv_pv,sstr->xpv_pv,len*sizeof(TCHAR));
 	dstr->xpv_cur = len;
     *SvEND(dstr) = '\0';
     dstr->sv_flags = sstr->sv_flags;
 }
 
 
-void sv_catpvn(SV* sv,char*ptr,int len)
+void sv_catpvn(SV* sv,TCHAR*ptr,int len)
 {
     SvGROW(sv, sv->xpv_cur + len +1);
 
-	memcpy(sv->xpv_pv + sv->xpv_cur,ptr,len);
+	memcpy(sv->xpv_pv + sv->xpv_cur,ptr,len*sizeof(TCHAR));
 	sv->xpv_cur += len;
     *SvEND(sv) = '\0';
 }
 
 
-void sv_setpvn(register SV *sv, register char *ptr, register STRLEN len)
+void sv_setpvn(register SV *sv, register TCHAR *ptr, register STRLEN len)
 {
     SvGROW(sv, len + 1 < 512 ? 512:len + 1);
-    memcpy(SvPVX(sv),ptr,len);
+    memcpy(SvPVX(sv),ptr,len*sizeof(TCHAR));
 //    SvCUR_set(sv, len);
 	sv->xpv_cur = len;
     *SvEND(sv) = '\0';
@@ -384,8 +391,8 @@ BOOL sv_upgrade(register SV* sv, int mt)
 #if 0
 void fbm_compile(SV *sv, int iflag)
 {
-    register unsigned char *s;
-    register unsigned char *table;
+    register TBYTE *s;
+    register TBYTE *table;
     register int i;
     register int len = SvCUR(sv);
     int rarest = 0;
@@ -394,13 +401,13 @@ void fbm_compile(SV *sv, int iflag)
     if (len > 255)
 	return;			/* can't have offsets that big */
     SvGROW(sv,len+258);
-    table = (unsigned char*)(SvPVX(sv) + len + 1);
+    table = (TBYTE*)(SvPVX(sv) + len + 1);
     s = table - 2;
     for (i = 0; i < 256; i++) {
 	table[i] = len;
     }
     i = 0;
-    while (s >= (unsigned char*)(SvPVX(sv)))
+    while (s >= (TBYTE*)(SvPVX(sv)))
     {
 	if (table[*s] == len) {
 #ifndef pdp11
@@ -423,7 +430,7 @@ void fbm_compile(SV *sv, int iflag)
 //baba    sv_magic(sv, Nullsv, 'B', Nullch, 0);			/* deep magic */
     SvVALID_on(sv);
 
-    s = (unsigned char*)(SvPVX(sv));		/* deeper magic */
+    s = (TBYTE*)(SvPVX(sv));		/* deeper magic */
     if (iflag) {
 	register int tmp, foldtmp;
 	SvCASEFOLD_on(sv);
@@ -455,7 +462,7 @@ void fbm_compile(SV *sv, int iflag)
 #endif
 
 
-SV *newSVpv(char *s, STRLEN len)
+SV *newSVpv(TCHAR *s, STRLEN len)
 {
     register SV *sv;
     sv = new (std::nothrow) SV;
@@ -466,14 +473,14 @@ SV *newSVpv(char *s, STRLEN len)
     SvREFCNT(sv) = 1;
     SvFLAGS(sv) = 0;
     if (!len)
-	len = strlen(s);
+	len = _tcslen(s);
     sv_setpvn(sv,s,len);
     return sv;
 }
 
-int kpart(char *pLim, char *pChr)
+int kpart(TCHAR *pLim, TCHAR *pChr)
 {
-    register char *p = pChr - 1;
+    register TCHAR *p = pChr - 1;
     register int ct = 0;
 
     if (NULL == pLim || NULL == pChr) return 0 ;
@@ -489,16 +496,16 @@ int kpart(char *pLim, char *pChr)
 
 /* same as instr but allow embedded nulls */
 
-char *
+TCHAR *
 ninstr(
-register char *big,
-register char *bigend,
-char *little,
-char *lend,int kmode)
+register TCHAR *big,
+register TCHAR *bigend,
+TCHAR *little,
+TCHAR *lend,int kmode)
 {
-    register char *s, *x;
+    register TCHAR *s, *x;
     register int first = *little;
-    register char *littleend = lend;
+    register TCHAR *littleend = lend;
 
     if (!first && little >= littleend)
 	return big;
@@ -552,3 +559,5 @@ BOOL iskanji(int c) {
 	return sjis_tab[c & 0xff];
 }
 #endif
+
+} // namespace

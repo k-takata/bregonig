@@ -27,6 +27,7 @@
 #include <ctype.h>
 #include <string.h>
 #include <mbstring.h>
+#include <tchar.h>
 #include <oniguruma.h>
 #include "bregexp.h"
 //#include "global.h"
@@ -35,34 +36,10 @@
 #include "dbgtrace.h"
 
 
-unsigned long scan_oct(const char *start, int len, int *retlen);
-unsigned long scan_hex(const char *start, int len, int *retlen);
-//unsigned long scan_dec(const char *start, int len, int *retlen);
+int dec2oct(int dec);
+int get_right_most_captured_num(OnigRegion *region);
 
-
-char *bufcat(char *buf, int *copycnt, const char *src, int len,
-		int *blen, int bufsize, char *msg)
-{
-	if (*blen <= *copycnt + len) {
-		*blen += len + bufsize;
-		char *tp = new (std::nothrow) char[*blen];
-		if (tp == NULL) {
-			strcpy(msg,"out of space buf");
-			delete [] buf;
-			return NULL;
-		}
-		memcpy(tp, buf, *copycnt);
-		delete [] buf;
-		buf = tp;
-	}
-	if (len) {
-		memcpy(buf + *copycnt, src, len);
-		*copycnt += len;
-	}
-	return buf;
-}
-
-
+#ifndef UNICODE
 int dec2oct(int dec)
 {
 	int i, j;
@@ -77,15 +54,63 @@ int dec2oct(int dec)
 	return i + j*8 + (dec/100)*64;
 }
 
-
-int subst_onig(bregonig *rx, char *target, char *targetstartp, char *targetendp,
-		char *msg, BCallBack callback)
+int get_right_most_captured_num(OnigRegion *region)
 {
-//TRACE0("subst_onig()\n");
-	char *orig,*m,*c;
-	char *s = target;
+	for (int i = region->num_regs - 1; i > 0; i--) {
+		if (region->beg[i] != ONIG_REGION_NOTPOS)
+			return i;
+	}
+	return -1;
+}
+#endif
+
+
+using namespace BREGONIG_NS;
+namespace BREGONIG_NS {
+
+enum casetype {
+	CASE_NONE, CASE_UPPER, CASE_LOWER
+};
+
+
+unsigned long scan_oct(const TCHAR *start, int len, int *retlen);
+unsigned long scan_hex(const TCHAR *start, int len, int *retlen);
+//unsigned long scan_dec(const TCHAR *start, int len, int *retlen);
+
+
+TCHAR *bufcat(TCHAR *buf, int *copycnt, const TCHAR *src, int len,
+		int *blen, int bufsize = SUBST_BUF_SIZE)
+{
+	if (*blen <= *copycnt + len) {
+		*blen += len + bufsize;
+		TCHAR *tp = new (std::nothrow) TCHAR[*blen];
+		if (tp == NULL) {
+		//	asc2tcs(msg,"out of space buf");
+			delete [] buf;
+			throw std::bad_alloc();
+		//	return NULL;
+		}
+		memcpy(tp, buf, *copycnt * sizeof(TCHAR));
+		delete [] buf;
+		buf = tp;
+	}
+	if (len) {
+		memcpy(buf + *copycnt, src, len * sizeof(TCHAR));
+		*copycnt += len;
+	}
+	return buf;
+}
+
+
+
+int subst_onig(bregonig *rx, TCHAR *target, TCHAR *targetstartp, TCHAR *targetendp,
+		TCHAR *msg, BCallBack callback)
+{
+TRACE0(_T("subst_onig()\n"));
+	TCHAR *orig,*m,*c;
+	TCHAR *s = target;
 	int len = targetendp - target;
-	char *strend = s + len;
+	TCHAR *strend = s + len;
 	int maxiters = (strend - s) + 10;
 	int iters = 0;
 	int clen;
@@ -97,106 +122,103 @@ int subst_onig(bregonig *rx, char *target, char *targetstartp, char *targetendp,
 	// 
 	if (regexec_onig(rx, s, strend, orig, 0,1,0,msg) <= 0)
 		return 0;
-	int blen = len + clen + SUBST_BUF_SIZE;
-	char *buf = new (std::nothrow) char[blen];
-	int copycnt = 0;
-	if (buf == NULL) {
-		strcpy(msg,"out of space buf");
-		return 0;
-	}
-	// now ready to go
-	int subst_count = 0;
-	do {
-		if (iters++ > maxiters) {
-			delete [] buf;
-			strcpy(msg,"Substitution loop");
-			return 0;
-		}
-		m = rx->startp[0];
-		len = m - s;
-		buf = bufcat(buf, &copycnt, s, len, &blen, SUBST_BUF_SIZE, msg);
-		if (buf == NULL)
-			return 0;
-		s = rx->endp[0];
-		if (!(rx->pmflags & PMf_CONST)) {	// we have \digits or $&
-			//	ok start magic
-			REPSTR *rep = rx->repstr;
-//			ASSERT(rep);
-			for (int i = 0; i < rep->count; i++) {
-				int j;
-				// normal char
-				int dlen = rep->dlen[i];
-				if (rep->startp[i] && ((int) rep->startp[i] > 1) && dlen) {
-					buf = bufcat(buf, &copycnt, rep->startp[i], dlen, &blen,
-							SUBST_BUF_SIZE, msg);
-					if (buf == NULL)
-						return 0;
+	try {
+		int blen = len + clen + SUBST_BUF_SIZE;
+		TCHAR *buf = new TCHAR[blen];
+		int copycnt = 0;
+		// now ready to go
+		int subst_count = 0;
+		do {
+			if (iters++ > maxiters) {
+				delete [] buf;
+TRACE0(_T("Substitution loop\n"));
+				asc2tcs(msg,"Substitution loop");
+				return 0;
+			}
+			m = rx->startp[0];
+			len = m - s;
+			buf = bufcat(buf, &copycnt, s, len, &blen);
+			s = rx->endp[0];
+			if (!(rx->pmflags & PMf_CONST)) {	// we have \digits or $&
+				//	ok start magic
+				REPSTR *rep = rx->repstr;
+	//			ASSERT(rep);
+				for (int i = 0; i < rep->count; i++) {
+					int j;
+					// normal char
+					int dlen = rep->dlen[i];
+					if (rep->is_normal_string(i) && dlen) {
+						buf = bufcat(buf, &copycnt, rep->startp[i], dlen, &blen);
+					}
+					
+					else if (0 <= dlen && dlen <= rx->nparens
+							&& rx->startp[dlen] && rx->endp[dlen]) {
+						// \digits, $digits or $&
+						len = rx->endp[dlen] - rx->startp[dlen];
+						buf = bufcat(buf, &copycnt, rx->startp[dlen], len, &blen);
+					}
+					
+					else if (dlen == -1
+							&& (j=get_right_most_captured_num(rx->region)) > 0) {
+						// $+
+						len = rx->endp[j] - rx->startp[j];
+						buf = bufcat(buf, &copycnt, rx->startp[j], len, &blen);
+					}
+					
+					else if ((10<=dlen && (j=dec2oct(dlen)) > 0)
+							&& dlen > rx->nparens && rep->is_backslash(i)) {
+						// \nnn
+						TCHAR ch = (TCHAR) j;
+						buf = bufcat(buf, &copycnt, &ch, 1, &blen);
+					}
 				}
-				
-				else if (dlen <= rx->nparens && rx->startp[dlen] && rx->endp[dlen]) {
-					// \digits, $digits or $&
-					len = rx->endp[dlen] - rx->startp[dlen];
-					buf = bufcat(buf, &copycnt, rx->startp[dlen], len, &blen,
-							SUBST_BUF_SIZE, msg);
-					if (buf == NULL)
-						return 0;
-				}
-				
-				else if ((10<=dlen && (j=dec2oct(dlen)) > 0)
-						&& dlen > rx->nparens && ((int) rep->startp[i] == 1)) {
-					// \nnn
-					char ch = (char) j;
-					buf = bufcat(buf, &copycnt, &ch, 1, &blen,
-							SUBST_BUF_SIZE, msg);
-					if (buf == NULL)
-						return 0;
+			} else {
+				if (clen) {		// no special char
+					buf = bufcat(buf, &copycnt, c, clen, &blen);
 				}
 			}
-		} else {
-			if (clen) {		// no special char
-				buf = bufcat(buf, &copycnt, c, clen, &blen,
-						SUBST_BUF_SIZE, msg);
-				if (buf == NULL)
-					return 0;
-			}
-		}
-		subst_count++;
-		if (once)
-			break;
-		if (callback)
-			if (!callback(CALLBACK_KIND_REPLACE, subst_count, s - orig))
+			subst_count++;
+			if (once)
 				break;
-	} while (regexec_onig(rx, s, strend, orig, s == m, 1,0,msg) > 0);
-//	len = rx->subend - s;
-	len = targetendp - s;	// ???
-	buf = bufcat(buf, &copycnt, s, len, &blen, 1, msg);
-	if (buf == NULL)
-		return 0;
-	if (copycnt) {
-		rx->outp = buf;
-		rx->outendp = buf + copycnt;
-		*(rx->outendp) = '\0';
+			if (callback)
+				if (!callback(CALLBACK_KIND_REPLACE, subst_count, s - orig))
+					break;
+		} while (regexec_onig(rx, s, strend, orig, s == m, 1,0,msg) > 0);
+	//	len = rx->subend - s;
+		len = targetendp - s;	// ???
+		buf = bufcat(buf, &copycnt, s, len, &blen, 1);
+		if (copycnt) {
+			rx->outp = buf;
+			rx->outendp = buf + copycnt;
+			*(rx->outendp) = '\0';
+		}
+		else
+			delete [] buf;
+		
+TRACE1(_T("subst_count: %d\n"), subst_count);
+		return subst_count;
 	}
-	else
-		delete [] buf;
-	
-	return subst_count;
+	catch (std::bad_alloc& /*ex*/) {
+TRACE0(_T("out of space in subst_onig()\n"));
+		asc2tcs(msg,"out of space buf");
+		return 0;
+	}
 }
 
 
 
 
 int set_repstr(REPSTR *repstr, int num,
-		int *pcindex, char *dst, char **polddst, bool bksl = false)
+		int *pcindex, TCHAR *dst, TCHAR **polddst, bool bksl = false)
 {
-TRACE0("set_repstr\n");
+TRACE0(_T("set_repstr\n"));
 	int cindex = *pcindex;
-	char *olddst = *polddst;
+	TCHAR *olddst = *polddst;
 	
 	if (/*num > 0 &&*/ cindex >= repstr->count - 2) {
 		int newcount = repstr->count + 10;
-		char **p1 = new char*[newcount];
-		memcpy(p1, repstr->startp, repstr->count * sizeof(char*));
+		TCHAR **p1 = new TCHAR*[newcount];
+		memcpy(p1, repstr->startp, repstr->count * sizeof(TCHAR*));
 		delete [] repstr->startp;
 		repstr->startp = p1;
 		int *p2 = new int[newcount];
@@ -212,7 +234,7 @@ TRACE0("set_repstr\n");
 	}
 	repstr->dlen[cindex] = num;		// paren number
 	if (bksl) {
-		repstr->startp[cindex] = (char *) 1;	// \digits
+		repstr->startp[cindex] = (TCHAR *) 1;	// \digits
 	} else {
 		repstr->startp[cindex] = NULL;			// $digits
 	}
@@ -226,16 +248,21 @@ TRACE0("set_repstr\n");
 }
 
 
-char *parse_digits(const char *str, REPSTR *repstr, int *pcindex,
-		char *dst, char **polddst, int endch = 0, bool bksl = false)
+const TCHAR *parse_digits(const TCHAR *str, REPSTR *repstr, int *pcindex,
+		TCHAR *dst, TCHAR **polddst, bool bksl = false)
 {
-TRACE0("parse_digits\n");
-	char *s;
-	int num = (int) strtoul(str, &s, 10);
+TRACE0(_T("parse_digits\n"));
+	TCHAR *s;
+	TCHAR endch = 0;
+	if (*str == '{') {
+		++str;
+		endch = '}';
+	}
+	int num = (int) _tcstoul(str, &s, 10);
 	
 	if (endch) {
 		if (*s != endch)
-			return NULL;
+			return NULL;	// SYNTAX ERROR
 		++s;
 	}
 	set_repstr(repstr, num, pcindex, dst, polddst, bksl);
@@ -244,49 +271,90 @@ TRACE0("parse_digits\n");
 }
 
 
-const char *parse_groupname(bregonig *rx, const char *str, const char *strend,
-		REPSTR *repstr, int *pcindex, char *dst, char **polddst, char endch)
+const TCHAR *parse_groupname(bregonig *rx, const TCHAR *str, const TCHAR *strend,
+		REPSTR *repstr, int *pcindex, TCHAR *dst, TCHAR **polddst,
+		bool bracket = false)
 {
-	const char *q = str;
+	TCHAR endch;
+	switch (*str++) {
+	case '<':	endch = '>';	break;
+	case '{':	endch = '}';	break;
+	case '\'':	endch = '\'';	break;
+	default:
+		return NULL;
+	}
+	const TCHAR *q = str;
 	while (q < strend && *q != endch) {
 		++q;
 	}
 	if (*q != endch) {
-		return NULL;
+		return NULL;	// SYNTAX ERROR
 	}
+	int arrnum = 0;
+	const TCHAR *nameend = q;
+	if (bracket) {	// [n]
+		if (q[1] != '[')
+			return NULL;	// SYNTAX ERROR
+		arrnum = (int) _tcstol(q+2, (TCHAR**) &q, 10);
+		if (*q != ']' || q >= strend)
+			return NULL;	// SYNTAX ERROR
+	}
+#if 0
 	int num = onig_name_to_backref_number(rx->reg,
-			(UChar*) str, (UChar*) q, NULL);
+			(UChar*) str, (UChar*) nameend, NULL);
 	if (num > 0)
-		set_repstr(repstr, num, pcindex, dst, polddst);
+		set_repstr(repstr, num, pcindex, dst, polddst);			// rightmost group-num
+#else
+	int *num_list;
+	int num = onig_name_to_group_numbers(rx->reg,
+			(UChar*) str, (UChar*) nameend, &num_list);
+#ifdef NAMEGROUP_RIGHTMOST
+	int n = num - 1;
+#else
+	int n = 0;
+#endif
+	if (bracket) {
+		n = arrnum;
+		if (arrnum < 0) {
+			n += num;
+		}
+	}
+	if ((num > 0) && (0 <= n || n < num))
+		set_repstr(repstr, num_list[n], pcindex, dst, polddst);	// leftmost group-num
+#endif
 	return q+1;
 }
 
 
-REPSTR *compile_rep(bregonig *rx, const char *str, const char *strend)
+REPSTR *compile_rep(bregonig *rx, const TCHAR *str, const TCHAR *strend)
 {
-TRACE0("compile_rep()\n");
+TRACE0(_T("compile_rep()\n"));
 	rx->pmflags |= PMf_CONST;	/* default */
 	int len = strend - str;
 	if (len < 2)				// no special char
 		return NULL;
-	register const char *p = str;
-	register const char *pend = strend;
+	register const TCHAR *p = str;
+	register const TCHAR *pend = strend;
 	
 	REPSTR *repstr = NULL;
 	try {
 		repstr = new (len) REPSTR;
 	//	memset(repstr, 0, len + sizeof(REPSTR));
-		char *dst = repstr->data;
+		TCHAR *dst = repstr->data;
 		repstr->init(20);		// default \digits count in string
 		int cindex = 0;
-		char ender, prvch;
+		TCHAR ender, prvch;
 		int numlen;
-		char *olddst = dst;
+		TCHAR *olddst = dst;
 		bool special = false;		// found special char
+		casetype nextchcase = CASE_NONE;
+		casetype chcase = CASE_NONE;
 		while (p < pend) {
 			if (*p != '\\' && *p != '$') {	// magic char ?
+#ifndef UNICODE
 				if (iskanji(*p))			// no
 					*dst++ = *p++;
+#endif
 				*dst++ = *p++;
 				continue;
 			}
@@ -304,10 +372,36 @@ TRACE0("compile_rep()\n");
 					set_repstr(repstr, 0, &cindex, dst, &olddst);
 					p++;
 					break;
-			/*
-				case '+':	// $+
+				case '+':	// $+, $+{name}
 					special = true;
+					if (p[1] == '{') {	// $+{name}
+						const TCHAR *q = parse_groupname(rx, p+1, pend, repstr,
+								&cindex, dst, &olddst);
+						if (q != NULL) {
+							p = q;
+						} else {
+							// SYNTAX ERROR
+							*dst++ = prvch;
+						}
+					} else {			// $+
+						set_repstr(repstr, -1, &cindex, dst, &olddst);
+						p++;
+					}
 					break;
+				case '-':	// $-{name}[n]
+					special = true;
+					if (p[1] == '{') {
+						const TCHAR *q = parse_groupname(rx, p+1, pend, repstr,
+								&cindex, dst, &olddst, true);
+						if (q != NULL) {
+							p = q;
+							continue;
+						}
+					}
+					// SYNTAX ERROR
+					*dst++ = prvch;
+					break;
+			/*
 				case '`':	// $`
 					special = true;
 					break;
@@ -320,28 +414,25 @@ TRACE0("compile_rep()\n");
 			*/
 				case '{':	// ${nn}, ${name}
 					special = true;
-					++p;
-					if (isDIGIT(*p)) {
+					if (isDIGIT(p[1])) {
 						// ${nn}
-						char *q = parse_digits(p, repstr, &cindex, dst, &olddst, '}');
+						const TCHAR *q = parse_digits(p, repstr, &cindex, dst, &olddst);
 						if (q != NULL) {
 							p = q;
 						} else {
 							// SYNTAX ERROR
 						//	throw std::invalid_argument("} not found");
 							*dst++ = prvch;
-							--p;
 						}
 					} else {
 						// ${name}
-						const char *q = parse_groupname(rx, p, pend, repstr,
-								&cindex, dst, &olddst, '}');
+						const TCHAR *q = parse_groupname(rx, p, pend, repstr,
+								&cindex, dst, &olddst);
 						if (q != NULL) {
 							p = q;
 						} else {
 							// SYNTAX ERROR
 							*dst++ = prvch;
-							--p;
 						}
 					}
 					break;
@@ -365,12 +456,12 @@ TRACE0("compile_rep()\n");
 			if (isDIGIT(*p)) {
 				if (*p == '0') {
 					// '\0nn'
-					ender = (char) scan_oct(p, 3, &numlen);
+					ender = (TCHAR) scan_oct(p, 3, &numlen);
 					p += numlen;
 					*dst++ = ender;
 				} else {
 					// \digits found
-					p = parse_digits(p, repstr, &cindex, dst, &olddst, 0, true);
+					p = parse_digits(p, repstr, &cindex, dst, &olddst, true);
 				}
 			} else {
 				prvch = *p++;
@@ -393,7 +484,7 @@ TRACE0("compile_rep()\n");
 				case 'a':
 					ender = '\a';
 					break;
-#if 1
+#ifdef USE_VTAB
 				case 'v':
 					ender = '\v';
 					break;
@@ -403,40 +494,40 @@ TRACE0("compile_rep()\n");
 					break;
 				case 'x':	// '\xHH', '\x{HH}'
 					if (isXDIGIT(*p)) {		// '\xHH'
-						ender = (char) scan_hex(p, 2, &numlen);
+						ender = (TCHAR) scan_hex(p, 2, &numlen);
 						p += numlen;
 					}
 					else {
-						const char *q = p;
-						if (*p == '{') {	// '\x{HH}'
-							unsigned int code = scan_hex(++p, 8, &numlen);
-							p += numlen;
-							if (*p == '}') {
-								if (code > 0xff) {
-									*dst++ = code >> 8;
+						const TCHAR *q = p;
+						if (*q == '{') {	// '\x{HH}'
+							unsigned int code = scan_hex(++q, 8, &numlen);
+							q += numlen;
+							if (*q == '}') {
+								TBYTE ch[2];
+								int len = set_codepoint(code, ch);
+								if (len > 1) {
+									*dst++ = ch[0];
 								}
-								ender = (char) code;
-								p++;
+								ender = ch[len-1];
+								p = q+1;
 								break;
 							}
 						}
 						// SYNTAX ERROR
 						ender = prvch;
-						p = q;
 					}
 					break;
 				case 'c':	// '\cx'	(ex. '\c[' == Ctrl-[ == '\x1b')
 					ender = *p++;
 					if (ender == '\\')	// '\c\x' == '\cx'
 						ender = *p++;
-					ender = toupper((unsigned char) ender);
+					ender = toupper((TBYTE) ender);
 					ender ^= 64;
 					break;
 				case 'k':	// \k<name>, \k'name'
 					if (*p == '<' || *p == '\'') {
-						const char endch = (*p == '<') ? '>' : '\'';
-						const char *q = parse_groupname(rx, p+1, pend, repstr,
-								&cindex, dst, &olddst, endch);
+						const TCHAR *q = parse_groupname(rx, p, pend, repstr,
+								&cindex, dst, &olddst);
 						if (q != NULL) {
 							p = q;
 							continue;
@@ -445,6 +536,25 @@ TRACE0("compile_rep()\n");
 					// SYNTAX ERROR
 					ender = prvch;
 					break;
+			/*
+				case 'l':	// lower next
+					nextchcase = CASE_LOWER;
+					continue;
+				case 'u':	// upper next
+					nextchcase = CASE_UPPER;
+					continue;
+				case 'L':	// lower till \E
+					chcase = CASE_LOWER;
+					continue;
+				case 'U':	// upper till \E
+					chcase = CASE_UPPER;
+					continue;
+				case 'Q':	// quote
+					continue;
+				case 'E':	// end of \L/\U
+					chcase = CASE_NONE;
+					continue;
+			*/
 				default:	// '/', '\\' and the other char
 					ender = prvch;
 					break;
@@ -471,7 +581,7 @@ TRACE0("compile_rep()\n");
 		return repstr;
 	}
 	catch (std::exception& /*ex*/) {
-TRACE0("out of space in compile_rep()\n");
+TRACE0(_T("out of space in compile_rep()\n"));
 		delete repstr;
 		throw;
 	}
@@ -480,9 +590,9 @@ TRACE0("out of space in compile_rep()\n");
 
 
 unsigned long
-scan_oct(const char *start, int len, int *retlen)
+scan_oct(const TCHAR *start, int len, int *retlen)
 {
-	register const char *s = start;
+	register const TCHAR *s = start;
 	register unsigned long retval = 0;
 	
 	while (len && *s >= '0' && *s <= '7') {
@@ -494,17 +604,17 @@ scan_oct(const char *start, int len, int *retlen)
 	return retval;
 }
 
-//static char hexdigit[] = "0123456789abcdef0123456789ABCDEFx";
-static char hexdigit[] = "0123456789abcdef0123456789ABCDEF";
+//static TCHAR hexdigit[] = "0123456789abcdef0123456789ABCDEFx";
+static TCHAR hexdigit[] = _T("0123456789abcdef0123456789ABCDEF");
 
 unsigned long
-scan_hex(const char *start, int len, int *retlen)
+scan_hex(const TCHAR *start, int len, int *retlen)
 {
-	register const char *s = start;
+	register const TCHAR *s = start;
 	register unsigned long retval = 0;
-	char *tmp;
+	TCHAR *tmp;
 	
-	while (len-- && *s && (tmp = strchr(hexdigit, *s))) {
+	while (len-- && *s && (tmp = _tcschr(hexdigit, *s))) {
 		retval <<= 4;
 		retval |= (tmp - hexdigit) & 15;
 		s++;
@@ -515,14 +625,15 @@ scan_hex(const char *start, int len, int *retlen)
 
 /*
 unsigned long
-scan_dec(const char *start, int len, int *retlen)
+scan_dec(const TCHAR *start, int len, int *retlen)
 {
-	char *s;
+	TCHAR *s;
 	unsigned long retval;
 	
-	retval = strtoul(start, &s, 10);
+	retval = _tcstoul(start, &s, 10);
 	*retlen = s - start;
 	return retval;
 }
 */
 
+} // namespace

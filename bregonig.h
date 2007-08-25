@@ -2,7 +2,7 @@
  *	bregonig.h
  */
 /*
- *	Copyright (C) 2006  K.Takata
+ *	Copyright (C) 2006-2007  K.Takata
  *
  *	You may distribute under the terms of either the GNU General Public
  *	License or the Artistic License, as specified in the perl_license.txt file.
@@ -12,24 +12,40 @@
 #ifndef BREGONIG_H_
 #define BREGONIG_H_
 
+#ifdef UNICODE
+typedef DWORD TWORD;
+#define BREGONIG_NS	unicode
+#else
+typedef WORD TWORD;
+#define BREGONIG_NS	ansi
+#endif
+
+namespace BREGONIG_NS {
 
 typedef struct repstr {
 	int  count;		/* entry counter */
-	char **startp;	/* start address  if <256 \digit	*/
-	int  *dlen;		/* data length	*/
-	char data[1];	/* data start	*/
+	TCHAR **startp;	/* start address  if <256 \digit	*/
+	int  *dlen;		/* data length / backref num	*/
+	TCHAR data[1];	/* data start	*/
 	
 	repstr() { count = 0; startp = 0; dlen = 0; }
 	~repstr() { delete [] startp; delete [] dlen; }
 	
 	void init(int cnt) {
 		count = cnt;		// default \digits count in string
-		startp = new char*[cnt];
+		startp = new TCHAR*[cnt];
 		dlen = new int[cnt];
 	}
 	
+	bool is_normal_string(int i) {
+		return ((startp[i] != NULL) && ((INT_PTR) startp[i] > 1));
+	}
+	bool is_backslash(int i) {
+		return ((INT_PTR) startp[i] == 1);
+	}
+	
 	static void *operator new(size_t cb, size_t data_size) {
-		return ::operator new (cb + data_size);
+		return ::operator new (cb + data_size * sizeof(TCHAR));
 	}
 	static void operator delete(void *p, size_t data_size) {
 		::operator delete (p);
@@ -39,16 +55,16 @@ typedef struct repstr {
 
 struct bregonig : bregexp {
 #if 0
-	char *outp;			/* matched or substitute string start ptr   */
-	char *outendp;		/* matched or substitute string end ptr     */
+	TCHAR *outp;		/* matched or substitute string start ptr   */
+	TCHAR *outendp;		/* matched or substitute string end ptr     */
 	int  splitctr;		/* split result counrer     */
-	char **splitp;		/* split result pointer ptr     */
+	TCHAR **splitp;		/* split result pointer ptr     */
 	int  rsv1;			/* reserved for external use    */
-	char *parap;		/* parameter start ptr ie. "s/xxxxx/yy/gi"  */
-	char *paraendp;		/* parameter end ptr     */
-	char *transtblp;	/* translate table ptr   */
-	char **startp;		/* match string start ptr   */
-	char **endp;		/* match string end ptr     */
+	TCHAR *parap;		/* parameter start ptr ie. "s/xxxxx/yy/gi"  */
+	TCHAR *paraendp;	/* parameter end ptr     */
+	TCHAR *transtblp;	/* translate table ptr   */
+	TCHAR **startp;		/* match string start ptr   */
+	TCHAR **endp;		/* match string end ptr     */
 	int  nparens;		/* number of parentheses */
 #endif
 // external field end point
@@ -57,8 +73,8 @@ struct bregonig : bregexp {
 	regex_t *reg;
 	OnigRegion *region;
 	REPSTR *repstr;
-	char *prerepp;		/* original replace string */
-	char *prerependp;	/* original replace string end */
+	TCHAR *prerepp;		/* original replace string */
+	TCHAR *prerependp;	/* original replace string end */
 	int prelen;
 	
 	
@@ -69,35 +85,95 @@ struct bregonig : bregexp {
 
 #define iskanji(c)	_ismbblead(c)
 
+inline int is_char_pair(const TBYTE *s)
+{
+#ifdef UNICODE
+	if (((s[0] & 0xfc00) == 0xd800) && ((s[1] & 0xfc00) == 0xdc00)) {
+		return true;
+	}
+	return false;
+#else
+	return iskanji(*s);
+#endif
+}
+
+inline TWORD get_codepoint(const TBYTE *s)
+{
+#ifdef UNICODE
+	return (((s[0] - 0xd800) << 10) | (s[1] - 0xdc00)) + 0x10000;
+#else
+	return (s[0] << 8) | s[1];
+#endif
+}
+
+inline int set_codepoint(TWORD codepoint, TBYTE *s)
+{
+	TBYTE *t = s;
+#ifdef UNICODE
+	if (codepoint > 0xffff) {	// Surrogate Pair
+		unsigned int c = codepoint - 0x10000;
+		*s++ = (c >> 10) | 0xd800;
+		codepoint = (c & 0x3ff) | 0xdc00;
+	}
+#else
+	if (codepoint > 0xff) {
+		*s++ = codepoint >> 8;
+	}
+#endif
+	*s++ = (TBYTE) codepoint;
+	return s - t;
+}
+
+// ASCII to TCHAR string
+inline TCHAR *asc2tcs(TCHAR *dst, const char *src)
+{
+#ifdef UNICODE
+	swprintf(dst, L"%hs", src);
+	return dst;
+#else
+	return strcpy(dst, src);
+#endif
+}
+
+
 #define BREGEXP_MAX_ERROR_MESSAGE_LEN	80
 
 #define CALLBACK_KIND_REPLACE	0
 #define SUBST_BUF_SIZE 256
 
 
-int onig_err_to_bregexp_msg(int err_code, OnigErrorInfo* err_info, char *msg);
+int check_params(const TCHAR *str, const TCHAR *target, const TCHAR *targetstartp,
+		const TCHAR *targetendp,
+		BREGEXP **rxp, bool trans, TCHAR *msg, int *pplen);
+int BMatch_s(TCHAR *str, TCHAR *target, TCHAR *targetstartp, TCHAR *targetendp,
+		int one_shot,
+		BREGEXP **rxp, TCHAR *msg);
+int BSubst_s(TCHAR *str, TCHAR *target, TCHAR *targetstartp, TCHAR *targetendp,
+		BREGEXP **rxp, TCHAR *msg, BCallBack callback);
 
-bregonig *compile_onig(const char *ptn, int plen, char *msg);
-REPSTR *compile_rep(bregonig *rx, const char *str, const char *strend);
+int onig_err_to_bregexp_msg(int err_code, OnigErrorInfo* err_info, TCHAR *msg);
 
-int subst_onig(bregonig *rx, char *target, char *targetstartp, char *targetendp,
-		char *msg, BCallBack callback);
-int split_onig(bregonig *rx, char *target, char *targetendp, int limit, char *msg);
+bregonig *compile_onig(const TCHAR *ptn, int plen, TCHAR *msg);
+REPSTR *compile_rep(bregonig *rx, const TCHAR *str, const TCHAR *strend);
+
+int subst_onig(bregonig *rx, TCHAR *target, TCHAR *targetstartp, TCHAR *targetendp,
+		TCHAR *msg, BCallBack callback);
+int split_onig(bregonig *rx, TCHAR *target, TCHAR *targetendp, int limit, TCHAR *msg);
 
 
-int regexec_onig(bregonig *rx, char *stringarg,
-	register char *strend,	/* pointer to null at end of string */
-	char *strbeg,	/* real beginning of string */
+int regexec_onig(bregonig *rx, TCHAR *stringarg,
+	register TCHAR *strend,	/* pointer to null at end of string */
+	TCHAR *strbeg,	/* real beginning of string */
 	int minend,		/* end of match must be at least minend after stringarg */
 	int safebase,	/* no need to remember string in subbase */
 	int one_shot,	/* if not match then break without proceed str pointer */
-	char *msg);		/* fatal error message */
+	TCHAR *msg);		/* fatal error message */
 
 
-int trans(bregonig *rx, char *target, char *targetendp, char *msg);
+int trans(bregonig *rx, TCHAR *target, TCHAR *targetendp, TCHAR *msg);
 
-bregonig *trcomp(char *res, char *resend, char *rp, char *rpend,
-		int flag, char *msg);
+bregonig *trcomp(TCHAR *res, TCHAR *resend, TCHAR *rp, TCHAR *rpend,
+		int flag, TCHAR *msg);
 
 
 #define isALNUM(c)   (isascii(c) && (isalpha(c) || isdigit(c) || c == '_'))
@@ -132,5 +208,7 @@ bregonig *trcomp(char *res, char *resend, char *rp, char *rpend,
 #define PMf_TRANS_COMPLEMENT	0x040000	/* translate complement */
 #define PMf_TRANS_DELETE		0x080000	/* translate delete */
 #define PMf_TRANS_SQUASH		0x100000	/* translate squash */
+
+} // namespace
 
 #endif /* BREGONIG_H_ */
