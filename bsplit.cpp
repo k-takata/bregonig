@@ -61,9 +61,9 @@ int split_onig(bregonig *rx, TCHAR *target, TCHAR *targetendp, int limit, TCHAR 
 			return -1;
 		}
 #ifdef UNICODE
-		int kanjiflag = rx->pmflags & PMf_KANJI;
-#else
 		int kanjiflag = 1;
+#else
+		int kanjiflag = rx->pmflags & PMf_KANJI;
 #endif
 		while (s < strend) {
 			if (--limit == 0) {

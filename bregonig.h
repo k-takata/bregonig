@@ -102,7 +102,7 @@ inline TWORD get_codepoint(const TBYTE *s)
 #ifdef UNICODE
 	return (((s[0] - 0xd800) << 10) | (s[1] - 0xdc00)) + 0x10000;
 #else
-	return ((unsigned char)s[0] <<8) | (unsigned char)s[1];
+	return (s[0] << 8) | s[1];
 #endif
 }
 

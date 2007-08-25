@@ -308,7 +308,11 @@ const TCHAR *parse_groupname(bregonig *rx, const TCHAR *str, const TCHAR *strend
 	int *num_list;
 	int num = onig_name_to_group_numbers(rx->reg,
 			(UChar*) str, (UChar*) nameend, &num_list);
+#ifdef NAMEGROUP_RIGHTMOST
+	int n = num - 1;
+#else
 	int n = 0;
+#endif
 	if (bracket) {
 		n = arrnum;
 		if (arrnum < 0) {
@@ -480,11 +484,11 @@ TRACE0(_T("compile_rep()\n"));
 				case 'a':
 					ender = '\a';
 					break;
-/*
+#ifdef USE_VTAB
 				case 'v':
 					ender = '\v';
 					break;
-*/
+#endif
 				case 'b':
 					ender = '\b';
 					break;

@@ -303,11 +303,11 @@ static TWORD specchar(TCHAR *p, int *next)
 //		ender = '\007';
 		ender = '\a';
 		break;
-/*
+#ifdef USE_VTAB
 	case 'v':			// added by K.Takata
 		ender = '\v';
 		break;
-*/
+#endif
 	case 'b':			// added by K.Takata
 		ender = '\b';
 		break;
