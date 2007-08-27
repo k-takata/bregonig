@@ -95,7 +95,7 @@ TCHAR *::BRegexpVersion(void)
 //	sprintf(version, "bregonig.dll Ver.%d.%02d%s %s with Oniguruma %s",
 	_stprintf(version, _T("bregonig.dll Ver.%d.%02d%hs with Oniguruma %hs"),
 			BREGONIG_VERSION_MAJOR, BREGONIG_VERSION_MINOR,
-			BREGONIG_VERSION_PREFIX,
+			BREGONIG_VERSION_SUFFIX,
 			/*__DATE__,*/ onig_version());
 	
 	return version;
@@ -582,6 +582,7 @@ TRACE0(_T("Error: onig_new()\n"));
 		return NULL;
 	}
 	
+	rx->nparens = onig_number_of_captures(rx->reg);	//
 	rx->parap = parap;
 	rx->paraendp = parap + plen;
 	rx->pmflags = flag;
