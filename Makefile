@@ -6,7 +6,7 @@
 
 #VER1 = 1
 
-ONIG_DIR = ../onig-5.9.0-mt
+ONIG_DIR = ../onig-5.9.0-mod
 !ifdef USE_ONIG_DLL
 ONIG_LIB = $(ONIG_DIR)/onig.lib
 !else

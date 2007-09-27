@@ -36,7 +36,7 @@ typedef struct bregexp {
 	BREGCONST TCHAR *outendp;	/* result string end ptr    */
 	BREGCONST int   splitctr;	/* split result counter     */
 	BREGCONST TCHAR **splitp;	/* split result pointer ptr     */
-	int rsv1;					/* reserved for external use    */
+	INT_PTR rsv1;				/* reserved for external use    */
 	TCHAR *parap;				/* parameter start ptr ie. "s/xxxxx/yy/gi"  */
 	TCHAR *paraendp;			/* parameter end ptr     */
 	TCHAR *transtblp;			/* translate table ptr   */
