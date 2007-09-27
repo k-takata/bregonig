@@ -167,8 +167,7 @@ int regexec_onig(bregonig *rx, TCHAR *stringarg,
 	int minend,		/* end of match must be at least minend after stringarg */
 	int safebase,	/* no need to remember string in subbase */
 	int one_shot,	/* if not match then break without proceed str pointer */
-	TCHAR *msg);		/* fatal error message */
-
+	TCHAR *msg);	/* fatal error message */
 
 int trans(bregonig *rx, TCHAR *target, TCHAR *targetendp, TCHAR *msg);
 

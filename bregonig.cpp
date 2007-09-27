@@ -618,13 +618,28 @@ int regexec_onig(bregonig *rx, TCHAR *stringarg,
 TRACE1(_T("one_shot: %d\n"), one_shot);
 	int err_code;
 	try {
-		stringarg += minend;	// ???
 		if (one_shot) {
+			OnigOptionType option = (minend > 0) ?
+					ONIG_OPTION_FIND_NOT_EMPTY : ONIG_OPTION_NONE;
 			err_code = onig_match(rx->reg, (UChar*) strbeg, (UChar*) strend,
 					(UChar*) stringarg, rx->region,
-					ONIG_OPTION_NONE);
+					option);
 		} else {
-			err_code = onig_search(rx->reg, (UChar*) strbeg, (UChar*) strend,
+			TCHAR *global_pos = stringarg;		/* \G */
+			if (minend > 0) {
+#ifdef UNICODE
+				int kanjiflag = 1;
+#else
+				int kanjiflag = rx->pmflags & PMf_KANJI;
+#endif
+				if (kanjiflag && is_char_pair((TBYTE*) stringarg)) {
+					stringarg += 2;
+				} else {
+					stringarg++;
+				}
+			}
+			err_code = onig_search2(rx->reg, (UChar*) strbeg, (UChar*) strend,
+					(UChar*) global_pos,
 					(UChar*) stringarg, (UChar*) strend, rx->region,
 					ONIG_OPTION_NONE);
 		}
