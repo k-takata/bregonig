@@ -1,12 +1,12 @@
 #
 # Makefile for bregonig.dll
 #
-#  Copyright (C) 2006-2007  K.Takata
+#  Copyright (C) 2006-2008  K.Takata
 #
 
 #VER1 = 1
 
-ONIG_DIR = ../onig-5.9.0-mod
+ONIG_DIR = ../onig-5.9.1-mod
 !ifdef USE_ONIG_DLL
 ONIG_LIB = $(ONIG_DIR)/onig.lib
 !else
