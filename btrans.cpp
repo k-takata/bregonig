@@ -415,6 +415,9 @@ int trans(bregonig *rx, TCHAR *target, TCHAR *targetendp, TCHAR *msg)
 				sv_catkanji(dest_sv, tch);
 			} else {
 				matches++;
+				if (complement && (rch == (TWORD)(-1))) {
+					rch = *(tp - 1);
+				}
 				if (rch == (TWORD)(-2)) {
 				/* delete this character */
 				} else if (squash) {
