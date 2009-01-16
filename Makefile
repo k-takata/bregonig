@@ -1,10 +1,12 @@
 #
 # Makefile for bregonig.dll
 #
-#  Copyright (C) 2006-2008  K.Takata
+#  Copyright (C) 2006-2009  K.Takata
 #
 
 #VER1 = 1
+
+BASEADDR = 0x60500000
 
 ONIG_DIR = ../onig-5.9.1-mod
 !ifdef USE_ONIG_DLL
@@ -14,13 +16,13 @@ ONIG_LIB = $(ONIG_DIR)/onig_s.lib
 !endif
 
 #CPPFLAGS = /O2 /W3 /GX /LD /nologo /I$(ONIG_DIR)
-#CPPFLAGS = /O2 /W3 /EHsc /LD /nologo /I$(ONIG_DIR)
-CPPFLAGS = /O2 /W3 /EHac /LD /nologo /I$(ONIG_DIR)
+CPPFLAGS = /O2 /W3 /EHsc /LD /nologo /I$(ONIG_DIR)
+#CPPFLAGS = /O2 /W3 /EHac /LD /nologo /I$(ONIG_DIR)
 !ifdef VER1
 CPPFLAGS = $(CPPFLAGS) /DUSE_VTAB /DPERL_5_8_COMPAT /DNAMEGROUP_RIGHTMOST
 !endif
 LD = link
-LDFLAGS = /DLL /nologo /MAP /opt:nowin98
+LDFLAGS = /DLL /nologo /MAP /opt:nowin98 /BASE:$(BASEADDR) /merge:.rdata=.text
 
 !ifdef USE_MSVCRT
 CPPFLAGS = $(CPPFLAGS) /MD
