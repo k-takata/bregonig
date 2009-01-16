@@ -2,7 +2,7 @@
  *	bregonig.cpp
  */
 /*
- *	Copyright (C) 2006-2007  K.Takata
+ *	Copyright (C) 2006-2009  K.Takata
  *
  *	You may distribute under the terms of either the GNU General Public
  *	License or the Artistic License, as specified in the perl_license.txt file.
@@ -617,40 +617,33 @@ int regexec_onig(bregonig *rx, TCHAR *stringarg,
 {
 TRACE1(_T("one_shot: %d\n"), one_shot);
 	int err_code;
-	try {
-		if (one_shot) {
-			OnigOptionType option = (minend > 0) ?
-					ONIG_OPTION_FIND_NOT_EMPTY : ONIG_OPTION_NONE;
-			err_code = onig_match(rx->reg, (UChar*) strbeg, (UChar*) strend,
-					(UChar*) stringarg, rx->region,
-					option);
-		} else {
-			TCHAR *global_pos = stringarg;		/* \G */
-			if (minend > 0) {
+	
+	if (one_shot) {
+		OnigOptionType option = (minend > 0) ?
+				ONIG_OPTION_FIND_NOT_EMPTY : ONIG_OPTION_NONE;
+		err_code = onig_match(rx->reg, (UChar*) strbeg, (UChar*) strend,
+				(UChar*) stringarg, rx->region,
+				option);
+	} else {
+		TCHAR *global_pos = stringarg;		/* \G */
+		if (minend > 0) {
 #ifdef UNICODE
-				int kanjiflag = 1;
+			int kanjiflag = 1;
 #else
-				int kanjiflag = rx->pmflags & PMf_KANJI;
+			int kanjiflag = rx->pmflags & PMf_KANJI;
 #endif
-				if (kanjiflag && is_char_pair((TBYTE*) stringarg)) {
-					stringarg += 2;
-				} else {
-					stringarg++;
-				}
+			if (kanjiflag && is_char_pair((TBYTE*) stringarg)) {
+				stringarg += 2;
+			} else {
+				stringarg++;
 			}
-			err_code = onig_search2(rx->reg, (UChar*) strbeg, (UChar*) strend,
-					(UChar*) global_pos,
-					(UChar*) stringarg, (UChar*) strend, rx->region,
-					ONIG_OPTION_NONE);
 		}
-	} catch (...) {	// catch NULL pointer exception. need /EHa option
-#if 1
-OutputDebugString(_T("bregonig.dll: fatal error\n"));
-		// Multithread BUG???
-		// should be fixed
-		return -1;
-#endif
+		err_code = onig_search2(rx->reg, (UChar*) strbeg, (UChar*) strend,
+				(UChar*) global_pos,
+				(UChar*) stringarg, (UChar*) strend, rx->region,
+				ONIG_OPTION_NONE);
 	}
+	
 	if (err_code >= 0) {
 		/* FOUND */
 		if (rx->startp) {
