@@ -317,7 +317,7 @@ static TWORD specchar(TCHAR *p, int *next)
 		}
 		else {
 			if (*p == '{') {	// '\x{HH}'
-				TWORD code = scan_hex(++p, 8, &numlen);
+				TWORD code = (TWORD)scan_hex(++p, 8, &numlen);
 				if (p[numlen] == '}') {
 					ender = code;
 					numlen += 2;
