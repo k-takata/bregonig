@@ -2,7 +2,7 @@
  *	bregonig.cpp
  */
 /*
- *	Copyright (C) 2006-2009  K.Takata
+ *	Copyright (C) 2006-2011  K.Takata
  *
  *	You may distribute under the terms of either the GNU General Public
  *	License or the Artistic License, as specified in the perl_license.txt file.
@@ -64,8 +64,16 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 				ONIG_SYN_OP2_ESC_V_VTAB |
 #endif
 #ifndef PERL_5_8_COMPAT
+				/* Perl 5.10 */
 				ONIG_SYN_OP2_PLUS_POSSESSIVE_REPEAT |
 				ONIG_SYN_OP2_PLUS_POSSESSIVE_INTERVAL |
+				ONIG_SYN_OP2_ESC_CAPITAL_R_LINEBREAK |
+#endif
+#ifdef ONIG_SYN_OP2_ESC_CAPITAL_X_EXTENDED_GRAPHEME_CLUSTER
+				ONIG_SYN_OP2_ESC_CAPITAL_X_EXTENDED_GRAPHEME_CLUSTER |
+#endif
+#ifdef ONIG_SYN_OP2_ESC_CAPITAL_K_KEEP_PATTERN
+				ONIG_SYN_OP2_ESC_CAPITAL_K_KEEP_PATTERN |
 #endif
 				ONIG_SYN_OP2_CCLASS_SET_OP;
 		OnigSyntaxPerl_NG_EX.behavior |= ONIG_SYN_DIFFERENT_LEN_ALT_LOOK_BEHIND;
@@ -251,7 +259,7 @@ TRACE1(_T("rxp:0x%08x\n"), rxp);
 	}
 TRACE1(_T("rx:0x%08x\n"), *rxp);
 	if (target == NULL || targetstartp == NULL || targetendp == NULL
-		|| targetstartp >= targetendp || target > targetstartp) { // bad target parameter ?
+		|| targetstartp > targetendp || target > targetstartp) { // bad target parameter ?
 		asc2tcs(msg, "invalid target parameter");
 		return -1;
 	}
@@ -308,9 +316,9 @@ TRACE1(_T("BMatch(): %s\n"), str);
 		rx->outp = NULL;
 	}
 	
-	if (rx->prelen == 0) {			// no string
-		return 0;
-	}
+//	if (rx->prelen == 0) {			// no string
+//		return 0;
+//	}
 	
 	int err_code = regexec_onig(rx, targetstartp, targetendp, target,
 			0, 1, one_shot, msg);
@@ -359,9 +367,9 @@ TRACE0(_T("rx == NULL\n"));
 		rx->outp = NULL;
 	}
 	
-	if (rx->prelen == 0) {			// no string
-		return 0;
-	}
+//	if (rx->prelen == 0) {			// no string
+//		return 0;
+//	}
 	
 	if (rx->pmflags & PMf_SUBSTITUTE) {
 		return subst_onig(rx,target,targetstartp,targetendp,msg,callback);

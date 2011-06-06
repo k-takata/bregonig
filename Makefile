@@ -8,7 +8,7 @@
 
 BASEADDR = 0x60500000
 
-ONIG_DIR = ../onig-5.9.2-mod
+ONIG_DIR = ../onig-5.9.2-mod-beta
 !ifdef USE_ONIG_DLL
 ONIG_LIB = $(ONIG_DIR)/onig.lib
 !else
