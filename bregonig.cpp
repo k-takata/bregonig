@@ -69,12 +69,9 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 				ONIG_SYN_OP2_PLUS_POSSESSIVE_INTERVAL |
 				ONIG_SYN_OP2_ESC_CAPITAL_R_LINEBREAK |
 #endif
-#ifdef ONIG_SYN_OP2_ESC_CAPITAL_X_EXTENDED_GRAPHEME_CLUSTER
 				ONIG_SYN_OP2_ESC_CAPITAL_X_EXTENDED_GRAPHEME_CLUSTER |
-#endif
-#ifdef ONIG_SYN_OP2_ESC_CAPITAL_K_KEEP_PATTERN
-				ONIG_SYN_OP2_ESC_CAPITAL_K_KEEP_PATTERN |
-#endif
+				ONIG_SYN_OP2_ESC_CAPITAL_K_KEEP |
+				ONIG_SYN_OP2_QMARK_SUBEXP_CALL |
 				ONIG_SYN_OP2_CCLASS_SET_OP;
 		OnigSyntaxPerl_NG_EX.behavior |= ONIG_SYN_DIFFERENT_LEN_ALT_LOOK_BEHIND;
 		OnigSyntaxPerl_NG_EX.options |= ONIG_OPTION_CAPTURE_GROUP;
@@ -449,7 +446,7 @@ TRACE1(_T("plen:%d\n"), plen);
 	TCHAR sep = '/';			// default separater
 	if (*p != '/') {
 		if (*p != 's' && *p != 'm' && memcmp(p,_T("tr"),2*sizeof(TCHAR)) != 0) {
-			asc2tcs(msg,"do not start 'm' or 's' or 'tr'");
+			asc2tcs(msg, "does not start with 'm', 's' or 'tr'");
 			delete [] parap;
 			return NULL;
 		}

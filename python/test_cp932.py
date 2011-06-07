@@ -777,6 +777,7 @@ def main():
     n("(?<=(?<!A)B)C", "ABC")
     n("(?i)(?<!aa|b)c", "Aac")
     n("(?i)(?<!b|aa)c", "Aac")
+    x2("a\\b?a", "aa", 0, 2)        # error: differ from perl
     
     # possessive quantifiers
     n("a?+a", "a")          # Ver.1.xx fails
@@ -797,8 +798,20 @@ def main():
     x2("ab\\Kcd", "abcd", 2, 4)
     x2("ab\\Kc(\\Kd|z)", "abcd", 3, 4)
     x2("ab\\Kc(\\Kz|d)", "abcd", 2, 4)
-    x2("(?<=a\\Kb|aa)cd", "abcd", 1, 4)
-    x2("(?<=ab|a\\Ka)cd", "abcd", 2, 4)
+    x2("(a\\K)*", "aaab", 3, 3)
+    x3("(a\\K)*", "aaab", 2, 3, 1)
+    x2("a\\K?a", "aa", 0, 2)        # error: differ from perl
+    x2("ab(?=c\Kd)", "abcd", 2, 2)          # This behaviour is currently not well defined. (see: perlre)
+    x2("(?<=a\\Kb|aa)cd", "abcd", 1, 4)     # This behaviour is currently not well defined. (see: perlre)
+    x2("(?<=ab|a\\Ka)cd", "abcd", 2, 4)     # This behaviour is currently not well defined. (see: perlre)
+    
+    x2("(?<name_2>ab)(?&name_2)", "abab", 0, 4);
+    x2("(?<name_2>ab)(?1)", "abab", 0, 4);
+    x2("(a|x(?-1)x)", "xax", 0, 3);
+    x2("a|x(?0)x", "xax", 0, 3);
+    x2("a|x(?R)x", "xax", 0, 3);
+    x2("(a|x\g<0>x)", "xax", 0, 3);
+    
     
     print("\nRESULT   SUCC: %d,  FAIL: %d,  ERROR: %d\n" % (
            nsucc, nfail, nerror))
