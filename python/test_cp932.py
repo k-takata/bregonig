@@ -805,6 +805,7 @@ def main():
     x2("(?<=a\\Kb|aa)cd", "abcd", 1, 4)     # This behaviour is currently not well defined. (see: perlre)
     x2("(?<=ab|a\\Ka)cd", "abcd", 2, 4)     # This behaviour is currently not well defined. (see: perlre)
     
+    # named group and subroutine call
     x2("(?<name_2>ab)(?&name_2)", "abab", 0, 4);
     x2("(?<name_2>ab)(?1)", "abab", 0, 4);
     x2("(a|x(?-1)x)", "xax", 0, 3);
@@ -812,6 +813,30 @@ def main():
     x2("a|x(?R)x", "xax", 0, 3);
     x2("(a|x\g<0>x)", "xax", 0, 3);
     
+    # character set modifiers
+    x2("(?u)\\w+", "‚ a#", 0, 3);
+    x2("(?a)\\w+", "‚ a#", 2, 3);
+    x2("(?u)\\W+", "‚ a#", 3, 4);
+    x2("(?a)\\W+", "‚ a#", 0, 2);
+    
+    x2("(?a)\\b", "‚ a", 2, 2);
+    x2("(?a)\\w\\b", "a‚ ", 0, 1);
+    x2("(?a)\\B", "a ‚ ‚  ", 2, 2);
+    
+    x2("(?u)\\B", "‚  ", 3, 3);
+    x2("(?a)\\B", "‚  ", 0, 0);
+    x2("(?a)\\B", "a‚  ", 3, 3);
+    
+    # \g{} backref
+    x2("((?<name1>\\d)|(?<name2>\\w))(\\g{name1}|\\g{name2})", "ff", 0, 2);
+    x2("(?:(?<x>)|(?<x>efg))\\g{x}", "", 0, 0);
+    x2("(?:(?<x>abc)|(?<x>efg))\\g{x}", "abcefgefg", 3, 9);
+    n("(?:(?<x>abc)|(?<x>efg))\\g{x}", "abcefg");
+    x2("((.*)a\\g{2}f)", "bacbabf", 3, 7);
+    x2("(.*)a\\g{1}f", "baczzzzzz\nbazz\nzzzzbabf", 19, 23);
+    x2("((.*)a\\g{-1}f)", "bacbabf", 3, 7);
+    x2("(.*)a\\g{-1}f", "baczzzzzz\nbazz\nzzzzbabf", 19, 23);
+    x2("(‚ *)(‚¢*)\\g{-2}\\g{-1}", "‚ ‚ ‚ ‚¢‚¢‚ ‚ ‚ ‚¢‚¢", 0, 20);
     
     print("\nRESULT   SUCC: %d,  FAIL: %d,  ERROR: %d\n" % (
            nsucc, nfail, nerror))

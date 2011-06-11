@@ -72,6 +72,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 				ONIG_SYN_OP2_ESC_CAPITAL_X_EXTENDED_GRAPHEME_CLUSTER |
 				ONIG_SYN_OP2_ESC_CAPITAL_K_KEEP |
 				ONIG_SYN_OP2_QMARK_SUBEXP_CALL |
+				ONIG_SYN_OP2_ESC_G_BRACE_BACKREF |
 				ONIG_SYN_OP2_CCLASS_SET_OP;
 		OnigSyntaxPerl_NG_EX.behavior |= ONIG_SYN_DIFFERENT_LEN_ALT_LOOK_BEHIND;
 		OnigSyntaxPerl_NG_EX.options |= ONIG_OPTION_CAPTURE_GROUP;
@@ -98,7 +99,7 @@ TCHAR *::BRegexpVersion(void)
 {
 	static TCHAR version[80];
 //	sprintf(version, "bregonig.dll Ver.%d.%02d%s %s with Oniguruma %s",
-	_stprintf(version, _T("bregonig.dll Ver.%d.%02d%hs with Oniguruma %hs"),
+	_stprintf(version, _T("bregonig.dll Ver.%d.%02d%hs with Onigmo %hs"),
 			BREGONIG_VERSION_MAJOR, BREGONIG_VERSION_MINOR,
 			BREGONIG_VERSION_SUFFIX,
 			/*__DATE__,*/ onig_version());
@@ -533,6 +534,7 @@ TRACE1(_T("plen:%d\n"), plen);
 			break;
 		case 'd':
 			flag |= PMf_TRANS_DELETE;
+			option &= ~ONIG_OPTION_ASCII_RANGE;
 			break;
 		case 's':
 			flag |= PMf_TRANS_SQUASH;
@@ -541,6 +543,13 @@ TRACE1(_T("plen:%d\n"), plen);
 			break;
 		case 'x':
 			option |= ONIG_OPTION_EXTEND;
+			break;
+		case 'a':
+			option |= ONIG_OPTION_ASCII_RANGE;
+			break;
+		case 'l':
+		case 'u':
+			option &= ~ONIG_OPTION_ASCII_RANGE;
 			break;
 		default:
 			break;
@@ -643,7 +652,7 @@ TRACE1(_T("one_shot: %d\n"), one_shot);
 				stringarg++;
 			}
 		}
-		err_code = onig_search2(rx->reg, (UChar*) strbeg, (UChar*) strend,
+		err_code = onig_search_gpos(rx->reg, (UChar*) strbeg, (UChar*) strend,
 				(UChar*) global_pos,
 				(UChar*) stringarg, (UChar*) strend, rx->region,
 				ONIG_OPTION_NONE);
