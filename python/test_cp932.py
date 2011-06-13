@@ -808,7 +808,9 @@ def main():
     # named group and subroutine call
     x2("(?<name_2>ab)(?&name_2)", "abab", 0, 4);
     x2("(?<name_2>ab)(?1)", "abab", 0, 4);
+    x2("(?<n>|\\((?&n)\\))+$", "()(())", 0, 6);
     x2("(a|x(?-1)x)", "xax", 0, 3);
+    x2("(a|(x(?-2)x))", "xax", 0, 3);
     x2("a|x(?0)x", "xax", 0, 3);
     x2("a|x(?R)x", "xax", 0, 3);
     x2("(a|x\g<0>x)", "xax", 0, 3);
@@ -837,6 +839,37 @@ def main():
     x2("((.*)a\\g{-1}f)", "bacbabf", 3, 7);
     x2("(.*)a\\g{-1}f", "baczzzzzz\nbazz\nzzzzbabf", 19, 23);
     x2("(‚ *)(‚¢*)\\g{-2}\\g{-1}", "‚ ‚ ‚ ‚¢‚¢‚ ‚ ‚ ‚¢‚¢", 0, 20);
+    
+    # Python/PCRE compatible named group
+    x2("(?P<name_2>ab)(?P>name_2)", "abab", 0, 4);
+    x2("(?P<n>|\\((?P>n)\\))+$", "()(())", 0, 6);
+    x2("((?P<name1>\\d)|(?P<name2>\\w))((?P=name1)|(?P=name2))", "ff", 0, 2);
+    
+    # Fullwidth Alphabet
+    n("‚‚‚‚ƒ‚„‚…‚†‚‡‚ˆ‚‰‚Š‚‹‚Œ‚‚Ž‚‚‚‘‚’‚“‚”‚•‚–‚—‚˜‚™‚š", "‚`‚a‚b‚c‚d‚e‚f‚g‚h‚i‚j‚k‚l‚m‚n‚o‚p‚q‚r‚s‚t‚u‚v‚w‚x‚y");
+    x2("(?i)‚‚‚‚ƒ‚„‚…‚†‚‡‚ˆ‚‰‚Š‚‹‚Œ‚‚Ž‚‚‚‘‚’‚“‚”‚•‚–‚—‚˜‚™‚š", "‚‚‚‚ƒ‚„‚…‚†‚‡‚ˆ‚‰‚Š‚‹‚Œ‚‚Ž‚‚‚‘‚’‚“‚”‚•‚–‚—‚˜‚™‚š", 0, 52);
+    x2("(?i)‚‚‚‚ƒ‚„‚…‚†‚‡‚ˆ‚‰‚Š‚‹‚Œ‚‚Ž‚‚‚‘‚’‚“‚”‚•‚–‚—‚˜‚™‚š", "‚`‚a‚b‚c‚d‚e‚f‚g‚h‚i‚j‚k‚l‚m‚n‚o‚p‚q‚r‚s‚t‚u‚v‚w‚x‚y", 0, 52);
+    x2("(?i)‚`‚a‚b‚c‚d‚e‚f‚g‚h‚i‚j‚k‚l‚m‚n‚o‚p‚q‚r‚s‚t‚u‚v‚w‚x‚y", "‚‚‚‚ƒ‚„‚…‚†‚‡‚ˆ‚‰‚Š‚‹‚Œ‚‚Ž‚‚‚‘‚’‚“‚”‚•‚–‚—‚˜‚™‚š", 0, 52);
+    x2("(?i)‚`‚a‚b‚c‚d‚e‚f‚g‚h‚i‚j‚k‚l‚m‚n‚o‚p‚q‚r‚s‚t‚u‚v‚w‚x‚y", "‚`‚a‚b‚c‚d‚e‚f‚g‚h‚i‚j‚k‚l‚m‚n‚o‚p‚q‚r‚s‚t‚u‚v‚w‚x‚y", 0, 52);
+    
+    # Greek
+    n("ƒ¿ƒÀƒÁƒÂƒÃƒÄƒÅƒÆƒÇƒÈƒÉƒÊƒËƒÌƒÍƒÎƒÏƒÐƒÑƒÒƒÓƒÔƒÕƒÖ", "ƒŸƒ ƒ¡ƒ¢ƒ£ƒ¤ƒ¥ƒ¦ƒ§ƒ¨ƒ©ƒªƒ«ƒ¬ƒ­ƒ®ƒ¯ƒ°ƒ±ƒ²ƒ³ƒ´ƒµƒ¶");
+    x2("(?i)ƒ¿ƒÀƒÁƒÂƒÃƒÄƒÅƒÆƒÇƒÈƒÉƒÊƒËƒÌƒÍƒÎƒÏƒÐƒÑƒÒƒÓƒÔƒÕƒÖ", "ƒ¿ƒÀƒÁƒÂƒÃƒÄƒÅƒÆƒÇƒÈƒÉƒÊƒËƒÌƒÍƒÎƒÏƒÐƒÑƒÒƒÓƒÔƒÕƒÖ", 0, 48);
+    x2("(?i)ƒ¿ƒÀƒÁƒÂƒÃƒÄƒÅƒÆƒÇƒÈƒÉƒÊƒËƒÌƒÍƒÎƒÏƒÐƒÑƒÒƒÓƒÔƒÕƒÖ", "ƒŸƒ ƒ¡ƒ¢ƒ£ƒ¤ƒ¥ƒ¦ƒ§ƒ¨ƒ©ƒªƒ«ƒ¬ƒ­ƒ®ƒ¯ƒ°ƒ±ƒ²ƒ³ƒ´ƒµƒ¶", 0, 48);
+    x2("(?i)ƒŸƒ ƒ¡ƒ¢ƒ£ƒ¤ƒ¥ƒ¦ƒ§ƒ¨ƒ©ƒªƒ«ƒ¬ƒ­ƒ®ƒ¯ƒ°ƒ±ƒ²ƒ³ƒ´ƒµƒ¶", "ƒ¿ƒÀƒÁƒÂƒÃƒÄƒÅƒÆƒÇƒÈƒÉƒÊƒËƒÌƒÍƒÎƒÏƒÐƒÑƒÒƒÓƒÔƒÕƒÖ", 0, 48);
+    x2("(?i)ƒŸƒ ƒ¡ƒ¢ƒ£ƒ¤ƒ¥ƒ¦ƒ§ƒ¨ƒ©ƒªƒ«ƒ¬ƒ­ƒ®ƒ¯ƒ°ƒ±ƒ²ƒ³ƒ´ƒµƒ¶", "ƒŸƒ ƒ¡ƒ¢ƒ£ƒ¤ƒ¥ƒ¦ƒ§ƒ¨ƒ©ƒªƒ«ƒ¬ƒ­ƒ®ƒ¯ƒ°ƒ±ƒ²ƒ³ƒ´ƒµƒ¶", 0, 48);
+    
+    # Cyrillic
+    n("„p„q„r„s„t„u„v„w„x„y„z„{„|„}„~„€„„‚„ƒ„„„…„†„‡„ˆ„‰„Š„‹„Œ„„Ž„„„‘", "„@„A„B„C„D„E„F„G„H„I„J„K„L„M„N„O„P„Q„R„S„T„U„V„W„X„Y„Z„[„\„]„^„_„`");
+    x2("(?i)„p„q„r„s„t„u„v„w„x„y„z„{„|„}„~„€„„‚„ƒ„„„…„†„‡„ˆ„‰„Š„‹„Œ„„Ž„„„‘", "„p„q„r„s„t„u„v„w„x„y„z„{„|„}„~„€„„‚„ƒ„„„…„†„‡„ˆ„‰„Š„‹„Œ„„Ž„„„‘", 0, 66);
+    x2("(?i)„p„q„r„s„t„u„v„w„x„y„z„{„|„}„~„€„„‚„ƒ„„„…„†„‡„ˆ„‰„Š„‹„Œ„„Ž„„„‘", "„@„A„B„C„D„E„F„G„H„I„J„K„L„M„N„O„P„Q„R„S„T„U„V„W„X„Y„Z„[„\„]„^„_„`", 0, 66);
+    x2("(?i)„@„A„B„C„D„E„F„G„H„I„J„K„L„M„N„O„P„Q„R„S„T„U„V„W„X„Y„Z„[„\„]„^„_„`", "„p„q„r„s„t„u„v„w„x„y„z„{„|„}„~„€„„‚„ƒ„„„…„†„‡„ˆ„‰„Š„‹„Œ„„Ž„„„‘", 0, 66);
+    x2("(?i)„@„A„B„C„D„E„F„G„H„I„J„K„L„M„N„O„P„Q„R„S„T„U„V„W„X„Y„Z„[„\„]„^„_„`", "„@„A„B„C„D„E„F„G„H„I„J„K„L„M„N„O„P„Q„R„S„T„U„V„W„X„Y„Z„[„\„]„^„_„`", 0, 66);
+    
+    # multiple name definition
+    x2("(?<a>a)(?<a>b)\\k<a>", "aba", 0, 3)
+    x2("(?<a>a)(?<a>b)(?&a)", "aba", 0, 3)
+    x2("(?<a>(a|.)(?<a>b))(?&a)", "abcb", 0, 4)
     
     print("\nRESULT   SUCC: %d,  FAIL: %d,  ERROR: %d\n" % (
            nsucc, nfail, nerror))
