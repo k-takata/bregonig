@@ -4,7 +4,7 @@
 */
 /*
  *	2002.08.24	modified by K2
- *	2006.08.28	modified by K.Takata
+ *	2011.06.15	modified by K.Takata
  */
 
 
@@ -28,6 +28,9 @@
 #define BSplit		BSplitW
 #define BRegfree	BRegfreeW
 #define BRegexpVersion	BRegexpVersionW
+
+#define BoMatch		BoMatchW
+#define BoSubst		BoSubstW
 #endif /* UNICODE */
 
 
@@ -93,6 +96,24 @@ void BRegfree(BREGEXP *rx);
 
 BREGEXPAPI
 TCHAR *BRegexpVersion(void);
+
+
+#if 0
+/* bregonig.dll native APIs (T.B.D.) */
+BREGEXPAPI
+int BoMatch(const TCHAR *pattern, const TCHAR *option,
+		const TCHAR *strstartp,
+		const TCHAR *targetstartp, const TCHAR *targetendp,
+		BOOL one_shot,
+		BREGEXP **rxp, TCHAR *msg);
+
+BREGEXPAPI
+int BoSubst(const TCHAR *pattern, const TCHAR *subst, const TCHAR *option,
+		const TCHAR *strstartp,
+		const TCHAR *targetstartp, const TCHAR *targetendp,
+		BCallBack callback,
+		BREGEXP **rxp, TCHAR *msg);
+#endif
 
 
 #if defined(__cplusplus)

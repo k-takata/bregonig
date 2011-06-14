@@ -44,7 +44,7 @@ using namespace BREGONIG_NS;
 
 extern OnigSyntaxType OnigSyntaxPerl_NG_EX;
 #ifndef UNICODE
-OnigSyntaxType OnigSyntaxPerl_NG_EX = *ONIG_SYNTAX_PERL_NG;
+OnigSyntaxType OnigSyntaxPerl_NG_EX = OnigSyntaxPerl;
 /*
 OnigSyntaxType OnigSyntaxPerl_NG_EX = {
 	ONIG_SYNTAX_PERL_NG->op,
@@ -60,25 +60,10 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 	switch (fdwReason) {
 	case DLL_PROCESS_ATTACH:
 		OnigSyntaxPerl_NG_EX.op2 |=
-#ifdef USE_VTAB
-				ONIG_SYN_OP2_ESC_V_VTAB |
-#endif
-#ifndef PERL_5_8_COMPAT
-				/* Perl 5.10 */
-				ONIG_SYN_OP2_PLUS_POSSESSIVE_REPEAT |
-				ONIG_SYN_OP2_PLUS_POSSESSIVE_INTERVAL |
-				ONIG_SYN_OP2_ESC_CAPITAL_R_LINEBREAK |
-				ONIG_SYN_OP2_ESC_CAPITAL_K_KEEP |
-				ONIG_SYN_OP2_QMARK_SUBEXP_CALL |
-				ONIG_SYN_OP2_ESC_G_BRACE_BACKREF |
-				ONIG_SYN_OP2_QMARK_CAPITAL_P_NAMED_GROUP |
-#endif
-				ONIG_SYN_OP2_ESC_CAPITAL_X_EXTENDED_GRAPHEME_CLUSTER |
+				ONIG_SYN_OP2_ESC_G_SUBEXP_CALL |			/* bregonig.dll extension */
 				ONIG_SYN_OP2_CCLASS_SET_OP;					/* bregonig.dll extension */
 		OnigSyntaxPerl_NG_EX.behavior |=
-				ONIG_SYN_DIFFERENT_LEN_ALT_LOOK_BEHIND |	/* bregonig.dll extension */
-				ONIG_SYN_ALLOW_MULTIPLEX_DEFINITION_NAME_CALL;
-		OnigSyntaxPerl_NG_EX.options |= ONIG_OPTION_CAPTURE_GROUP;
+				ONIG_SYN_DIFFERENT_LEN_ALT_LOOK_BEHIND;		/* bregonig.dll extension */
 		onig_init();
 		break;
 		
@@ -229,6 +214,26 @@ TRACE1(_T("BRegfree(): rx=0x%08x\n"), rx);
 	}
 }
 
+
+#if 0
+int ::BoMatch(const TCHAR *pattern, const TCHAR *option,
+		const TCHAR *strstartp,
+		const TCHAR *targetstartp, const TCHAR *targetendp,
+		int one_shot,
+		BREGEXP **rxp, TCHAR *msg)
+{
+	return 0;
+}
+
+int ::BoSubst(const TCHAR *pattern, const TCHAR *subst, const TCHAR *option,
+		const TCHAR *strstartp,
+		const TCHAR *targetstartp, const TCHAR *targetendp,
+		BCallBack callback,
+		BREGEXP **rxp, TCHAR *msg)
+{
+	return 0;
+}
+#endif
 
 
 
@@ -529,7 +534,7 @@ TRACE1(_T("plen:%d\n"), plen);
 		case 'k':
 			flag |= PMf_KANJI;
 #ifndef UNICODE
-			enc = ONIG_ENCODING_SJIS;
+			enc = ONIG_ENCODING_CP932;
 #endif
 			break;
 		case 'c':
