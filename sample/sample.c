@@ -4,6 +4,7 @@
 // grep for bregexp version
 //                     Author Tatsuo Baba
 //
+#include <windows.h>
 #include <stdio.h>
 #include <tchar.h>
 #include <locale.h>
