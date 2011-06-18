@@ -1,0 +1,17 @@
+*.o
+*.so
+*.a
+*.obj
+*.dll
+*.exp
+*.lib
+*.pyc
+*.bak
+*.BAK
+*~
+*.swp
+*.orig
+*.rej
+*.map
+*.RES
+*.res
