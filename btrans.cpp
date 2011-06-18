@@ -43,8 +43,8 @@ int trans(bregonig *rx, TCHAR *target, TCHAR *targetendp, TCHAR *msg);
 
 bregonig *trcomp(TCHAR *res, TCHAR *resend, TCHAR *rp, TCHAR *rpend,
 		int flag, TCHAR *msg);
-static SV *cvchar(TCHAR *str, TCHAR *strend);
-static TWORD specchar(TCHAR* p,int *next);
+static SV *cvchar(const TCHAR *str, const TCHAR *strend);
+static TWORD specchar(const TCHAR* p,int *next);
 void sv_catkanji(SV *sv,U32 tch);
 
 
@@ -73,15 +73,16 @@ static inline TWORD get_codepoint(const TBYTE *s)
 
 
 // compile translate string
-bregonig *trcomp(TCHAR *str, TCHAR *strend, TCHAR *rp, TCHAR *rpend,
+bregonig *trcomp(const TCHAR *str, const TCHAR *strend,
+		const TCHAR *rp, const TCHAR *rpend,
 		int flag, TCHAR *msg)
 {
 	int slen = strend - str;
 	int rlen = rpend - rp;
 	if (slen < 1)
 		return NULL;
-	register TCHAR *p = str;
-	register TCHAR *pend = strend;
+	register const TCHAR *p = str;
+	register const TCHAR *pend = strend;
 
 //	bregonig *rx = (bregonig*) new char[sizeof(bregonig)];
 	bregonig *rx = new (std::nothrow) bregonig();
@@ -193,14 +194,14 @@ TRACE0(_T("out of space in trcomp()\n"));
 	}
 }
 
-static SV *cvchar(TCHAR *str, TCHAR *strend)
+static SV *cvchar(const TCHAR *str, const TCHAR *strend)
 {
 	int next;
 	TWORD ender;
 	TWORD lastch = 0;
 	int len = strend - str;
-	TCHAR *p = str;
-	TCHAR *pend = strend;
+	const TCHAR *p = str;
+	const TCHAR *pend = strend;
 	SV *dst = newSVpv(_T(""),0);
 	while (p < pend) {
 		if (*p != '\\' && *p != '-') {	// no magic char ?
@@ -220,7 +221,7 @@ static SV *cvchar(TCHAR *str, TCHAR *strend)
 			break;
 		}
 		if (p[-1] == '-') {		// - ?
-			TCHAR* tp = p -1;
+			const TCHAR* tp = p -1;
 			TWORD toch;
 			if (is_char_pair((TBYTE*)p)) {	// Surrogate Pair or kanji ?
 				toch = get_codepoint((TBYTE*)p);
@@ -276,7 +277,7 @@ static SV *cvchar(TCHAR *str, TCHAR *strend)
 }
 
 
-static TWORD specchar(TCHAR *p, int *next)
+static TWORD specchar(const TCHAR *p, int *next)
 {
 	TWORD ender;
 	int numlen = 0;

@@ -2,7 +2,7 @@
  *	subst.cpp
  */
 /*
- *	Copyright (C) 2006-2007  K.Takata
+ *	Copyright (C) 2006-2011  K.Takata
  *
  *	You may distribute under the terms of either the GNU General Public
  *	License or the Artistic License, as specified in the perl_license.txt file.
@@ -103,14 +103,15 @@ TCHAR *bufcat(TCHAR *buf, int *copycnt, const TCHAR *src, int len,
 
 
 
-int subst_onig(bregonig *rx, TCHAR *target, TCHAR *targetstartp, TCHAR *targetendp,
+int subst_onig(bregonig *rx, const TCHAR *target,
+		const TCHAR *targetstartp, const TCHAR *targetendp,
 		TCHAR *msg, BCallBack callback)
 {
 TRACE0(_T("subst_onig()\n"));
-	TCHAR *orig,*m,*c;
-	TCHAR *s = target;
+	const TCHAR *orig,*m,*c;
+	const TCHAR *s = target;
 	int len = targetendp - target;
-	TCHAR *strend = s + len;
+	const TCHAR *strend = s + len;
 	int maxiters = (strend - s) + 10;
 	int iters = 0;
 	int clen;
@@ -184,8 +185,7 @@ TRACE0(_T("Substitution loop\n"));
 				if (!callback(CALLBACK_KIND_REPLACE, subst_count, s - orig))
 					break;
 		} while (regexec_onig(rx, s, strend, orig, s == m, 1,0,msg) > 0);
-	//	len = rx->subend - s;
-		len = targetendp - s;	// ???
+		len = targetendp - s;
 		buf = bufcat(buf, &copycnt, s, len, &blen, 1);
 		if (copycnt) {
 			rx->outp = buf;
@@ -349,13 +349,22 @@ TRACE0(_T("compile_rep()\n"));
 		bool special = false;		// found special char
 		casetype nextchcase = CASE_NONE;
 		casetype chcase = CASE_NONE;
+		OnigEncoding enc = onig_get_encoding(rx->reg);
 		while (p < pend) {
 			if (*p != '\\' && *p != '$') {	// magic char ?
+#if 0
 #ifndef UNICODE
 				if (iskanji(*p))			// no
 					*dst++ = *p++;
 #endif
 				*dst++ = *p++;
+#else
+				// copy one char
+				int len = ONIGENC_MBC_ENC_LEN(enc, (UChar*) p);
+				memcpy(dst, p, len);
+				p += len / sizeof(TCHAR);
+				dst += len / sizeof(TCHAR);
+#endif
 				continue;
 			}
 			if (p+1 >= pend) {		// end of the pattern
@@ -503,12 +512,20 @@ TRACE0(_T("compile_rep()\n"));
 							unsigned int code = scan_hex(++q, 8, &numlen);
 							q += numlen;
 							if (*q == '}') {
+#if 0
 								TBYTE ch[2];
 								int len = set_codepoint(code, ch);
 								if (len > 1) {
 									*dst++ = ch[0];
 								}
 								ender = ch[len-1];
+#else
+								int len = ONIGENC_CODE_TO_MBC(
+										enc, code, (UChar*) dst)
+											/ sizeof(TCHAR);
+								dst += len - 1;
+								ender = *dst;
+#endif
 								p = q+1;
 								break;
 							}

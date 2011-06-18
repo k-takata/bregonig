@@ -1,6 +1,6 @@
 //
 // bsplit.cc
-//   Split front-end  
+//   Split front-end
 ////////////////////////////////////////////////////////////////////////////////
 //  1999.11.24   update by Tatsuo Baba
 //  2006.08.29   update by K.Takata
@@ -48,9 +48,9 @@ int split_onig(bregonig *rx, TCHAR *target, TCHAR *targetendp, int limit, TCHAR 
 	rx->splitctr = 0;	// split counter
 
 
-	// rx->prelen = 0 means split each characters
+	// pattern length = 0 means split each characters
 	//   and limit is 1 returns all string
-	if (!rx->prelen || limit == 1) {
+	if (rx->patternp == rx->patternendp || limit == 1) {
 		int blen = 2*len + 3;
 		if (limit == 1)
 			blen = 5;

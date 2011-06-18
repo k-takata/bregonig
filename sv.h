@@ -265,8 +265,8 @@ TCHAR *ninstr(register TCHAR *big,register TCHAR *bigend,TCHAR *little,
 TCHAR * fbm_instr(TBYTE*,register TBYTE *,SV*,int mline,int kmode);
 BOOL sv_upgrade(register SV*, int);// sv.spp
 SV *newSVpv(TCHAR*,int);//sv.cpp
-void sv_catpvn(register SV*,register TCHAR*,register int);//sv.cpp
-void sv_setpvn(register SV*,register TCHAR*,register int);//sv.cpp
+void sv_catpvn(register SV*,register const TCHAR*,register int);//sv.cpp
+void sv_setpvn(register SV*,register const TCHAR*,register int);//sv.cpp
 void sv_setsv(SV*,SV*);//sv.cpp
 
 void fbm_compile (SV* sv, int iflag);

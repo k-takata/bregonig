@@ -2,7 +2,7 @@
  *	bregonig.h
  */
 /*
- *	Copyright (C) 2006-2007  K.Takata
+ *	Copyright (C) 2006-2011  K.Takata
  *
  *	You may distribute under the terms of either the GNU General Public
  *	License or the Artistic License, as specified in the perl_license.txt file.
@@ -53,6 +53,13 @@ typedef struct repstr {
 } REPSTR;
 
 
+enum pattern_type {
+	PTN_ERROR = -1,
+	PTN_MATCH = 0,
+	PTN_SUBST,
+	PTN_TRANS
+};
+
 struct bregonig : bregexp {
 #if 0
 	TCHAR *outp;		/* matched or substitute string start ptr   */
@@ -73,9 +80,14 @@ struct bregonig : bregexp {
 	regex_t *reg;
 	OnigRegion *region;
 	REPSTR *repstr;
+	
+	/* "s/pattern/replace/option" */
+	TCHAR *patternp;	/* original pattern string */
+	TCHAR *patternendp;	/* original pattern string end */
 	TCHAR *prerepp;		/* original replace string */
 	TCHAR *prerependp;	/* original replace string end */
-	int prelen;
+	TCHAR *optionp;		/* original option string */
+	TCHAR *optionendp;	/* original option string end */
 	
 	
 	bregonig();
@@ -142,9 +154,8 @@ inline TCHAR *asc2tcs(TCHAR *dst, const char *src)
 #define SUBST_BUF_SIZE 256
 
 
-int check_params(const TCHAR *str, const TCHAR *target, const TCHAR *targetstartp,
-		const TCHAR *targetendp,
-		BREGEXP **rxp, bool trans, TCHAR *msg, int *pplen);
+int check_params(const TCHAR *target, const TCHAR *targetstartp,
+		const TCHAR *targetendp, BREGEXP **rxp, TCHAR *msg);
 int BMatch_s(TCHAR *str, TCHAR *target, TCHAR *targetstartp, TCHAR *targetendp,
 		int one_shot,
 		BREGEXP **rxp, TCHAR *msg);
@@ -153,17 +164,27 @@ int BSubst_s(TCHAR *str, TCHAR *target, TCHAR *targetstartp, TCHAR *targetendp,
 
 int onig_err_to_bregexp_msg(int err_code, OnigErrorInfo* err_info, TCHAR *msg);
 
-bregonig *compile_onig(const TCHAR *ptn, int plen, TCHAR *msg);
+
+bregonig *recompile_onig(bregonig *rxold, const TCHAR *ptn, TCHAR *msg);
+bregonig *recompile_onig_ex(bregonig *rxold,
+		pattern_type type,
+		const TCHAR *patternp, const TCHAR *patternendp,
+		const TCHAR *prerepp, const TCHAR *prerependp,
+		const TCHAR *optionp, const TCHAR *optionendp,
+		TCHAR *msg);
+
+//bregonig *compile_onig(const TCHAR *ptn, int plen, TCHAR *msg);
 REPSTR *compile_rep(bregonig *rx, const TCHAR *str, const TCHAR *strend);
 
-int subst_onig(bregonig *rx, TCHAR *target, TCHAR *targetstartp, TCHAR *targetendp,
+int subst_onig(bregonig *rx, const TCHAR *target,
+		const TCHAR *targetstartp, const TCHAR *targetendp,
 		TCHAR *msg, BCallBack callback);
 int split_onig(bregonig *rx, TCHAR *target, TCHAR *targetendp, int limit, TCHAR *msg);
 
 
-int regexec_onig(bregonig *rx, TCHAR *stringarg,
-	register TCHAR *strend,	/* pointer to null at end of string */
-	TCHAR *strbeg,	/* real beginning of string */
+int regexec_onig(bregonig *rx, const TCHAR *stringarg,
+	const TCHAR *strend,	/* pointer to null at end of string */
+	const TCHAR *strbeg,	/* real beginning of string */
 	int minend,		/* end of match must be at least minend after stringarg */
 	int safebase,	/* no need to remember string in subbase */
 	int one_shot,	/* if not match then break without proceed str pointer */
@@ -171,7 +192,8 @@ int regexec_onig(bregonig *rx, TCHAR *stringarg,
 
 int trans(bregonig *rx, TCHAR *target, TCHAR *targetendp, TCHAR *msg);
 
-bregonig *trcomp(TCHAR *res, TCHAR *resend, TCHAR *rp, TCHAR *rpend,
+bregonig *trcomp(const TCHAR *res, const TCHAR *resend,
+		const TCHAR *rp, const TCHAR *rpend,
 		int flag, TCHAR *msg);
 
 

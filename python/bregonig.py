@@ -11,7 +11,9 @@ __all__ = ["BREGEXP", "BRegexpVersion",
            "BMatch", "BSubst",
            "BMatchEx", "BSubstEx",
            "BTrans", "BSplit", "BRegfree",
-           "LoadDLL", "LoadBregonig", "LoadBregexp"]
+           "BoMatch", "BoSubst",
+           "LoadDLL", "LoadBregonig", "LoadBregexp",
+           "BCallBack"]
 
 
 if sizeof(c_long) == sizeof(c_void_p):
@@ -45,6 +47,12 @@ _BSubstEx = None
 _BTrans = None
 _BSplit = None
 _BRegfree = None
+_BoMatch = None
+_BoSubst = None
+
+
+# callback type
+BCallBack = WINFUNCTYPE(c_bool, c_int, c_int, c_int)
 
 
 def BRegexpVersion():
@@ -79,6 +87,20 @@ def BSplit(str, target, targetendp, limit, rxp, msg):
 
 def BRegfree(rxp):
     return _BRegfree(rxp)
+
+def BoMatch(patternp, optionp, strstartp, targetstartp, targetendp,
+        one_shot, rxp, msg):
+    if _BoMatch is None:
+        raise RuntimeError("Ver.2.50+ is needed")
+    return _BoMatch(patternp, optionp, strstartp, targetstartp, targetendp,
+            one_shot, rxp, msg)
+
+def BoSubst(patternp, substp, optionp, strstartp, targetstartp, targetendp,
+        callback, rxp, msg):
+    if _BoSubst is None:
+        raise RuntimeError("Ver.2.50+ is needed")
+    return _BoSubst(patternp, substp, optionp, strstartp, targetstartp, targetendp,
+            callback, rxp, msg)
 
 
 # bregonig.dll
@@ -178,4 +200,29 @@ def LoadDLL(regexpdll, unicode_func = False):
     else:
         _BRegfree = regexpdll.BRegfree
     _BRegfree.argtypes = [POINTER(BREGEXP)]
-
+    
+    global _BoMatch
+    try:
+        if unicode_func:
+            _BoMatch = regexpdll.BoMatchW
+        else:
+            _BoMatch = regexpdll.BoMatch
+        _BoMatch.argtypes = [c_tchar_p, c_tchar_p,
+                c_void_p, c_void_p, c_void_p,
+                c_int,
+                POINTER(POINTER(BREGEXP)), c_tchar_p]
+    except AttributeError:
+        pass
+    
+    global _BoSubst
+    try:
+        if unicode_func:
+            _BoSubst = regexpdll.BoSubstW
+        else:
+            _BoSubst = regexpdll.BoSubst
+        _BoSubst.argtypes = [c_tchar_p, c_tchar_p, c_tchar_p,
+                c_void_p, c_void_p, c_void_p,
+                c_void_p,
+                POINTER(POINTER(BREGEXP)), c_tchar_p]
+    except AttributeError:
+        pass

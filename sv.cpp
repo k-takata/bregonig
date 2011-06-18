@@ -322,7 +322,7 @@ SV *littlestr,int mline,int kmode)
  * as temporary.
  */
 
-void sv_setpvn(register SV *sv, register TCHAR *ptr, register STRLEN len);
+void sv_setpvn(register SV *sv, register const TCHAR *ptr, register STRLEN len);
 
 
 
@@ -358,7 +358,7 @@ sv_setsv(SV *dstr, register SV *sstr)
 }
 
 
-void sv_catpvn(SV* sv,TCHAR*ptr,int len)
+void sv_catpvn(SV* sv,const TCHAR*ptr,int len)
 {
     SvGROW(sv, sv->xpv_cur + len +1);
 
@@ -368,7 +368,7 @@ void sv_catpvn(SV* sv,TCHAR*ptr,int len)
 }
 
 
-void sv_setpvn(register SV *sv, register TCHAR *ptr, register STRLEN len)
+void sv_setpvn(register SV *sv, register const TCHAR *ptr, register STRLEN len)
 {
     SvGROW(sv, len + 1 < 512 ? 512:len + 1);
     memcpy(SvPVX(sv),ptr,len*sizeof(TCHAR));
