@@ -147,7 +147,7 @@ TRACE1(_T("BTrans(): %s\n"), str);
 		return -1;
 	}
 	bregonig *rx = static_cast<bregonig*>(*rxp);
-	*rxp = rx = recompile_onig(rx, str, msg);
+	*rxp = rx = recompile_onig(rx, PTN_TRANS, str, msg);
 	if (*rxp == NULL) {
 		return -1;
 	}
@@ -174,7 +174,7 @@ TRACE1(_T("BSplit(): %s\n"), str);
 		return -1;
 	}
 	bregonig *rx = static_cast<bregonig*>(*rxp);
-	*rxp = rx = recompile_onig(rx, str, msg);
+	*rxp = rx = recompile_onig(rx, PTN_MATCH, str, msg);
 	if (*rxp == NULL) {
 		return -1;
 	}
@@ -288,14 +288,14 @@ int BMatch_s(TCHAR *str, TCHAR *target, TCHAR *targetstartp, TCHAR *targetendp,
 		int one_shot,
 		BREGEXP **rxp, TCHAR *msg)
 {
-TRACE1(_T("BMatch(): %s\n"), str);
+TRACE2(_T("BMatch(): '%s' (%p)\n"), str, str);
 	set_new_throw_bad_alloc();
 	
 	if (check_params(target, targetstartp, targetendp, rxp, msg) < 0) {
 		return -1;
 	}
 	bregonig *rx = static_cast<bregonig*>(*rxp);
-	*rxp = rx = recompile_onig(rx, str, msg);
+	*rxp = rx = recompile_onig(rx, PTN_MATCH, str, msg);
 	if (rx == NULL) {
 		return -1;
 	}
@@ -330,7 +330,7 @@ TRACE1(_T("BSubst(): %s\n"), str);
 		return -1;
 	}
 	bregonig *rx = static_cast<bregonig*>(*rxp);
-	*rxp = rx = recompile_onig(rx, str, msg);
+	*rxp = rx = recompile_onig(rx, PTN_SUBST, str, msg);
 	if (rx == NULL) {
 		return -1;
 	}
@@ -397,14 +397,20 @@ bregonig::~bregonig()
 
 
 
-pattern_type parse_pattern(const TCHAR *ptn,
+pattern_type parse_pattern(const TCHAR *ptn, pattern_type typeold,
 		const TCHAR **patternp, const TCHAR **patternendp,
 		const TCHAR **prerepp, const TCHAR **prerependp,
 		const TCHAR **optionp, const TCHAR **optionendp,
 		TCHAR *msg)
 {
 	if (ptn == NULL) {
-		return PTN_ERROR;
+		*patternp = NULL;
+		*patternendp = NULL;
+		*prerepp = NULL;
+		*prerependp = NULL;
+		*optionp = NULL;
+		*optionendp = NULL;
+		return typeold;
 	}
 	
 	pattern_type type = PTN_MATCH;
@@ -491,6 +497,7 @@ void parse_option(const TCHAR *optionp, const TCHAR *optionendp,
 #else
 	*enc = ONIG_ENCODING_ASCII;
 #endif
+TRACE1(_T("option: %s"), optionp);
 	while (p < optionendp) {
 		switch (*p++) {
 		case 'g':
@@ -549,9 +556,9 @@ void parse_option(const TCHAR *optionp, const TCHAR *optionendp,
 }
 
 
-bregonig *recompile_onig(bregonig *rxold, const TCHAR *ptn, TCHAR *msg)
+bregonig *recompile_onig(bregonig *rxold, pattern_type type,
+		const TCHAR *ptn, TCHAR *msg)
 {
-	pattern_type type;
 	const TCHAR *patternp;
 	const TCHAR *patternendp;
 	const TCHAR *prerepp;
@@ -560,7 +567,7 @@ bregonig *recompile_onig(bregonig *rxold, const TCHAR *ptn, TCHAR *msg)
 	const TCHAR *optionendp;
 	
 TRACE1(_T("recompile_onig(): %s\n"), ptn);
-	type = parse_pattern(ptn, &patternp, &patternendp,
+	type = parse_pattern(ptn, type, &patternp, &patternendp,
 			&prerepp, &prerependp, &optionp, &optionendp, msg);
 	if (type == PTN_ERROR) {
 		return NULL;
@@ -590,6 +597,7 @@ int compare_pattern(const bregonig *rxold,
 	int len2 = prerependp - prerepp;
 	int len3 = optionendp - optionp;
 	
+TRACE2(_T("compare_pattern: %s, len: %d"), patternp, patternendp-patternp);
 	if (rxold == NULL) {
 		return -1;
 	}
@@ -675,7 +683,10 @@ bregonig *recompile_onig_ex(bregonig *rxold,
 	bregonig *rx;
 	OnigOptionType option;
 	OnigEncoding enc;
-TRACE1(_T("recompile_onig_ex(): %s\n"), patternp);
+TRACE0(_T("recompile_onig_ex()\n"));
+TRACE2(_T("patternp: %s, len: %d\n"), patternp, patternendp-patternp);
+TRACE2(_T("prerepp: %s, len: %d\n"), prerepp, prerependp-prerepp);
+TRACE2(_T("optionp: %s, len: %d\n"), optionp, optionendp-optionp);
 	
 	
 	compare = compare_pattern(rxold, type, patternp, patternendp,

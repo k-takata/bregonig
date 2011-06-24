@@ -872,6 +872,23 @@ def main():
     x2("(?<a>a)(?<a>b)(?&a)", "aba", 0, 3)
     x2("(?<a>(a|.)(?<a>b))(?&a)", "abcb", 0, 4)
     
+    # branch reset
+    x3("(?|(c)|(?:(b)|(a)))", "a", 0, 1, 2)
+    x3("(?|(c)|(?|(b)|(a)))", "a", 0, 1, 1)
+    
+    # conditional expression
+    x2("(?:(a)|(b))(?(1)cd)e", "acde", 0, 4)
+    x2("(?:(a)|(b))(?(2)cd)e", "ae", 0, 2)
+    x2("(?:(a)|(b))(?(1)c|d)", "ac", 0, 2)
+    x2("(?:(a)|(b))(?(1)c|d)", "bd", 0, 2)
+    n("(?:(a)|(b))(?(1)c|d)", "ad")
+    n("(?:(a)|(b))(?(1)c|d)", "bc")
+    x2("(?:(a)|(b))(?:(?(1)cd)e|fg)", "acde", 0, 4)
+    x2("(?:(a)|(b))(?:(?(1)cd|x)e|fg)", "bxe", 0, 3)
+    n("(?:(a)|(b))(?:(?(2)cd|x)e|fg)", "bxe")
+    x2("(?:(?<x>a)|(?<y>b))(?:(?(<x>)cd|x)e|fg)", "bxe", 0, 3)
+    n("(?:(?<x>a)|(?<y>b))(?:(?(<y>)cd|x)e|fg)", "bxe")
+    
     print("\nRESULT   SUCC: %d,  FAIL: %d,  ERROR: %d\n" % (
            nsucc, nfail, nerror))
 

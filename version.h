@@ -1,7 +1,7 @@
 
 #define BREGONIG_VERSION_MAJOR	2
 #define BREGONIG_VERSION_MINOR	50
-#define BREGONIG_VERSION_SUFFIX	" beta6"
+#define BREGONIG_VERSION_SUFFIX	" beta7"
 
 
 #define TOSTR_(a)	#a

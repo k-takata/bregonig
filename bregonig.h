@@ -165,7 +165,8 @@ int BSubst_s(TCHAR *str, TCHAR *target, TCHAR *targetstartp, TCHAR *targetendp,
 int onig_err_to_bregexp_msg(int err_code, OnigErrorInfo* err_info, TCHAR *msg);
 
 
-bregonig *recompile_onig(bregonig *rxold, const TCHAR *ptn, TCHAR *msg);
+bregonig *recompile_onig(bregonig *rxold, pattern_type type,
+		const TCHAR *ptn, TCHAR *msg);
 bregonig *recompile_onig_ex(bregonig *rxold,
 		pattern_type type,
 		const TCHAR *patternp, const TCHAR *patternendp,
