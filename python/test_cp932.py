@@ -889,6 +889,12 @@ def main():
     x2("(?:(?<x>a)|(?<y>b))(?:(?(<x>)cd|x)e|fg)", "bxe", 0, 3)
     n("(?:(?<x>a)|(?<y>b))(?:(?(<y>)cd|x)e|fg)", "bxe")
     
+    # Implicit-anchor optimization
+    x2("(?s:.*abc)", "dddabdd\nddabc", 0, 13)   # optimized /(?s:.*abc)/ ==> /\A(?s:.*abc)/
+    x2("(?s:.+abc)", "dddabdd\nddabc", 0, 13)   # optimized
+    x2("(.*)X\\1", "1234X2345", 1, 8)           # not optimized
+    
+    
     print("\nRESULT   SUCC: %d,  FAIL: %d,  ERROR: %d\n" % (
            nsucc, nfail, nerror))
 
