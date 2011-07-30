@@ -778,6 +778,7 @@ def main():
     n("(?i)(?<!aa|b)c", "Aac")
     n("(?i)(?<!b|aa)c", "Aac")
     x2("a\\b?a", "aa", 0, 2)        # error: differ from perl
+    x2("[^x]*x", "aaax", 0, 4)
     
     # possessive quantifiers
     n("a?+a", "a")          # Ver.1.xx fails
