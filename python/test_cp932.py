@@ -777,7 +777,7 @@ def main():
     n("(?<=(?<!A)B)C", "ABC")
     n("(?i)(?<!aa|b)c", "Aac")
     n("(?i)(?<!b|aa)c", "Aac")
-    x2("a\\b?a", "aa", 0, 2)        # error: differ from perl
+    x2("a\\b?a", "aa", 0, 2)
     x2("[^x]*x", "aaax", 0, 4)
     
     # possessive quantifiers
