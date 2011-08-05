@@ -13,7 +13,8 @@ __all__ = ["BREGEXP", "BRegexpVersion",
            "BTrans", "BSplit", "BRegfree",
            "BoMatch", "BoSubst",
            "LoadDLL", "LoadBregonig", "LoadBregexp",
-           "BCallBack"]
+           "BCallBack",
+           "create_tchar_buffer"]
 
 
 if sizeof(c_long) == sizeof(c_void_p):
@@ -49,6 +50,8 @@ _BSplit = None
 _BRegfree = None
 _BoMatch = None
 _BoSubst = None
+
+_create_tchar_buffer = None
 
 
 # callback type
@@ -102,6 +105,9 @@ def BoSubst(patternp, substp, optionp, strstartp, targetstartp, targetendp,
     return _BoSubst(patternp, substp, optionp, strstartp, targetstartp, targetendp,
             callback, rxp, msg)
 
+def create_tchar_buffer(size=None):
+    return _create_tchar_buffer(size)
+
 
 # bregonig.dll
 def LoadBregonig(unicode_func = False):
@@ -128,10 +134,13 @@ def LoadDLL(regexpdll, unicode_func = False):
                       False: Use ANSI functions.
     """
     
+    global _create_tchar_buffer
     if unicode_func:
         c_tchar_p = c_wchar_p
+        _create_tchar_buffer = create_unicode_buffer
     else:
         c_tchar_p = c_char_p
+        _create_tchar_buffer = create_string_buffer
     
     global _BRegexpVersion
     if unicode_func:
