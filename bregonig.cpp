@@ -288,7 +288,7 @@ int BMatch_s(TCHAR *str, TCHAR *target, TCHAR *targetstartp, TCHAR *targetendp,
 		int one_shot,
 		BREGEXP **rxp, TCHAR *msg)
 {
-TRACE2(_T("BMatch(): '%s' (%p)\n"), str, str);
+TRACE(_T("BMatch(): '%s' (%p), %p, %p, %p\n"), str, str, target, targetstartp, targetendp);
 	set_new_throw_bad_alloc();
 	
 	if (check_params(target, targetstartp, targetendp, rxp, msg) < 0) {
@@ -323,7 +323,7 @@ TRACE2(_T("BMatch(): '%s' (%p)\n"), str, str);
 int BSubst_s(TCHAR *str, TCHAR *target, TCHAR *targetstartp, TCHAR *targetendp,
 		BREGEXP **rxp, TCHAR *msg, BCallBack callback)
 {
-TRACE1(_T("BSubst(): %s\n"), str);
+TRACE(_T("BSubst(): '%s' (%p), %p, %p, %p\n"), str, str, target, targetstartp, targetendp);
 	set_new_throw_bad_alloc();
 	
 	if (check_params(target, targetstartp, targetendp, rxp, msg) < 0) {
