@@ -5,19 +5,20 @@
 #
 
 #VER1 = 1
+USE_LTCG = 1
+#USE_MSVCRT = 1
+#USE_ONIG_DLL = 1
 
 BASEADDR = 0x60500000
 
-ONIG_DIR = ../onigmo-5.9.2
+ONIG_DIR = ../onigmo-5.10.6
 !ifdef USE_ONIG_DLL
 ONIG_LIB = $(ONIG_DIR)/onig.lib
 !else
 ONIG_LIB = $(ONIG_DIR)/onig_s.lib
 !endif
 
-#CPPFLAGS = /O2 /W3 /GX /LD /nologo /I$(ONIG_DIR)
 CPPFLAGS = /O2 /W3 /EHsc /LD /nologo /I$(ONIG_DIR)
-#CPPFLAGS = /O2 /W3 /EHac /LD /nologo /I$(ONIG_DIR)
 !ifdef VER1
 CPPFLAGS = $(CPPFLAGS) /DUSE_VTAB /DPERL_5_8_COMPAT /DNAMEGROUP_RIGHTMOST
 !endif
@@ -32,6 +33,16 @@ CPPFLAGS = $(CPPFLAGS) /MT
 
 !ifndef USE_ONIG_DLL
 CPPFLAGS = $(CPPFLAGS) /DONIG_EXTERN=extern
+!endif
+
+!if DEFINED(USE_LTCG) && $(USE_LTCG)
+# Use LTCG (Link Time Code Generation)
+# Check the version of nmake.exe instead of cl.exe, because we can't check it
+# directly. Nmake can't compare strings, so we use cmd.exe's "if" command.
+!if [if "$(_NMAKE_VER)" GEQ "7.00" exit 1]
+CPPFLAGS = $(CPPFLAGS) /GL
+LDFLAGS = $(LDFLAGS) /LTCG
+!endif
 !endif
 
 !ifdef DEBUG
