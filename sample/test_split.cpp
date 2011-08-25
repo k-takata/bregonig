@@ -10,7 +10,7 @@
 int main()
 {
 	static BregPool bpool(8);
-	TCHAR msg[80];
+	TCHAR msg[BREGEXP_MAX_ERROR_MESSAGE_LEN];
 	TCHAR t1[] = _T(" Yokohama 045-222-1111  Osaka 06-5555-6666  Tokyo 03-1111-9999 ");
 	TCHAR patern1[] = _T("/ *\\d{2,3}-\\d{3,4}-\\d{4} */");
 	BREGEXP *rxp = bpool.Get(patern1);
