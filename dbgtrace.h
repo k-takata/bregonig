@@ -2,7 +2,7 @@
  *	dbgtrace.h
  */
 /*
- * Copyright (C) 2006-2007  K.Takata
+ * Copyright (C) 2006-2011  K.Takata
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -52,8 +52,9 @@ void TRACEx_(LPCTSTR msg, ...)
 }
 #endif /* __cplusplus || _MSC_VER */
 
-#if defined(_DEBUG) || defined(DEBUG)
 #pragma comment(lib, "user32.lib")
+
+#if defined(_DEBUG) || defined(DEBUG)
 #include <stdarg.h>
 
 #define TRACE0(msg)	OutputDebugString(msg)
