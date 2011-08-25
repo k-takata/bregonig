@@ -85,7 +85,7 @@ TCHAR *bufcat(TCHAR *buf, int *copycnt, const TCHAR *src, int len,
 		*blen += len + bufsize;
 		TCHAR *tp = new (std::nothrow) TCHAR[*blen];
 		if (tp == NULL) {
-		//	asc2tcs(msg,"out of space buf");
+		//	asc2tcs(msg, "out of space buf", BREGEXP_MAX_ERROR_MESSAGE_LEN);
 			delete [] buf;
 			throw std::bad_alloc();
 		//	return NULL;
@@ -132,7 +132,7 @@ TRACE0(_T("subst_onig()\n"));
 			if (iters++ > maxiters) {
 				delete [] buf;
 TRACE0(_T("Substitution loop\n"));
-				asc2tcs(msg,"Substitution loop");
+				asc2tcs(msg, "Substitution loop", BREGEXP_MAX_ERROR_MESSAGE_LEN);
 				return 0;
 			}
 			m = rx->startp[0];
@@ -200,7 +200,7 @@ TRACE1(_T("subst_count: %d\n"), subst_count);
 	}
 	catch (std::bad_alloc& /*ex*/) {
 TRACE0(_T("out of space in subst_onig()\n"));
-		asc2tcs(msg,"out of space buf");
+		asc2tcs(msg, "out of space buf", BREGEXP_MAX_ERROR_MESSAGE_LEN);
 		return 0;
 	}
 }
