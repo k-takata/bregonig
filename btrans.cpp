@@ -86,7 +86,7 @@ bregonig *trcomp(TCHAR *str, TCHAR *strend, TCHAR *rp, TCHAR *rpend,
 //	bregonig *rx = (bregonig*) new char[sizeof(bregonig)];
 	bregonig *rx = new (std::nothrow) bregonig();
 	if (rx == NULL) {
-		asc2tcs(msg,"out of space trcomp");
+		asc2tcs(msg, "out of space trcomp", BREGEXP_MAX_ERROR_MESSAGE_LEN);
 		return NULL;
 	}
 
@@ -188,7 +188,7 @@ TRACE0(_T("out of space in trcomp()\n"));
 			sv_free(rstr);
 		delete tbl;
 		delete rx;
-		asc2tcs(msg, ex.what());
+		asc2tcs(msg, ex.what(), BREGEXP_MAX_ERROR_MESSAGE_LEN);
 		return NULL;
 	}
 }
@@ -450,7 +450,7 @@ int trans(bregonig *rx, TCHAR *target, TCHAR *targetendp, TCHAR *msg)
 TRACE0(_T("out of space in trans()\n"));
 		if (dest_sv)
 			sv_free(dest_sv);
-		asc2tcs(msg, ex.what());
+		asc2tcs(msg, ex.what(), BREGEXP_MAX_ERROR_MESSAGE_LEN);
 		return -1;
 	}
 }
