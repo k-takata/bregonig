@@ -14,7 +14,8 @@ __all__ = ["BREGEXP", "BRegexpVersion",
            "BoMatch", "BoSubst",
            "LoadDLL", "LoadBregonig", "LoadBregexp",
            "BCallBack",
-           "create_tchar_buffer"]
+           "create_tchar_buffer",
+           "BREGEXP_MAX_ERROR_MESSAGE_LEN"]
 
 
 if sizeof(c_long) == sizeof(c_void_p):
@@ -53,6 +54,9 @@ _BoSubst = None
 
 _create_tchar_buffer = None
 
+
+# constant
+BREGEXP_MAX_ERROR_MESSAGE_LEN = 80
 
 # callback type
 BCallBack = WINFUNCTYPE(c_bool, c_int, c_int, c_int)
