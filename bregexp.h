@@ -33,6 +33,8 @@
 #define BoSubst		BoSubstW
 #endif /* UNICODE */
 
+#define BREGEXP_MAX_ERROR_MESSAGE_LEN	80
+
 
 typedef struct bregexp {
 	BREGCONST TCHAR *outp;		/* result string start ptr  */

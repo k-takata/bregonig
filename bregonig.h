@@ -155,8 +155,6 @@ inline TCHAR *asc2tcs(TCHAR *dst, const char *src, size_t cch)
 }
 
 
-#define BREGEXP_MAX_ERROR_MESSAGE_LEN	80
-
 #define CALLBACK_KIND_REPLACE	0
 #define SUBST_BUF_SIZE 256
 
