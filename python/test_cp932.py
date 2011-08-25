@@ -47,7 +47,7 @@ def xx(pattern, target, s_from, s_to, mem, not_match):
     global nfail
     
     rxp = POINTER(BREGEXP)()
-    msg = create_tchar_buffer(80)
+    msg = create_tchar_buffer(BREGEXP_MAX_ERROR_MESSAGE_LEN)
     
     pattern2 = pattern
     if not isinstance(pattern, bytes):

@@ -41,7 +41,7 @@ class BregPool:
         if (self._rxpool[i]):
             return self._rxpool[i];
         
-        msg = create_string_buffer(80)
+        msg = create_string_buffer(BREGEXP_MAX_ERROR_MESSAGE_LEN)
         
         dummystr = " "
         p = cast(dummystr, c_void_p)
