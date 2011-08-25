@@ -86,11 +86,12 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 TCHAR *::BRegexpVersion(void)
 {
 	static TCHAR version[80];
-//	sprintf(version, "bregonig.dll Ver.%d.%02d%s %s with Oniguruma %s",
-	_stprintf(version, _T("bregonig.dll Ver.%d.%02d%hs with Onigmo %hs"),
+	_sntprintf(version, lengthof(version),
+			_T("bregonig.dll Ver.%d.%02d%hs with Onigmo %hs"),
 			BREGONIG_VERSION_MAJOR, BREGONIG_VERSION_MINOR,
 			BREGONIG_VERSION_SUFFIX,
-			/*__DATE__,*/ onig_version());
+			onig_version());
+	version[lengthof(version) - 1] = '\0';	// Ensure NUL termination.
 	
 	return version;
 }
@@ -155,7 +156,7 @@ TRACE1(_T("BTrans(): %s\n"), str);
 	if (!(rx->pmflags & PMf_TRANSLATE)) {
 		delete rx;
 		*rxp = NULL;
-		asc2tcs(msg,"no translate parameter");
+		asc2tcs(msg, "no translate parameter", BREGEXP_MAX_ERROR_MESSAGE_LEN);
 		return -1;
 	}
 	
@@ -259,7 +260,7 @@ int onig_err_to_bregexp_msg(int err_code, OnigErrorInfo* err_info, TCHAR *msg)
 	char err_str[ONIG_MAX_ERROR_MESSAGE_LEN];
 	int ret = onig_error_code_to_str((UChar*) err_str, err_code, err_info);
 	err_str[BREGEXP_MAX_ERROR_MESSAGE_LEN-1] = '\0';
-	asc2tcs(msg, err_str);
+	asc2tcs(msg, err_str, BREGEXP_MAX_ERROR_MESSAGE_LEN);
 	return ret;
 }
 
@@ -271,12 +272,12 @@ int check_params(const TCHAR *target, const TCHAR *targetstartp,
 	msg[0] = '\0';			// ensure no error
 	
 	if (rxp == NULL) {
-		asc2tcs(msg, "invalid BREGEXP parameter");
+		asc2tcs(msg, "invalid BREGEXP parameter", BREGEXP_MAX_ERROR_MESSAGE_LEN);
 		return -1;
 	}
 	if (target == NULL || targetstartp == NULL || targetendp == NULL
 		|| targetstartp > targetendp || target > targetstartp) { // bad target parameter ?
-		asc2tcs(msg, "invalid target parameter");
+		asc2tcs(msg, "invalid target parameter", BREGEXP_MAX_ERROR_MESSAGE_LEN);
 		return -1;
 	}
 	
@@ -307,7 +308,7 @@ TRACE(_T("BMatch(): '%s' (%p), %p, %p, %p\n"), str, str, target, targetstartp, t
 		int len = rx->endp[1] - rx->startp[1];
 		TCHAR *tp = new (std::nothrow) TCHAR[len+1];
 		if (tp == NULL) {
-			asc2tcs(msg,"match out of space");
+			asc2tcs(msg, "match out of space", BREGEXP_MAX_ERROR_MESSAGE_LEN);
 			return -1;
 		}
 		memcpy(tp,rx->startp[1],len*sizeof(TCHAR));
@@ -346,7 +347,7 @@ TRACE0(_T("Match in Subst"));
 		int len = rx->endp[1] - rx->startp[1];
 		TCHAR *tp = new (std::nothrow) TCHAR[len+1];
 		if (tp == NULL) {
-			asc2tcs(msg, "match out of space");
+			asc2tcs(msg, "match out of space", BREGEXP_MAX_ERROR_MESSAGE_LEN);
 			return -1;
 		}
 		memcpy(tp,rx->startp[1],len*sizeof(TCHAR));
@@ -421,7 +422,8 @@ pattern_type parse_pattern(const TCHAR *ptn, pattern_type typeold,
 	if (*p != sep) {
 		if (*p != 's' && *p != 'm' && *p != 'y'
 				&& (p[0] != 't' || p[1] != 'r')) {
-			asc2tcs(msg, "does not start with 'm', 's', 'tr' or 'y'");
+			asc2tcs(msg, "does not start with 'm', 's', 'tr' or 'y'",
+					BREGEXP_MAX_ERROR_MESSAGE_LEN);
 			return PTN_ERROR;
 		}
 		if (*p == 's') {
@@ -469,7 +471,7 @@ pattern_type parse_pattern(const TCHAR *ptn, pattern_type typeold,
 		prev = *p++;
 	}
 	if ((resend == NULL) || (rpend == NULL && type != PTN_MATCH)) {
-		asc2tcs(msg, "unmatch separater");
+		asc2tcs(msg, "unmatch separater", BREGEXP_MAX_ERROR_MESSAGE_LEN);
 		return PTN_ERROR;
 	}
 	if (rpend == NULL) {
@@ -698,7 +700,7 @@ TRACE1(_T("compare: %d\n"), compare);
 		
 		if (patternp == NULL
 				|| ((type == PTN_SUBST || type == PTN_TRANS) && prerepp == NULL)) {
-			asc2tcs(msg, "invalid reg parameter");
+			asc2tcs(msg, "invalid reg parameter", BREGEXP_MAX_ERROR_MESSAGE_LEN);
 			return NULL;
 		}
 	} else {
@@ -732,7 +734,7 @@ TRACE1(_T("compare: %d\n"), compare);
 			// pattern string needs to compile.
 			rx = new (std::nothrow) bregonig();
 			if (rx == NULL) {
-				asc2tcs(msg, "out of space regexp");
+				asc2tcs(msg, "out of space regexp", BREGEXP_MAX_ERROR_MESSAGE_LEN);
 				return NULL;
 			}
 			OnigErrorInfo err_info;
@@ -760,7 +762,7 @@ TRACE1(_T("compare: %d\n"), compare);
 				rx->pmflags |= PMf_SUBSTITUTE;
 				rx->repstr = compile_rep(rx, prerepp, prerependp);	// compile replace string
 			} catch (std::exception& ex) {
-				asc2tcs(msg, ex.what());
+				asc2tcs(msg, ex.what(), BREGEXP_MAX_ERROR_MESSAGE_LEN);
 				delete rx;
 				return NULL;
 			}
@@ -854,7 +856,7 @@ TRACE1(_T("one_shot: %d\n"), one_shot);
 		rx->startp = new (std::nothrow) TCHAR*[rx->region->num_regs * 2];
 			/* allocate startp and endp together */
 		if (rx->startp == NULL) {
-			asc2tcs(msg, "out of space");
+			asc2tcs(msg, "out of space", BREGEXP_MAX_ERROR_MESSAGE_LEN);
 			return -1;
 		}
 		rx->endp = rx->startp + rx->region->num_regs;

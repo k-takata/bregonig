@@ -20,6 +20,10 @@ typedef WORD TWORD;
 #define BREGONIG_NS	ansi
 #endif
 
+#ifndef lengthof
+#define lengthof(arr)	((sizeof(arr) / sizeof((arr)[0])))
+#endif
+
 namespace BREGONIG_NS {
 
 typedef struct repstr {
@@ -137,13 +141,16 @@ inline int set_codepoint(TWORD codepoint, TBYTE *s)
 }
 
 // ASCII to TCHAR string
-inline TCHAR *asc2tcs(TCHAR *dst, const char *src)
+inline TCHAR *asc2tcs(TCHAR *dst, const char *src, size_t cch)
 {
 #ifdef UNICODE
-	swprintf(dst, L"%hs", src);
+	_snwprintf(dst, cch, L"%hs", src);
+	if (cch > 0) {
+		dst[cch - 1] = L'\0';			// Ensure NUL termination.
+	}
 	return dst;
 #else
-	return strcpy(dst, src);
+	return lstrcpyn(dst, src, cch);		// NUL termination is ensured.
 #endif
 }
 

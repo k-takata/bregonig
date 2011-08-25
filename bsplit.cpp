@@ -57,7 +57,7 @@ int split_onig(bregonig *rx, TCHAR *target, TCHAR *targetendp, int limit, TCHAR 
 		TCHAR **buf = new (std::nothrow) TCHAR*[blen];
 		int copycnt = 0;
 		if (buf == NULL) {
-			asc2tcs(msg,"out of space buf");
+			asc2tcs(msg, "out of space buf", BREGEXP_MAX_ERROR_MESSAGE_LEN);
 			return -1;
 		}
 #ifdef UNICODE
@@ -97,7 +97,7 @@ int split_onig(bregonig *rx, TCHAR *target, TCHAR *targetendp, int limit, TCHAR 
 	TCHAR **buf = new (std::nothrow) TCHAR*[blen];
 	int copycnt = 0;
 	if (buf == NULL) {
-		asc2tcs(msg,"out of space buf");
+		asc2tcs(msg, "out of space buf", BREGEXP_MAX_ERROR_MESSAGE_LEN);
 		return -1;
 	}
 	if (!regexec_onig(rx, s, strend, orig, 0,1,0,msg)) { // no split ?
@@ -114,7 +114,7 @@ int split_onig(bregonig *rx, TCHAR *target, TCHAR *targetendp, int limit, TCHAR 
 	do {
 		if (iters++ > maxiters) {
 			delete [] buf;
-			asc2tcs(msg,"Split loop");
+			asc2tcs(msg, "Split loop", BREGEXP_MAX_ERROR_MESSAGE_LEN);
 			return -1;
 		}
 		m = rx->startp[0];
@@ -122,7 +122,7 @@ int split_onig(bregonig *rx, TCHAR *target, TCHAR *targetendp, int limit, TCHAR 
 		if (blen <= copycnt + 3) {
 			TCHAR **tp = new (std::nothrow) TCHAR*[blen + 256];
 			if (tp == NULL) {
-				asc2tcs(msg,"out of space buf");
+				asc2tcs(msg, "out of space buf", BREGEXP_MAX_ERROR_MESSAGE_LEN);
 				delete [] buf;
 				return -1;
 			}
@@ -141,7 +141,7 @@ int split_onig(bregonig *rx, TCHAR *target, TCHAR *targetendp, int limit, TCHAR 
 	if (blen <= copycnt + 3) {
 		TCHAR **tp = new (std::nothrow) TCHAR*[blen + 3];
 		if (tp == NULL) {
-			asc2tcs(msg,"out of space buf");
+			asc2tcs(msg, "out of space buf", BREGEXP_MAX_ERROR_MESSAGE_LEN);
 			delete [] buf;
 			return -1;
 		}
