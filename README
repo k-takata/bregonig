@@ -1,0 +1,14 @@
+This is a source code package of bregonig.dll reguler expression library.
+
+Binary packages and documents are available at the following site:
+http://homepage3.nifty.com/k-takata/mysoft/bregonig.html (Japanese)
+
+Bregonig.dll is a reguler expression library compatible with bregexp.dll.
+Bregexp.dll is widely used in Japanese Win32 applications, but the regexp
+engine is very old. (It seems to be a modified version of Perl 5.00x.)
+On the other hand, bregonig.dll uses Oniguruma (or Onigmo) to support
+more powerful regexp patterns.
+
+LICENSE:
+  You may distribute under the terms of either the GNU General Public
+  License or the Artistic License.
