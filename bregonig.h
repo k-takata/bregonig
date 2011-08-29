@@ -173,7 +173,7 @@ int onig_err_to_bregexp_msg(int err_code, OnigErrorInfo* err_info, TCHAR *msg);
 bregonig *recompile_onig(bregonig *rxold, pattern_type type,
 		const TCHAR *ptn, TCHAR *msg);
 bregonig *recompile_onig_ex(bregonig *rxold,
-		pattern_type type,
+		pattern_type type, const TCHAR *ptn,
 		const TCHAR *patternp, const TCHAR *patternendp,
 		const TCHAR *prerepp, const TCHAR *prerependp,
 		const TCHAR *optionp, const TCHAR *optionendp,

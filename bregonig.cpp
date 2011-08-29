@@ -213,7 +213,7 @@ int ::BoMatch(const TCHAR *patternp, const TCHAR *optionp,
 	}
 	
 	bregonig *rx = static_cast<bregonig*>(*rxp);
-	*rxp = rx = recompile_onig_ex(rx, PTN_MATCH, patternp, patternendp,
+	*rxp = rx = recompile_onig_ex(rx, PTN_MATCH, NULL, patternp, patternendp,
 			substp, substendp, optionp, optionendp, msg);
 	if (rx == NULL) {
 		return -1;
@@ -242,7 +242,7 @@ int ::BoSubst(const TCHAR *patternp, const TCHAR *substp, const TCHAR *optionp,
 	}
 	
 	bregonig *rx = static_cast<bregonig*>(*rxp);
-	*rxp = rx = recompile_onig_ex(rx, PTN_SUBST, patternp, patternendp,
+	*rxp = rx = recompile_onig_ex(rx, PTN_SUBST, NULL, patternp, patternendp,
 			substp, substendp, optionp, optionendp, msg);
 	if (rx == NULL) {
 		return -1;
@@ -574,7 +574,7 @@ TRACE1(_T("recompile_onig(): %s\n"), ptn);
 	if (type == PTN_ERROR) {
 		return NULL;
 	}
-	return recompile_onig_ex(rxold, type, patternp, patternendp,
+	return recompile_onig_ex(rxold, type, ptn, patternp, patternendp,
 			prerepp, prerependp, optionp, optionendp, msg);
 }
 
@@ -675,7 +675,7 @@ TRACE2(_T("compare_pattern: %s, len: %d"), patternp, patternendp-patternp);
 
 
 bregonig *recompile_onig_ex(bregonig *rxold,
-		pattern_type type,
+		pattern_type type, const TCHAR *ptn,
 		const TCHAR *patternp, const TCHAR *patternendp,
 		const TCHAR *prerepp, const TCHAR *prerependp,
 		const TCHAR *optionp, const TCHAR *optionendp,
@@ -767,6 +767,19 @@ TRACE1(_T("compare: %d\n"), compare);
 				return NULL;
 			}
 		}
+	}
+	
+	if (ptn != NULL) {
+		int plen = _tcslen(ptn);
+		delete [] rx->parap;
+		rx->parap = new (std::nothrow) TCHAR[plen+1];	// parameter copy
+		if (rx->parap == NULL) {
+			asc2tcs(msg, "precompile out of space", BREGEXP_MAX_ERROR_MESSAGE_LEN);
+			delete rx;
+			return NULL;
+		}
+		memcpy(rx->parap, ptn, (plen+1)*sizeof(TCHAR));	// copy include null
+		rx->paraendp = rx->parap + plen;
 	}
 	
 	TCHAR *oldpatternp = rx->patternp;
