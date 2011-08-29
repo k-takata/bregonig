@@ -39,10 +39,6 @@
 using namespace BREGONIG_NS;
 namespace BREGONIG_NS {
 
-int trans(bregonig *rx, TCHAR *target, TCHAR *targetendp, TCHAR *msg);
-
-bregonig *trcomp(TCHAR *res, TCHAR *resend, TCHAR *rp, TCHAR *rpend,
-		int flag, TCHAR *msg);
 static SV *cvchar(const TCHAR *str, const TCHAR *strend);
 static TWORD specchar(const TCHAR* p,int *next);
 void sv_catkanji(SV *sv,U32 tch);
