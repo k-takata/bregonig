@@ -697,6 +697,7 @@ TRACE1(_T("compare: %d\n"), compare);
 	if (compare < 0) {
 		// need to compile
 		delete rxold;
+		rxold = NULL;
 		
 		if (patternp == NULL
 				|| ((type == PTN_SUBST || type == PTN_TRANS) && prerepp == NULL)) {
