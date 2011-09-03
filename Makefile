@@ -11,7 +11,7 @@ USE_LTCG = 1
 
 BASEADDR = 0x60500000
 
-ONIG_DIR = ../onigmo-5.10.6
+ONIG_DIR = ../onigmo-5.11.0
 !ifdef USE_ONIG_DLL
 ONIG_LIB = $(ONIG_DIR)/onig.lib
 !else
@@ -23,7 +23,7 @@ CPPFLAGS = /O2 /W3 /EHsc /LD /nologo /I$(ONIG_DIR)
 CPPFLAGS = $(CPPFLAGS) /DUSE_VTAB /DPERL_5_8_COMPAT /DNAMEGROUP_RIGHTMOST
 !endif
 LD = link
-LDFLAGS = /DLL /nologo /MAP /opt:nowin98 /BASE:$(BASEADDR) /merge:.rdata=.text
+LDFLAGS = /DLL /nologo /MAP /BASE:$(BASEADDR) /merge:.rdata=.text
 
 !ifdef USE_MSVCRT
 CPPFLAGS = $(CPPFLAGS) /MD
@@ -45,6 +45,10 @@ _MSC_VER = [for /f %i in ('cmd /c "(echo _MSC_VER>mscver.c) && ($(CC) /EP mscver
 CPPFLAGS = $(CPPFLAGS) /GL
 LDFLAGS = $(LDFLAGS) /LTCG
 !endif
+!endif
+
+!if $(_MSC_VER) < 1500
+LDFLAGS = $(LDFLAGS) /opt:nowin98
 !endif
 
 !ifdef DEBUG

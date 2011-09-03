@@ -62,8 +62,8 @@ struct sv {
     int		sv_flags;	/* what we are */
 //    struct xpvbm     sv_xpv;		/* struct xpvbm */ 
     TCHAR*	xpv_pv;		/* pointer to malloced string */
-    int		xpv_cur;		/* length of xpv_pv as a C string */
-    int		xpv_len;		/* allocated size */
+    ptrdiff_t		xpv_cur;		/* length of xpv_pv as a C string */
+    ptrdiff_t		xpv_len;		/* allocated size */
     int		xbm_useful;	/* is this constant pattern being useful? */
     int		xbm_previous;	/* how many characters in string before rare? */
     TCHAR	xbm_rare;	/* rarest character in string */
@@ -264,9 +264,9 @@ TCHAR *ninstr(register TCHAR *big,register TCHAR *bigend,TCHAR *little,
 //TCHAR * fbm_instr(unsigned TCHAR*,register unsigned TCHAR *,SV*,int mline,int kmode);
 TCHAR * fbm_instr(TBYTE*,register TBYTE *,SV*,int mline,int kmode);
 BOOL sv_upgrade(register SV*, int);// sv.spp
-SV *newSVpv(TCHAR*,int);//sv.cpp
-void sv_catpvn(register SV*,register const TCHAR*,register int);//sv.cpp
-void sv_setpvn(register SV*,register const TCHAR*,register int);//sv.cpp
+SV *newSVpv(TCHAR*,ptrdiff_t);//sv.cpp
+void sv_catpvn(register SV*,register const TCHAR*,register ptrdiff_t);//sv.cpp
+void sv_setpvn(register SV*,register const TCHAR*,register ptrdiff_t);//sv.cpp
 void sv_setsv(SV*,SV*);//sv.cpp
 
 void fbm_compile (SV* sv, int iflag);

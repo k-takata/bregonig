@@ -7,6 +7,7 @@
  *	2011.06.17	modified by K.Takata
  */
 
+#include <stddef.h>
 
 #ifdef _BREGEXP_
 /* for internal use */
@@ -50,7 +51,7 @@ typedef struct bregexp {
 	int nparens;				/* number of parentheses */
 } BREGEXP;
 
-typedef BOOL (__stdcall *BCallBack)(int kind, int value, int index);
+typedef BOOL (__stdcall *BCallBack)(int kind, int value, ptrdiff_t index);
 
 #if defined(__cplusplus)
 extern "C"

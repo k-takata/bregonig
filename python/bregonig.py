@@ -59,7 +59,7 @@ _create_tchar_buffer = None
 BREGEXP_MAX_ERROR_MESSAGE_LEN = 80
 
 # callback type
-BCallBack = WINFUNCTYPE(c_bool, c_int, c_int, c_int)
+BCallBack = WINFUNCTYPE(c_bool, c_int, c_int, c_ssize_t)
 
 
 def BRegexpVersion():

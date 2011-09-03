@@ -73,8 +73,8 @@ bregonig *trcomp(const TCHAR *str, const TCHAR *strend,
 		const TCHAR *rp, const TCHAR *rpend,
 		int flag, TCHAR *msg)
 {
-	int slen = strend - str;
-	int rlen = rpend - rp;
+	ptrdiff_t slen = strend - str;
+	ptrdiff_t rlen = rpend - rp;
 	if (slen < 1)
 		return NULL;
 	register const TCHAR *p = str;
@@ -103,7 +103,7 @@ bregonig *trcomp(const TCHAR *str, const TCHAR *strend,
 		rstr = cvchar(rp,rpend);
 	
 	
-		int tlen = SvCUR(tstr);
+		ptrdiff_t tlen = SvCUR(tstr);
 		rlen = SvCUR(rstr);
 		register TBYTE *t = (TBYTE*)SvPVX(tstr);
 		register TBYTE *r = (TBYTE*)SvPVX(rstr);
@@ -195,7 +195,7 @@ static SV *cvchar(const TCHAR *str, const TCHAR *strend)
 	int next;
 	TWORD ender;
 	TWORD lastch = 0;
-	int len = strend - str;
+	ptrdiff_t len = strend - str;
 	const TCHAR *p = str;
 	const TCHAR *pend = strend;
 	SV *dst = newSVpv(_T(""),0);
@@ -357,7 +357,7 @@ int trans(bregonig *rx, TCHAR *target, TCHAR *targetendp, TCHAR *msg)
 	register TBYTE *send;
 	register int matches = 0;
 	register int squash = rx->pmflags & PMf_TRANS_SQUASH;
-	int len;
+	ptrdiff_t len;
 	U32 last_rch;
 	// This variable need, doesn't it?
 	// replase sv ;

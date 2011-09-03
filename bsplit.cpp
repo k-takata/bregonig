@@ -37,12 +37,12 @@ int split_onig(bregonig *rx, TCHAR *target, TCHAR *targetendp, int limit, TCHAR 
 {
 	TCHAR *orig,*m;
 	TCHAR *s = target;
-	int len = targetendp - target;
+	ptrdiff_t len = targetendp - target;
 	if (len < 1)
 		return -1;
 	TCHAR *strend = s + len;
-	int maxiters = (strend - s) + 10;
-	int iters = 0;
+	ptrdiff_t maxiters = (strend - s) + 10;
+	ptrdiff_t iters = 0;
 	orig = m = s;
 
 	rx->splitctr = 0;	// split counter
@@ -51,7 +51,7 @@ int split_onig(bregonig *rx, TCHAR *target, TCHAR *targetendp, int limit, TCHAR 
 	// pattern length = 0 means split each characters
 	//   and limit is 1 returns all string
 	if (rx->patternp == rx->patternendp || limit == 1) {
-		int blen = 2*len + 3;
+		ptrdiff_t blen = 2*len + 3;
 		if (limit == 1)
 			blen = 5;
 		TCHAR **buf = new (std::nothrow) TCHAR*[blen];

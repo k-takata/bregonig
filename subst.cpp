@@ -78,8 +78,8 @@ unsigned long scan_hex(const TCHAR *start, int len, int *retlen);
 //unsigned long scan_dec(const TCHAR *start, int len, int *retlen);
 
 
-TCHAR *bufcat(TCHAR *buf, int *copycnt, const TCHAR *src, int len,
-		int *blen, int bufsize = SUBST_BUF_SIZE)
+TCHAR *bufcat(TCHAR *buf, ptrdiff_t *copycnt, const TCHAR *src, ptrdiff_t len,
+		ptrdiff_t *blen, int bufsize = SUBST_BUF_SIZE)
 {
 	if (*blen <= *copycnt + len) {
 		*blen += len + bufsize;
@@ -110,11 +110,11 @@ int subst_onig(bregonig *rx, const TCHAR *target,
 TRACE0(_T("subst_onig()\n"));
 	const TCHAR *orig,*m,*c;
 	const TCHAR *s = target;
-	int len = targetendp - target;
+	ptrdiff_t len = targetendp - target;
 	const TCHAR *strend = s + len;
-	int maxiters = (strend - s) + 10;
-	int iters = 0;
-	int clen;
+	ptrdiff_t maxiters = (strend - s) + 10;
+	ptrdiff_t iters = 0;
+	ptrdiff_t clen;
 	orig = m = s;
 	s = targetstartp;	// added by K2
 	bool once = !(rx->pmflags & PMf_GLOBAL);
@@ -124,9 +124,9 @@ TRACE0(_T("subst_onig()\n"));
 	if (regexec_onig(rx, s, strend, orig, 0,1,0,msg) <= 0)
 		return 0;
 	try {
-		int blen = len + clen + SUBST_BUF_SIZE;
+		ptrdiff_t blen = len + clen + SUBST_BUF_SIZE;
 		TCHAR *buf = new TCHAR[blen];
-		int copycnt = 0;
+		ptrdiff_t copycnt = 0;
 		// now ready to go
 		int subst_count = 0;
 		do {
@@ -147,7 +147,7 @@ TRACE0(_T("Substitution loop\n"));
 				for (int i = 0; i < rep->count; i++) {
 					int j;
 					// normal char
-					int dlen = rep->dlen[i];
+					ptrdiff_t dlen = rep->dlen[i];
 					if (rep->is_normal_string(i) && dlen) {
 						buf = bufcat(buf, &copycnt, rep->startp[i], dlen, &blen);
 					}
@@ -166,7 +166,7 @@ TRACE0(_T("Substitution loop\n"));
 						buf = bufcat(buf, &copycnt, rx->startp[j], len, &blen);
 					}
 					
-					else if ((10<=dlen && (j=dec2oct(dlen)) > 0)
+					else if ((10<=dlen && (j=dec2oct((int) dlen)) > 0)
 							&& dlen > rx->nparens && rep->is_backslash(i)) {
 						// \nnn
 						TCHAR ch = (TCHAR) j;
@@ -221,8 +221,8 @@ TRACE0(_T("set_repstr\n"));
 		memcpy(p1, repstr->startp, repstr->count * sizeof(TCHAR*));
 		delete [] repstr->startp;
 		repstr->startp = p1;
-		int *p2 = new int[newcount];
-		memcpy(p2, repstr->dlen, repstr->count * sizeof(int));
+		ptrdiff_t *p2 = new ptrdiff_t[newcount];
+		memcpy(p2, repstr->dlen, repstr->count * sizeof(ptrdiff_t));
 		delete [] repstr->dlen;
 		repstr->dlen = p2;
 		repstr->count = newcount;
@@ -330,7 +330,7 @@ REPSTR *compile_rep(bregonig *rx, const TCHAR *str, const TCHAR *strend)
 {
 TRACE0(_T("compile_rep()\n"));
 	rx->pmflags |= PMf_CONST;	/* default */
-	int len = strend - str;
+	ptrdiff_t len = strend - str;
 	if (len < 2)				// no special char
 		return NULL;
 	register const TCHAR *p = str;
@@ -617,7 +617,7 @@ scan_oct(const TCHAR *start, int len, int *retlen)
 		retval |= *s++ - '0';
 		len--;
 	}
-	*retlen = s - start;
+	*retlen = (int) (s - start);
 	return retval;
 }
 
@@ -636,7 +636,7 @@ scan_hex(const TCHAR *start, int len, int *retlen)
 		retval |= (tmp - hexdigit) & 15;
 		s++;
 	}
-	*retlen = s - start;
+	*retlen = (int) (s - start);
 	return retval;
 }
 

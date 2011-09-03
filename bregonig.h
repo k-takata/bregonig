@@ -29,7 +29,7 @@ namespace BREGONIG_NS {
 typedef struct repstr {
 	int  count;		/* entry counter */
 	TCHAR **startp;	/* start address  if <256 \digit	*/
-	int  *dlen;		/* data length / backref num	*/
+	ptrdiff_t  *dlen;		/* data length / backref num	*/
 	TCHAR data[1];	/* data start	*/
 	
 	repstr() { count = 0; startp = 0; dlen = 0; }
@@ -38,7 +38,7 @@ typedef struct repstr {
 	void init(int cnt) {
 		count = cnt;		// default \digits count in string
 		startp = new TCHAR*[cnt];
-		dlen = new int[cnt];
+		dlen = new ptrdiff_t[cnt];
 	}
 	
 	bool is_normal_string(int i) {
@@ -137,7 +137,7 @@ inline int set_codepoint(TWORD codepoint, TBYTE *s)
 	}
 #endif
 	*s++ = (TBYTE) codepoint;
-	return s - t;
+	return (int) (s - t);
 }
 
 // ASCII to TCHAR string
@@ -150,7 +150,7 @@ inline TCHAR *asc2tcs(TCHAR *dst, const char *src, size_t cch)
 	}
 	return dst;
 #else
-	return lstrcpyn(dst, src, cch);		// NUL termination is ensured.
+	return lstrcpyn(dst, src, (int) cch);		// NUL termination is ensured.
 #endif
 }
 
@@ -167,7 +167,7 @@ int BMatch_s(TCHAR *str, TCHAR *target, TCHAR *targetstartp, TCHAR *targetendp,
 int BSubst_s(TCHAR *str, TCHAR *target, TCHAR *targetstartp, TCHAR *targetendp,
 		BREGEXP **rxp, TCHAR *msg, BCallBack callback);
 
-int onig_err_to_bregexp_msg(int err_code, OnigErrorInfo* err_info, TCHAR *msg);
+int onig_err_to_bregexp_msg(OnigPosition err_code, OnigErrorInfo* err_info, TCHAR *msg);
 
 
 bregonig *recompile_onig(bregonig *rxold, pattern_type type,

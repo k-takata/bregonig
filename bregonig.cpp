@@ -255,7 +255,7 @@ int ::BoSubst(const TCHAR *patternp, const TCHAR *substp, const TCHAR *optionp,
 
 namespace BREGONIG_NS {
 
-int onig_err_to_bregexp_msg(int err_code, OnigErrorInfo* err_info, TCHAR *msg)
+int onig_err_to_bregexp_msg(OnigPosition err_code, OnigErrorInfo* err_info, TCHAR *msg)
 {
 	char err_str[ONIG_MAX_ERROR_MESSAGE_LEN];
 	int ret = onig_error_code_to_str((UChar*) err_str, err_code, err_info);
@@ -595,9 +595,9 @@ int compare_pattern(const bregonig *rxold,
 		const TCHAR *optionp, const TCHAR *optionendp)
 {
 	pattern_type typeold;
-	int len1 = patternendp - patternp;
-	int len2 = prerependp - prerepp;
-	int len3 = optionendp - optionp;
+	ptrdiff_t len1 = patternendp - patternp;
+	ptrdiff_t len2 = prerependp - prerepp;
+	ptrdiff_t len3 = optionendp - optionp;
 	
 TRACE2(_T("compare_pattern: %s, len: %d"), patternp, patternendp-patternp);
 	if (rxold == NULL) {
@@ -721,6 +721,7 @@ TRACE1(_T("compare: %d\n"), compare);
 	if (type == PTN_TRANS) {
 		if (compare == 0) {
 			// no need to compile
+TRACE1(_T("rxold(1):0x%08x\n"), rxold);
 			return rxold;
 		}
 		rx = trcomp(patternp, patternendp, prerepp, prerependp, flag, msg);
@@ -730,6 +731,7 @@ TRACE1(_T("compare: %d\n"), compare);
 	} else {
 		if (compare == 0) {
 			// no need to compile
+TRACE1(_T("rxold(2):0x%08x\n"), rxold);
 			return rxold;
 		} else if (compare < 0) {
 			// pattern string needs to compile.
@@ -771,7 +773,7 @@ TRACE1(_T("compare: %d\n"), compare);
 	}
 	
 	if (ptn != NULL) {
-		int plen = _tcslen(ptn);
+		size_t plen = _tcslen(ptn);
 		delete [] rx->parap;
 		rx->parap = new (std::nothrow) TCHAR[plen+1];	// parameter copy
 		if (rx->parap == NULL) {
@@ -793,9 +795,9 @@ TRACE1(_T("compare: %d\n"), compare);
 	}
 	
 	/* save pattern, replace and option string */
-	int len1 = patternendp - patternp;
-	int len2 = prerependp - prerepp;
-	int len3 = optionendp - optionp;
+	ptrdiff_t len1 = patternendp - patternp;
+	ptrdiff_t len2 = prerependp - prerepp;
+	ptrdiff_t len3 = optionendp - optionp;
 	rx->patternp = new (std::nothrow) TCHAR[len1+1 + len2+1 + len3+1];
 	if (rx->patternp == NULL) {
 		delete rx;
@@ -833,7 +835,7 @@ int regexec_onig(bregonig *rx, const TCHAR *stringarg,
 	TCHAR *msg)		/* fatal error message */
 {
 TRACE1(_T("one_shot: %d\n"), one_shot);
-	int err_code;
+	OnigPosition err_code;
 	
 	if (one_shot) {
 		OnigOptionType option = (minend > 0) ?
