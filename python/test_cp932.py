@@ -875,6 +875,14 @@ def main():
     x2(u"a\\b?a", u"aa", 0, 2)
     x2(u"[^x]*x", u"aaax", 0, 4)
     
+    # character classes (tests for character class optimization)
+    x2(u"[@][a]", u"@a", 0, 2);
+    x2(u".*[a][b][c][d][e]", u"abcde", 0, 5);
+    x2(u"(?i)[A\\x{41}]", u"a", 0, 1);
+    x2(u"[abA]", u"a", 0, 1);
+    x2(u"[[ab]&&[ac]]+", u"aaa", 0, 3);
+    x2(u"[[Ç†Ç¢]&&[Ç†Ç§]]+", u"Ç†Ç†Ç†", 0, 3);
+    
     # possessive quantifiers
     n(u"a?+a", u"a")          # Ver.1.xx fails
     n(u"a*+a", u"aaaa")       # Ver.1.xx fails
@@ -934,6 +942,13 @@ def main():
     x2(u"(?a)\\B", u"Ç† ", 0, 0);
     x2(u"(?a)\\B", u"aÇ† ", 2, 2);
     
+    x2(u"(?a)\\p{Alpha}\\P{Alpha}", u"aÅB", 0, 2);
+    x2(u"(?u)\\p{Alpha}\\P{Alpha}", u"aÅB", 0, 2);
+    x2(u"(?a)[[:word:]]+", u"aÇ†", 0, 1);
+    x2(u"(?a)[[:^word:]]+", u"aÇ†", 1, 2);
+    x2(u"(?u)[[:word:]]+", u"aÇ†", 0, 2);
+    n(u"(?u)[[:^word:]]+", u"aÇ†");
+    
     # \g{} backref
     x2(u"((?<name1>\\d)|(?<name2>\\w))(\\g{name1}|\\g{name2})", u"ff", 0, 2);
     x2(u"(?:(?<x>)|(?<x>efg))\\g{x}", u"", 0, 0);
@@ -982,7 +997,9 @@ def main():
     
     # conditional expression
     x2(u"(?:(a)|(b))(?(1)cd)e", u"acde", 0, 4)
+    n(u"(?:(a)|(b))(?(1)cd)e", u"ae")
     x2(u"(?:(a)|(b))(?(2)cd)e", u"ae", 0, 2)
+    n(u"(?:(a)|(b))(?(2)cd)e", u"acde")
     x2(u"(?:(a)|(b))(?(1)c|d)", u"ac", 0, 2)
     x2(u"(?:(a)|(b))(?(1)c|d)", u"bd", 0, 2)
     n(u"(?:(a)|(b))(?(1)c|d)", u"ad")
@@ -992,6 +1009,8 @@ def main():
     n(u"(?:(a)|(b))(?:(?(2)cd|x)e|fg)", u"bxe")
     x2(u"(?:(?<x>a)|(?<y>b))(?:(?(<x>)cd|x)e|fg)", u"bxe", 0, 3)
     n(u"(?:(?<x>a)|(?<y>b))(?:(?(<y>)cd|x)e|fg)", u"bxe")
+    x2(u"((?<=a))?(?(1)b|c)", u"abc", 1, 2)
+    x2(u"((?<=a))?(?(1)b|c)", u"bc", 1, 2)
     
     # Implicit-anchor optimization
     x2(u"(?s:.*abc)", u"dddabdd\nddabc", 0, 13)   # optimized /(?s:.*abc)/ ==> /\A(?s:.*abc)/
