@@ -54,6 +54,7 @@ def xx(pattern, target, s_from, s_to, mem, not_match):
         pattern2 = pattern.encode(encoding)
     pattern3 = "/".encode(encoding) + pattern2 + "/k".encode(encoding)
     if encoding == "UTF-16LE":
+        pattern2 = pattern2.decode(encoding)
         pattern3 = pattern3.decode(encoding)
     
     target2 = target
@@ -67,7 +68,11 @@ def xx(pattern, target, s_from, s_to, mem, not_match):
         r = BoMatch(pattern2, "8", tp.getptr(), tp.getptr(), tp.getptr(-1),
                 False, byref(rxp), msg)
     else:
-        r = BMatch(pattern3, tp.getptr(), tp.getptr(-1), byref(rxp), msg)
+        try:
+            r = BoMatch(pattern2, "k", tp.getptr(), tp.getptr(), tp.getptr(-1),
+                    False, byref(rxp), msg)
+        except RuntimeError:
+            r = BMatch(pattern3, tp.getptr(), tp.getptr(-1), byref(rxp), msg)
     
     if r < 0:
         nerror += 1

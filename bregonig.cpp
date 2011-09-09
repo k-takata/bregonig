@@ -144,7 +144,7 @@ int ::BTrans(TCHAR *str, TCHAR *target, TCHAR *targetendp,
 TRACE1(_T("BTrans(): %s\n"), str);
 	set_new_throw_bad_alloc();
 	
-	if (check_params(target, target/*startp*/, targetendp, rxp, msg) < 0) {
+	if (check_params(target, target/*startp*/, targetendp, rxp, msg, false) < 0) {
 		return -1;
 	}
 	bregonig *rx = static_cast<bregonig*>(*rxp);
@@ -171,7 +171,7 @@ int ::BSplit(TCHAR *str, TCHAR *target, TCHAR *targetendp,
 TRACE1(_T("BSplit(): %s\n"), str);
 	set_new_throw_bad_alloc();
 	
-	if (check_params(target, target/*startp*/, targetendp, rxp, msg) < 0) {
+	if (check_params(target, target/*startp*/, targetendp, rxp, msg, false) < 0) {
 		return -1;
 	}
 	bregonig *rx = static_cast<bregonig*>(*rxp);
@@ -208,7 +208,7 @@ int ::BoMatch(const TCHAR *patternp, const TCHAR *optionp,
 	const TCHAR *substendp = NULL;
 	const TCHAR *optionendp = (optionp != NULL) ? optionp + _tcslen(optionp) : NULL;
 	
-	if (check_params(strstartp, targetstartp, targetendp, rxp, msg) < 0) {
+	if (check_params(strstartp, targetstartp, targetendp, rxp, msg, true) < 0) {
 		return -1;
 	}
 	
@@ -237,7 +237,7 @@ int ::BoSubst(const TCHAR *patternp, const TCHAR *substp, const TCHAR *optionp,
 	const TCHAR *substendp = (substp != NULL) ? substp + _tcslen(substp) : NULL;
 	const TCHAR *optionendp = (optionp != NULL) ? optionp + _tcslen(optionp) : NULL;
 	
-	if (check_params(strstartp, targetstartp, targetendp, rxp, msg) < 0) {
+	if (check_params(strstartp, targetstartp, targetendp, rxp, msg, true) < 0) {
 		return -1;
 	}
 	
@@ -265,7 +265,7 @@ int onig_err_to_bregexp_msg(OnigPosition err_code, OnigErrorInfo* err_info, TCHA
 }
 
 int check_params(const TCHAR *target, const TCHAR *targetstartp,
-		const TCHAR *targetendp, BREGEXP **rxp, TCHAR *msg)
+		const TCHAR *targetendp, BREGEXP **rxp, TCHAR *msg, bool allownullstr)
 {
 	if (msg == NULL)		// no message area
 		return -1;
@@ -275,8 +275,12 @@ int check_params(const TCHAR *target, const TCHAR *targetstartp,
 		asc2tcs(msg, "invalid BREGEXP parameter", BREGEXP_MAX_ERROR_MESSAGE_LEN);
 		return -1;
 	}
+	const TCHAR *endp = targetendp;
+	if (allownullstr) {
+		endp++;
+	}
 	if (target == NULL || targetstartp == NULL || targetendp == NULL
-		|| targetstartp > targetendp || target > targetstartp) { // bad target parameter ?
+			|| targetstartp >= endp || target > targetstartp) { // bad target parameter ?
 		asc2tcs(msg, "invalid target parameter", BREGEXP_MAX_ERROR_MESSAGE_LEN);
 		return -1;
 	}
@@ -292,7 +296,7 @@ int BMatch_s(TCHAR *str, TCHAR *target, TCHAR *targetstartp, TCHAR *targetendp,
 TRACE(_T("BMatch(): '%s' (%p), %p, %p, %p\n"), str, str, target, targetstartp, targetendp);
 	set_new_throw_bad_alloc();
 	
-	if (check_params(target, targetstartp, targetendp, rxp, msg) < 0) {
+	if (check_params(target, targetstartp, targetendp, rxp, msg, false) < 0) {
 		return -1;
 	}
 	bregonig *rx = static_cast<bregonig*>(*rxp);
@@ -327,7 +331,7 @@ int BSubst_s(TCHAR *str, TCHAR *target, TCHAR *targetstartp, TCHAR *targetendp,
 TRACE(_T("BSubst(): '%s' (%p), %p, %p, %p\n"), str, str, target, targetstartp, targetendp);
 	set_new_throw_bad_alloc();
 	
-	if (check_params(target, targetstartp, targetendp, rxp, msg) < 0) {
+	if (check_params(target, targetstartp, targetendp, rxp, msg, false) < 0) {
 		return -1;
 	}
 	bregonig *rx = static_cast<bregonig*>(*rxp);

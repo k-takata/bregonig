@@ -160,7 +160,7 @@ inline TCHAR *asc2tcs(TCHAR *dst, const char *src, size_t cch)
 
 
 int check_params(const TCHAR *target, const TCHAR *targetstartp,
-		const TCHAR *targetendp, BREGEXP **rxp, TCHAR *msg);
+		const TCHAR *targetendp, BREGEXP **rxp, TCHAR *msg, bool allownullstr);
 int BMatch_s(TCHAR *str, TCHAR *target, TCHAR *targetstartp, TCHAR *targetendp,
 		int one_shot,
 		BREGEXP **rxp, TCHAR *msg);
