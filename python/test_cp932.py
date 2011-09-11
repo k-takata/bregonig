@@ -1020,6 +1020,12 @@ def main():
     # Implicit-anchor optimization
     x2(u"(?s:.*abc)", u"dddabdd\nddabc", 0, 13)   # optimized /(?s:.*abc)/ ==> /\A(?s:.*abc)/
     x2(u"(?s:.+abc)", u"dddabdd\nddabc", 0, 13)   # optimized
+    x2(u"(?-s:.*abc)", u"dddabdd\nddabc", 8, 13)  # optimized /(?-s:.*abc)/ ==> /(?:^|\A)(?s:.*abc)/
+    x2(u"(?-s:.+abc)", u"dddabdd\nddabc", 8, 13)  # optimized
+    x2(u"(?-s:.*abc)", u"dddabdd\nabc", 8, 11)    # optimized
+    n(u"(?-s:.+abc)", u"dddabdd\nabc")            # optimized
+    x2(u"(?s:.*\\Z)", u"dddabdd\nddabc", 0, 13)   # optimized /(?s:.*\Z)/ ==> /\A(?s:.*\Z)/
+    x2(u"(?-s:.*\\Z)", u"dddabdd\nddabc", 8, 13)  # optimized /(?-s:.*\Z)/ ==> /(?:^|\A)(?s:.*\Z)/
     x2(u"(.*)X\\1", u"1234X2345", 1, 8)           # not optimized
     
     
