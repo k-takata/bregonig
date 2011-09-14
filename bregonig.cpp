@@ -553,6 +553,9 @@ TRACE1(_T("option: %s"), optionp);
 		case 'u':
 			option &= ~ONIG_OPTION_ASCII_RANGE;
 			break;
+		case 'R':
+			option |= ONIG_OPTION_NEWLINE_CRLF;
+			break;
 		default:
 			break;
 		}
