@@ -35,8 +35,12 @@ CPPFLAGS = $(CPPFLAGS) /MT
 CPPFLAGS = $(CPPFLAGS) /DONIG_EXTERN=extern
 !endif
 
-# Command string to get the version of cl.exe
-_MSC_VER = [for /f %i in ('cmd /c "(echo _MSC_VER>mscver.c) && ($(CC) /EP mscver.c 2>nul) && del mscver.c"') do @exit %i]
+# Get the version of cl.exe.
+#  1. Write the version to a work file (mscver.~).
+!if [(echo _MSC_VER>mscver.c) && ($(CC) /EP mscver.c 2>nul > mscver.~) && del mscver.c]
+!endif
+#  2. Command string to get the version.
+_MSC_VER = [for /f %i in (mscver.~) do @exit %i]
 
 !if DEFINED(USE_LTCG) && $(USE_LTCG)
 # Use LTCG (Link Time Code Generation).
