@@ -209,7 +209,7 @@ TRACE0(_T("out of space in subst_onig()\n"));
 
 
 int set_repstr(REPSTR *repstr, int num,
-		int *pcindex, TCHAR *dst, TCHAR **polddst, bool bksl = false)
+		int *pcindex, TCHAR *dst, TCHAR **polddst, bool backslash = false)
 {
 TRACE0(_T("set_repstr\n"));
 	int cindex = *pcindex;
@@ -233,7 +233,7 @@ TRACE0(_T("set_repstr\n"));
 		repstr->dlen[cindex++] = dst - olddst;
 	}
 	repstr->dlen[cindex] = num;		// paren number
-	if (bksl) {
+	if (backslash) {
 		repstr->startp[cindex] = (TCHAR *) 1;	// \digits
 	} else {
 		repstr->startp[cindex] = NULL;			// $digits
@@ -249,7 +249,7 @@ TRACE0(_T("set_repstr\n"));
 
 
 const TCHAR *parse_digits(const TCHAR *str, REPSTR *repstr, int *pcindex,
-		TCHAR *dst, TCHAR **polddst, bool bksl = false)
+		TCHAR *dst, TCHAR **polddst, bool backslash = false)
 {
 TRACE0(_T("parse_digits\n"));
 	TCHAR *s;
@@ -265,7 +265,7 @@ TRACE0(_T("parse_digits\n"));
 			return NULL;	// SYNTAX ERROR
 		++s;
 	}
-	set_repstr(repstr, num, pcindex, dst, polddst, bksl);
+	set_repstr(repstr, num, pcindex, dst, polddst, backslash);
 	
 	return s;
 }
