@@ -299,12 +299,6 @@ const TCHAR *parse_groupname(bregonig *rx, const TCHAR *str, const TCHAR *strend
 		if (*q != ']' || q >= strend)
 			return NULL;	// SYNTAX ERROR
 	}
-#if 0
-	int num = onig_name_to_backref_number(rx->reg,
-			(UChar*) str, (UChar*) nameend, NULL);
-	if (num > 0)
-		set_repstr(repstr, num, pcindex, dst, polddst);			// rightmost group-num
-#else
 	int *num_list;
 	int num = onig_name_to_group_numbers(rx->reg,
 			(UChar*) str, (UChar*) nameend, &num_list);
@@ -321,7 +315,6 @@ const TCHAR *parse_groupname(bregonig *rx, const TCHAR *str, const TCHAR *strend
 	}
 	if ((num > 0) && (0 <= n || n < num))
 		set_repstr(repstr, num_list[n], pcindex, dst, polddst);	// leftmost group-num
-#endif
 	return q+1;
 }
 
@@ -352,19 +345,11 @@ TRACE0(_T("compile_rep()\n"));
 		OnigEncoding enc = onig_get_encoding(rx->reg);
 		while (p < pend) {
 			if (*p != '\\' && *p != '$') {	// magic char ?
-#if 0
-#ifndef UNICODE
-				if (iskanji(*p))			// no
-					*dst++ = *p++;
-#endif
-				*dst++ = *p++;
-#else
 				// copy one char
 				int len = ONIGENC_MBC_ENC_LEN(enc, (UChar*) p);
 				memcpy(dst, p, len);
 				p += len / sizeof(TCHAR);
 				dst += len / sizeof(TCHAR);
-#endif
 				continue;
 			}
 			if (p+1 >= pend) {		// end of the pattern
@@ -512,20 +497,11 @@ TRACE0(_T("compile_rep()\n"));
 							unsigned int code = scan_hex(++q, 8, &numlen);
 							q += numlen;
 							if (*q == '}') {
-#if 0
-								TBYTE ch[2];
-								int len = set_codepoint(code, ch);
-								if (len > 1) {
-									*dst++ = ch[0];
-								}
-								ender = ch[len-1];
-#else
 								int len = ONIGENC_CODE_TO_MBC(
 										enc, code, (UChar*) dst)
 											/ sizeof(TCHAR);
 								dst += len - 1;
 								ender = *dst;
-#endif
 								p = q+1;
 								break;
 							}
@@ -621,7 +597,6 @@ scan_oct(const TCHAR *start, int len, int *retlen)
 	return retval;
 }
 
-//static TCHAR hexdigit[] = "0123456789abcdef0123456789ABCDEFx";
 static TCHAR hexdigit[] = _T("0123456789abcdef0123456789ABCDEF");
 
 unsigned long
