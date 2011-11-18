@@ -37,7 +37,7 @@ CPPFLAGS = $(CPPFLAGS) /DONIG_EXTERN=extern
 
 # Get the version of cl.exe.
 #  1. Write the version to a work file (mscver.~).
-!if [(echo _MSC_VER>mscver.c) && ($(CC) /EP mscver.c 2>nul > mscver.~) && del mscver.c]
+!if [(echo _MSC_VER>mscver.c) && ($(CC) /EP mscver.c 2>nul > mscver.~)]
 !endif
 #  2. Command string to get the version.
 _MSC_VER = [for /f %i in (mscver.~) do @exit %i]
@@ -122,3 +122,7 @@ clean :
 	del $(BROBJS) bregonig.lib bregonig.dll bregonig.exp bregonig.map
 	del k2regexp.obj k2regexp.res k2regexp.lib k2regexp.dll k2regexp.exp k2regexp.map
 
+
+# clean up
+!if [del mscver.~ mscver.c]
+!endif
