@@ -115,6 +115,8 @@ def n(pattern, target):
     xx(pattern, target, 0, 0, 0, True)
 
 
+def is_unicode_encoding(enc):
+    return enc in ("UTF-16LE", "UTF-8")
 
 def main():
     global encoding
@@ -862,7 +864,7 @@ def main():
     
     
     # additional test patterns
-    if encoding in ("UTF-16LE", "UTF-8"):
+    if is_unicode_encoding(encoding):
         x2(u"\\x{3042}\\x{3044}", u"‚ ‚¢", 0, 2)
     else:
         x2(u"\\x{82a0}\\x{82A2}", u"‚ ‚¢", 0, 2)
@@ -881,6 +883,11 @@ def main():
     x2(u"[^x]*x", u"aaax", 0, 4)
     x2(u"(?i)[\\x{0}-B]+", u"\x00\x01\x02\x1f\x20@AaBbC", 0, 10)
     x2(u"(?i)a{2}", u"AA", 0, 2)
+    if is_unicode_encoding(encoding):
+        try:
+            x2(u"\\p{Other_Default_Ignorable_Code_Point}+", u"\u034F\uFFF8\U000E0FFF", 0, 4)
+        except UnicodeEncodeError:
+            pass
     
     # character classes (tests for character class optimization)
     x2(u"[@][a]", u"@a", 0, 2);
@@ -903,7 +910,7 @@ def main():
     
     # extended grapheme cluster
     x2(u"\\X{5}", u"‚ ‚¢ab\n", 0, 5)
-    if encoding in ("UTF-16LE", "UTF-8"):
+    if is_unicode_encoding(encoding):
         try:
             x2(u"\\X", u"\u306F\u309A\n", 0, 2)
         except UnicodeEncodeError:
