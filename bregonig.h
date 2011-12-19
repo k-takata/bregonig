@@ -24,28 +24,43 @@ typedef WORD TWORD;
 #define lengthof(arr)	((sizeof(arr) / sizeof((arr)[0])))
 #endif
 
+enum casetype {
+	CASE_NONE, CASE_UPPER, CASE_LOWER
+};
+
 namespace BREGONIG_NS {
+
+struct repinfo {
+	TCHAR *startp;		/* start address  if <256 \digit */
+	ptrdiff_t dlen;		/* data length / backref num */
+	casetype nextcase;		/* \l or \u */
+	casetype currentcase;	/* \L or \U */
+};
 
 typedef struct repstr {
 	int  count;		/* entry counter */
-	TCHAR **startp;	/* start address  if <256 \digit	*/
-	ptrdiff_t  *dlen;		/* data length / backref num	*/
+	repinfo *info;
 	TCHAR data[1];	/* data start	*/
 	
-	repstr() { count = 0; startp = 0; dlen = 0; }
-	~repstr() { delete [] startp; delete [] dlen; }
+	repstr() { count = 0; info = 0; }
+	~repstr() { delete [] info; }
 	
 	void init(int cnt) {
 		count = cnt;		// default \digits count in string
-		startp = new TCHAR*[cnt];
-		dlen = new ptrdiff_t[cnt];
+		info = new repinfo[cnt];
 	}
 	
-	bool is_normal_string(int i) {
-		return ((startp[i] != NULL) && ((INT_PTR) startp[i] > 1));
+	inline bool is_normal_string(int i) {
+		return ((info[i].startp != NULL) && ((INT_PTR) info[i].startp > 1));
 	}
-	bool is_backslash(int i) {
-		return ((INT_PTR) startp[i] == 1);
+	inline bool is_backslash(int i) {
+		return ((INT_PTR) info[i].startp == 1);
+	}
+	inline void set_backslash(int i) {
+		info[i].startp = (TCHAR *) 1;	// \digits
+	}
+	inline void set_dollar(int i) {
+		info[i].startp = NULL;			// $digits
 	}
 	
 	static void *operator new(size_t cb, size_t data_size) {

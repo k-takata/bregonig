@@ -38,6 +38,8 @@
 
 int dec2oct(int dec);
 int get_right_most_captured_num(OnigRegion *region);
+OnigCodePoint convert_char_case(OnigEncoding enc, OnigCodePoint c,
+		casetype nextcase, casetype currentcase);
 
 #ifndef UNICODE
 int dec2oct(int dec)
@@ -62,15 +64,29 @@ int get_right_most_captured_num(OnigRegion *region)
 	}
 	return -1;
 }
+
+OnigCodePoint convert_char_case(OnigEncoding enc, OnigCodePoint c,
+		casetype nextcase, casetype currentcase)
+{
+	// TODO: support for non-ASCII character
+	if (nextcase == CASE_LOWER
+			|| (nextcase == CASE_NONE && currentcase == CASE_LOWER)) {
+		if (isascii(c)) {
+			c = tolower(c);
+		}
+	} else if (nextcase == CASE_UPPER
+			|| (nextcase == CASE_NONE && currentcase == CASE_UPPER)) {
+		if (isascii(c)) {
+			c = toupper(c);
+		}
+	}
+	return c;
+}
 #endif
 
 
 using namespace BREGONIG_NS;
 namespace BREGONIG_NS {
-
-enum casetype {
-	CASE_NONE, CASE_UPPER, CASE_LOWER
-};
 
 
 unsigned long scan_oct(const TCHAR *start, int len, int *retlen);
@@ -78,8 +94,10 @@ unsigned long scan_hex(const TCHAR *start, int len, int *retlen);
 //unsigned long scan_dec(const TCHAR *start, int len, int *retlen);
 
 
-TCHAR *bufcat(TCHAR *buf, ptrdiff_t *copycnt, const TCHAR *src, ptrdiff_t len,
-		ptrdiff_t *blen, int bufsize = SUBST_BUF_SIZE)
+TCHAR *bufcat(OnigEncoding enc, TCHAR *buf, ptrdiff_t *copycnt,
+		const TCHAR *src, ptrdiff_t len, ptrdiff_t *blen,
+		casetype nextcase, casetype currentcase,
+		int bufsize = SUBST_BUF_SIZE)
 {
 	if (*blen <= *copycnt + len) {
 		*blen += len + bufsize;
@@ -95,8 +113,22 @@ TCHAR *bufcat(TCHAR *buf, ptrdiff_t *copycnt, const TCHAR *src, ptrdiff_t len,
 		buf = tp;
 	}
 	if (len) {
-		memcpy(buf + *copycnt, src, len * sizeof(TCHAR));
-		*copycnt += len;
+		if ((nextcase == CASE_NONE) && (currentcase == CASE_NONE)) {
+			memcpy(buf + *copycnt, src, len * sizeof(TCHAR));
+			*copycnt += len;
+		} else {
+			int i = 0;
+			while (i < len) {
+				OnigCodePoint c = ONIGENC_MBC_TO_CODE(enc, (UChar*) (src + i),
+						(UChar*) (src + len));
+				c = convert_char_case(enc, c, nextcase, currentcase);
+				int clen = ONIGENC_CODE_TO_MBC(enc, c,
+						(UChar*) (buf + *copycnt + i)) / sizeof(TCHAR);
+				i += clen;
+				nextcase = CASE_NONE;
+			}
+			*copycnt += len;
+		}
 	}
 	return buf;
 }
@@ -108,6 +140,7 @@ int subst_onig(bregonig *rx, const TCHAR *target,
 		TCHAR *msg, BCallBack callback)
 {
 TRACE0(_T("subst_onig()\n"));
+	OnigEncoding enc = rx->reg->enc;
 	const TCHAR *orig,*m,*c;
 	const TCHAR *s = target;
 	ptrdiff_t len = targetendp - target;
@@ -138,44 +171,63 @@ TRACE0(_T("Substitution loop\n"));
 			}
 			m = rx->startp[0];
 			len = m - s;
-			buf = bufcat(buf, &copycnt, s, len, &blen);
+			buf = bufcat(enc, buf, &copycnt, s, len, &blen,
+					CASE_NONE, CASE_NONE);
 			s = rx->endp[0];
 			if (!(rx->pmflags & PMf_CONST)) {	// we have \digits or $&
 				//	ok start magic
 				REPSTR *rep = rx->repstr;
+				casetype nextcase = CASE_NONE;
 	//			ASSERT(rep);
 				for (int i = 0; i < rep->count; i++) {
 					int j;
+					casetype currentcase = rep->info[i].currentcase;
+					if (rep->info[i].nextcase != CASE_NONE) {
+						nextcase = rep->info[i].nextcase;
+					}
 					// normal char
-					ptrdiff_t dlen = rep->dlen[i];
+					ptrdiff_t dlen = rep->info[i].dlen;
 					if (rep->is_normal_string(i) && dlen) {
-						buf = bufcat(buf, &copycnt, rep->startp[i], dlen, &blen);
+						buf = bufcat(enc, buf, &copycnt, rep->info[i].startp,
+								dlen, &blen, nextcase, currentcase);
+						nextcase = CASE_NONE;
 					}
 					
 					else if (0 <= dlen && dlen <= rx->nparens
 							&& rx->startp[dlen] && rx->endp[dlen]) {
 						// \digits, $digits or $&
 						len = rx->endp[dlen] - rx->startp[dlen];
-						buf = bufcat(buf, &copycnt, rx->startp[dlen], len, &blen);
+						buf = bufcat(enc, buf, &copycnt, rx->startp[dlen],
+								len, &blen, nextcase, currentcase);
+						if (len) {
+							nextcase = CASE_NONE;
+						}
 					}
 					
 					else if (dlen == -1
 							&& (j=get_right_most_captured_num(rx->region)) > 0) {
 						// $+
 						len = rx->endp[j] - rx->startp[j];
-						buf = bufcat(buf, &copycnt, rx->startp[j], len, &blen);
+						buf = bufcat(enc, buf, &copycnt, rx->startp[j],
+								len, &blen, nextcase, currentcase);
+						if (len) {
+							nextcase = CASE_NONE;
+						}
 					}
 					
 					else if ((10<=dlen && (j=dec2oct((int) dlen)) > 0)
 							&& dlen > rx->nparens && rep->is_backslash(i)) {
 						// \nnn
 						TCHAR ch = (TCHAR) j;
-						buf = bufcat(buf, &copycnt, &ch, 1, &blen);
+						buf = bufcat(enc, buf, &copycnt, &ch,
+								1, &blen, nextcase, currentcase);
+						nextcase = CASE_NONE;
 					}
 				}
 			} else {
 				if (clen) {		// no special char
-					buf = bufcat(buf, &copycnt, c, clen, &blen);
+					buf = bufcat(enc, buf, &copycnt, c, clen, &blen,
+							CASE_NONE, CASE_NONE);
 				}
 			}
 			subst_count++;
@@ -186,7 +238,8 @@ TRACE0(_T("Substitution loop\n"));
 					break;
 		} while (regexec_onig(rx, s, strend, orig, s == m, 1,0,msg) > 0);
 		len = targetendp - s;
-		buf = bufcat(buf, &copycnt, s, len, &blen, 1);
+		buf = bufcat(enc, buf, &copycnt, s, len, &blen, CASE_NONE, CASE_NONE,
+				1);
 		if (copycnt) {
 			rx->outp = buf;
 			rx->outendp = buf + copycnt;
@@ -209,7 +262,8 @@ TRACE0(_T("out of space in subst_onig()\n"));
 
 
 int set_repstr(REPSTR *repstr, int num,
-		int *pcindex, TCHAR *dst, TCHAR **polddst, bool backslash = false)
+		int *pcindex, TCHAR *dst, TCHAR **polddst,
+		casetype nextcase, casetype currentcase, bool backslash = false)
 {
 TRACE0(_T("set_repstr\n"));
 	int cindex = *pcindex;
@@ -217,27 +271,25 @@ TRACE0(_T("set_repstr\n"));
 	
 	if (/*num > 0 &&*/ cindex >= repstr->count - 2) {
 		int newcount = repstr->count + 10;
-		TCHAR **p1 = new TCHAR*[newcount];
-		memcpy(p1, repstr->startp, repstr->count * sizeof(TCHAR*));
-		delete [] repstr->startp;
-		repstr->startp = p1;
-		ptrdiff_t *p2 = new ptrdiff_t[newcount];
-		memcpy(p2, repstr->dlen, repstr->count * sizeof(ptrdiff_t));
-		delete [] repstr->dlen;
-		repstr->dlen = p2;
+		repinfo *info = new repinfo[newcount];
+		memcpy(info, repstr->info, repstr->count * sizeof(repinfo));
+		delete [] repstr->info;
+		repstr->info = info;
 		repstr->count = newcount;
 	}
 	
 	if (dst - olddst > 0) {
-		repstr->startp[cindex] = olddst;
-		repstr->dlen[cindex++] = dst - olddst;
+		repstr->info[cindex].startp = olddst;
+		repstr->info[cindex++].dlen = dst - olddst;
 	}
-	repstr->dlen[cindex] = num;		// paren number
+	repstr->info[cindex].dlen = num;		// paren number
 	if (backslash) {
-		repstr->startp[cindex] = (TCHAR *) 1;	// \digits
+		repstr->set_backslash(cindex);		// \digits (try later)
 	} else {
-		repstr->startp[cindex] = NULL;			// $digits
+		repstr->set_dollar(cindex);			// $digits (try later)
 	}
+	repstr->info[cindex].nextcase = nextcase;
+	repstr->info[cindex].currentcase = currentcase;
 	cindex++;
 	
 	olddst = dst;
@@ -249,7 +301,8 @@ TRACE0(_T("set_repstr\n"));
 
 
 const TCHAR *parse_digits(const TCHAR *str, REPSTR *repstr, int *pcindex,
-		TCHAR *dst, TCHAR **polddst, bool backslash = false)
+		TCHAR *dst, TCHAR **polddst,
+		casetype nextcase, casetype currentcase, bool backslash = false)
 {
 TRACE0(_T("parse_digits\n"));
 	TCHAR *s;
@@ -265,7 +318,8 @@ TRACE0(_T("parse_digits\n"));
 			return NULL;	// SYNTAX ERROR
 		++s;
 	}
-	set_repstr(repstr, num, pcindex, dst, polddst, backslash);
+	set_repstr(repstr, num, pcindex, dst, polddst, nextcase, currentcase,
+			backslash);
 	
 	return s;
 }
@@ -273,7 +327,7 @@ TRACE0(_T("parse_digits\n"));
 
 const TCHAR *parse_groupname(bregonig *rx, const TCHAR *str, const TCHAR *strend,
 		REPSTR *repstr, int *pcindex, TCHAR *dst, TCHAR **polddst,
-		bool bracket = false)
+		casetype nextcase, casetype currentcase, bool bracket = false)
 {
 	TCHAR endch;
 	switch (*str++) {
@@ -314,7 +368,8 @@ const TCHAR *parse_groupname(bregonig *rx, const TCHAR *str, const TCHAR *strend
 		}
 	}
 	if ((num > 0) && (0 <= n || n < num))
-		set_repstr(repstr, num_list[n], pcindex, dst, polddst);	// leftmost group-num
+		set_repstr(repstr, num_list[n], pcindex, dst, polddst,
+				nextcase, currentcase);	// leftmost group-num
 	return q+1;
 }
 
@@ -340,16 +395,21 @@ TRACE0(_T("compile_rep()\n"));
 		int numlen;
 		TCHAR *olddst = dst;
 		bool special = false;		// found special char
-		casetype nextchcase = CASE_NONE;
-		casetype chcase = CASE_NONE;
+		casetype nextcase = CASE_NONE;
+		casetype currentcase = CASE_NONE;
 		OnigEncoding enc = onig_get_encoding(rx->reg);
 		while (p < pend) {
 			if (*p != '\\' && *p != '$') {	// magic char ?
 				// copy one char
-				int len = ONIGENC_MBC_ENC_LEN(enc, (UChar*) p);
-				memcpy(dst, p, len);
-				p += len / sizeof(TCHAR);
-				dst += len / sizeof(TCHAR);
+				OnigCodePoint c = ONIGENC_MBC_TO_CODE(enc, (UChar*) p,
+						(UChar*) pend);
+				c = convert_char_case(enc, c, nextcase, currentcase);
+				int len = ONIGENC_CODE_TO_MBC(enc, c, (UChar*) dst)
+							/ sizeof(TCHAR);
+				p += len;
+				dst += len;
+				ender = *dst;
+				nextcase = CASE_NONE;
 				continue;
 			}
 			if (p+1 >= pend) {		// end of the pattern
@@ -363,14 +423,17 @@ TRACE0(_T("compile_rep()\n"));
 				case '&':	// $&
 			//	case '0':	// $0
 					special = true;
-					set_repstr(repstr, 0, &cindex, dst, &olddst);
+					set_repstr(repstr, 0, &cindex, dst, &olddst,
+							nextcase, currentcase);
+					nextcase = CASE_NONE;
 					p++;
 					break;
 				case '+':	// $+, $+{name}
 					special = true;
 					if (p[1] == '{') {	// $+{name}
 						const TCHAR *q = parse_groupname(rx, p+1, pend, repstr,
-								&cindex, dst, &olddst);
+								&cindex, dst, &olddst, nextcase, currentcase);
+						nextcase = CASE_NONE;
 						if (q != NULL) {
 							p = q;
 						} else {
@@ -378,7 +441,9 @@ TRACE0(_T("compile_rep()\n"));
 							*dst++ = prvch;
 						}
 					} else {			// $+
-						set_repstr(repstr, -1, &cindex, dst, &olddst);
+						set_repstr(repstr, -1, &cindex, dst, &olddst,
+								nextcase, currentcase);
+						nextcase = CASE_NONE;
 						p++;
 					}
 					break;
@@ -386,7 +451,9 @@ TRACE0(_T("compile_rep()\n"));
 					special = true;
 					if (p[1] == '{') {
 						const TCHAR *q = parse_groupname(rx, p+1, pend, repstr,
-								&cindex, dst, &olddst, true);
+								&cindex, dst, &olddst,
+								nextcase, currentcase, true);
+						nextcase = CASE_NONE;
 						if (q != NULL) {
 							p = q;
 							continue;
@@ -410,7 +477,9 @@ TRACE0(_T("compile_rep()\n"));
 					special = true;
 					if (isDIGIT(p[1])) {
 						// ${nn}
-						const TCHAR *q = parse_digits(p, repstr, &cindex, dst, &olddst);
+						const TCHAR *q = parse_digits(p, repstr, &cindex, dst,
+								&olddst, nextcase, currentcase);
+						nextcase = CASE_NONE;
 						if (q != NULL) {
 							p = q;
 						} else {
@@ -421,7 +490,8 @@ TRACE0(_T("compile_rep()\n"));
 					} else {
 						// ${name}
 						const TCHAR *q = parse_groupname(rx, p, pend, repstr,
-								&cindex, dst, &olddst);
+								&cindex, dst, &olddst, nextcase, currentcase);
+						nextcase = CASE_NONE;
 						if (q != NULL) {
 							p = q;
 						} else {
@@ -433,11 +503,13 @@ TRACE0(_T("compile_rep()\n"));
 				default:
 					if (isDIGIT(*p) && *p != '0') {		// $digits
 						special = true;
-						p = parse_digits(p, repstr, &cindex, dst, &olddst);
+						p = parse_digits(p, repstr, &cindex, dst, &olddst,
+								nextcase, currentcase);
 					} else {
 						*dst++ = prvch;
 						*dst++ = *p++;
 					}
+					nextcase = CASE_NONE;
 					break;
 				}
 				continue;
@@ -455,41 +527,54 @@ TRACE0(_T("compile_rep()\n"));
 					*dst++ = ender;
 				} else {
 					// \digits found
-					p = parse_digits(p, repstr, &cindex, dst, &olddst, true);
+					p = parse_digits(p, repstr, &cindex, dst, &olddst,
+							nextcase, currentcase, true);
 				}
+				nextcase = CASE_NONE;
 			} else {
 				prvch = *p++;
 				switch (prvch) {
 				case 'n':
 					ender = '\n';
+					nextcase = CASE_NONE;
 					break;
 				case 'r':
 					ender = '\r';
+					nextcase = CASE_NONE;
 					break;
 				case 't':
 					ender = '\t';
+					nextcase = CASE_NONE;
 					break;
 				case 'f':
 					ender = '\f';
+					nextcase = CASE_NONE;
 					break;
 				case 'e':
 					ender = '\033';
+					nextcase = CASE_NONE;
 					break;
 				case 'a':
 					ender = '\a';
+					nextcase = CASE_NONE;
 					break;
 #ifdef USE_VTAB
 				case 'v':
 					ender = '\v';
+					nextcase = CASE_NONE;
 					break;
 #endif
 				case 'b':
 					ender = '\b';
+					nextcase = CASE_NONE;
 					break;
 				case 'x':	// '\xHH', '\x{HH}'
 					if (isXDIGIT(*p)) {		// '\xHH'
 						ender = (TCHAR) scan_hex(p, 2, &numlen);
+						ender = convert_char_case(enc, ender, nextcase,
+								currentcase);
 						p += numlen;
+						nextcase = CASE_NONE;
 					}
 					else {
 						const TCHAR *q = p;
@@ -497,12 +582,15 @@ TRACE0(_T("compile_rep()\n"));
 							unsigned int code = scan_hex(++q, 8, &numlen);
 							q += numlen;
 							if (*q == '}') {
+								code = convert_char_case(enc, code, nextcase,
+										currentcase);
 								int len = ONIGENC_CODE_TO_MBC(
 										enc, code, (UChar*) dst)
 											/ sizeof(TCHAR);
 								dst += len - 1;
 								ender = *dst;
 								p = q+1;
+								nextcase = CASE_NONE;
 								break;
 							}
 						}
@@ -516,11 +604,13 @@ TRACE0(_T("compile_rep()\n"));
 						ender = *p++;
 					ender = toupper((TBYTE) ender);
 					ender ^= 64;
+					nextcase = CASE_NONE;
 					break;
 				case 'k':	// \k<name>, \k'name'
 					if (*p == '<' || *p == '\'') {
 						const TCHAR *q = parse_groupname(rx, p, pend, repstr,
-								&cindex, dst, &olddst);
+								&cindex, dst, &olddst, nextcase, currentcase);
+						nextcase = CASE_NONE;
 						if (q != NULL) {
 							p = q;
 							continue;
@@ -529,27 +619,28 @@ TRACE0(_T("compile_rep()\n"));
 					// SYNTAX ERROR
 					ender = prvch;
 					break;
-			/*
+				
 				case 'l':	// lower next
-					nextchcase = CASE_LOWER;
+					nextcase = CASE_LOWER;
 					continue;
 				case 'u':	// upper next
-					nextchcase = CASE_UPPER;
+					nextcase = CASE_UPPER;
 					continue;
 				case 'L':	// lower till \E
-					chcase = CASE_LOWER;
+					currentcase = CASE_LOWER;
 					continue;
 				case 'U':	// upper till \E
-					chcase = CASE_UPPER;
+					currentcase = CASE_UPPER;
 					continue;
 				case 'Q':	// quote
 					continue;
 				case 'E':	// end of \L/\U
-					chcase = CASE_NONE;
+					currentcase = CASE_NONE;
 					continue;
-			*/
+				
 				default:	// '/', '\\' and the other char
 					ender = prvch;
+					nextcase = CASE_NONE;
 					break;
 				}
 				*dst++ = ender;
@@ -566,8 +657,8 @@ TRACE0(_T("compile_rep()\n"));
 		
 		
 		if (dst - olddst > 0) {
-			repstr->startp[cindex] = olddst;
-			repstr->dlen[cindex++] = dst - olddst;
+			repstr->info[cindex].startp = olddst;
+			repstr->info[cindex++].dlen = dst - olddst;
 		}
 		repstr->count = cindex;
 		
