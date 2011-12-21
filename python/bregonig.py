@@ -14,7 +14,7 @@ __all__ = ["BREGEXP", "BRegexpVersion",
            "BoMatch", "BoSubst",
            "LoadDLL", "LoadBregonig", "LoadBregexp",
            "BCallBack",
-           "create_tchar_buffer",
+           "create_tchar_buffer", "tstring_at",
            "BREGEXP_MAX_ERROR_MESSAGE_LEN"]
 
 
@@ -53,6 +53,7 @@ _BoMatch = None
 _BoSubst = None
 
 _create_tchar_buffer = None
+_tstring_at = None
 
 
 # constant
@@ -112,6 +113,9 @@ def BoSubst(patternp, substp, optionp, strstartp, targetstartp, targetendp,
 def create_tchar_buffer(size=None):
     return _create_tchar_buffer(size)
 
+def tstring_at(address, size=-1):
+    return _tstring_at(address, size)
+
 
 # bregonig.dll
 def LoadBregonig(unicode_func = False):
@@ -139,12 +143,15 @@ def LoadDLL(regexpdll, unicode_func = False):
     """
     
     global _create_tchar_buffer
+    global _tstring_at
     if unicode_func:
         c_tchar_p = c_wchar_p
         _create_tchar_buffer = create_unicode_buffer
+        _tstring_at = wstring_at
     else:
         c_tchar_p = c_char_p
         _create_tchar_buffer = create_string_buffer
+        _tstring_at = string_at
     
     global _BRegexpVersion
     if unicode_func:
