@@ -142,7 +142,7 @@ def main():
             unicode_func = encs[sys.argv[1]]
         except KeyError:
             print("test target encoding error")
-            print("Usage: python test_cp932.py [test target encoding] [output encoding]")
+            print("Usage: python test_match.py [test target encoding] [output encoding]")
             sys.exit()
         encoding = sys.argv[1]
     
