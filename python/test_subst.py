@@ -5,7 +5,7 @@ from __future__ import print_function, unicode_literals
 from ctypes import *
 from bregonig import *
 import sys
-import codecs
+import io
 import locale
 
 nerror = 0
@@ -13,6 +13,14 @@ nsucc = 0
 nfail = 0
 
 encoding = "CP932"
+
+# work around for Python 2.x
+org_print = print
+def print(*args, **kwargs):
+    kw = dict(kwargs)
+    kw.setdefault('end', '\n')      # 'end' must be a unicode string
+    return org_print(*args, **kw)
+
 
 class strptr:
     """a helper class to get a pointer to a string"""
@@ -163,8 +171,8 @@ def main():
         outenc = sys.argv[2]
     else:
         outenc = locale.getpreferredencoding()
-    sys.stdout = codecs.getwriter(outenc)(sys.stdout)
-    sys.stderr = codecs.getwriter(outenc)(sys.stderr)
+    sys.stdout = io.open(sys.stdout.fileno(), "w", encoding=outenc, closefd=False)
+    sys.stderr = io.open(sys.stderr.fileno(), "w", encoding=outenc, closefd=False)
     
     
     LoadBregonig(unicode_func)

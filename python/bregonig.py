@@ -65,7 +65,10 @@ BCallBack = WINFUNCTYPE(c_bool, c_int, c_int, c_ssize_t)
 
 def BRegexpVersion():
     """Return version string of the regular expression DLL."""
-    return _BRegexpVersion()
+    s = _BRegexpVersion()
+    if isinstance(s, bytes):
+        s = s.decode()
+    return s
 
 def BMatch(str, target, targetendp, rxp, msg):
     return _BMatch(str, target, targetendp, rxp, msg)

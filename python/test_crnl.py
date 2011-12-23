@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: cp932 -*-
 
-from __future__ import print_function
+from __future__ import print_function, unicode_literals
 from ctypes import *
 from bregonig import *
 import sys
-import codecs
+import io
 import locale
 
 nerror = 0
@@ -13,6 +13,14 @@ nsucc = 0
 nfail = 0
 
 encoding = "CP932"
+
+# work around for Python 2.x
+org_print = print
+def print(*args, **kwargs):
+    kw = dict(kwargs)
+    kw.setdefault('end', '\n')      # 'end' must be a unicode string
+    return org_print(*args, **kw)
+
 
 class strptr:
     """a helper class to get a pointer to a string"""
@@ -52,8 +60,6 @@ def xx(pattern, target, start_offset, s_from, s_to, not_match):
     pattern2 = pattern
     if not isinstance(pattern, bytes):
         pattern2 = pattern.encode(encoding)
-    if encoding == "UTF-16LE":
-        pattern2 = pattern2.decode(encoding)
     
     target2 = target
     if not isinstance(target, bytes):
@@ -63,11 +69,17 @@ def xx(pattern, target, start_offset, s_from, s_to, not_match):
     tp = strptr(target2)
     
     if encoding == "UTF-8":
-        r = BoMatch(pattern2, "R8", tp.getptr(), tp.getptr(start_offset), tp.getptr(-1),
-                False, byref(rxp), msg)
+        option = "R8"
     else:
-        r = BoMatch(pattern2, "Rk", tp.getptr(), tp.getptr(start_offset), tp.getptr(-1),
-                False, byref(rxp), msg)
+        option = "Rk"
+    option = option.encode(encoding)
+    
+    if encoding == "UTF-16LE":
+        pattern2 = pattern2.decode(encoding)
+        option = option.decode(encoding)
+    
+    r = BoMatch(pattern2, option, tp.getptr(), tp.getptr(start_offset), tp.getptr(-1),
+            False, byref(rxp), msg)
     
     if r < 0:
         nerror += 1
@@ -115,14 +127,15 @@ def main():
     
     # set encoding of the test target
     if len(sys.argv) > 1:
-        if sys.argv[1] in ("CP932", "SJIS"):
-            unicode_func = False
-        elif sys.argv[1] == "UTF-8":
-            unicode_func = False
-        elif sys.argv[1] == "UTF-16LE":
-            unicode_func = True
-        else:
+        encs = {"CP932": False,
+                "SJIS": False,
+                "UTF-8": False,
+                "UTF-16LE": True}
+        try:
+            unicode_func = encs[sys.argv[1]]
+        except KeyError:
             print("test target encoding error")
+            print("Usage: python test_crnl.py [test target encoding] [output encoding]")
             sys.exit()
         encoding = sys.argv[1]
     
@@ -131,8 +144,8 @@ def main():
         outenc = sys.argv[2]
     else:
         outenc = locale.getpreferredencoding()
-    sys.stdout = codecs.getwriter(outenc)(sys.stdout)
-    sys.stderr = codecs.getwriter(outenc)(sys.stderr)
+    sys.stdout = io.open(sys.stdout.fileno(), "w", encoding=outenc, closefd=False)
+    sys.stderr = io.open(sys.stderr.fileno(), "w", encoding=outenc, closefd=False)
     
     
     LoadBregonig(unicode_func)
@@ -141,64 +154,64 @@ def main():
     print(BRegexpVersion())
     print()
     
-    x(u"",      u"\r\n",            0,  0,  0);
-    n(u".",     u"\r\n",            0);
-    n(u"..",    u"\r\n",            0);
-    x(u"^",     u"\r\n",            0,  0,  0);
-    x(u"(?m)\\n^",  u"\r\nf",       0,  1,  2);
-    x(u"(?m)\\n^a", u"\r\na",       0,  1,  3);
-    x(u"$",     u"\r\n",            0,  0,  0);
-    x(u"T$",    u"T\r\n",           0,  0,  1);
-    x(u"T$",    u"T\raT\r\n",       0,  3,  4);
-    x(u"\\z",   u"\r\n",            0,  2,  2);
-    n(u"a\\z",  u"a\r\n",           0);
-    x(u"\\Z",   u"\r\n",            0,  0,  0);
-    x(u"\\Z",   u"\r\na",           0,  3,  3);
-    x(u"\\Z",   u"\r\n\r\n\n",      0,  4,  4);
-    x(u"\\Z",   u"\r\n\r\nX",       0,  5,  5);
-    x(u"a\\Z",  u"a\r\n",           0,  0,  1);
-    x(u"aaaaaaaaaaaaaaa\\Z",    u"aaaaaaaaaaaaaaa\r\n", 0,  0,  15);
-    x(u"(?m)a|$",   u"b\r\n",       0,  1,  1);
-    x(u"(?m)$|b",   u"\rb",         0,  1,  2);
-    x(u"(?m)a$|ab$",u"\r\nab\r\n",  0,  2,  4);
-    x(u"a|\\Z",     u"b\r\n",       0,  1,  1);
-    x(u"\\Z|b",     u"\rb",         0,  1,  2);
-    x(u"a\\Z|ab\\Z",u"\r\nab\r\n",  0,  2,  4);
-    x(u"(?=a$).",   u"a\r\n",       0,  0,  1);
-    n(u"(?=a$).",   u"a\r",         0);
-    x(u"(?!a$)..",  u"a\r",         0,  0,  2);
-    x(u"(?m)(?<=a$)\\r\\n", u"a\r\n",   0,  1,  3);
-    n(u"(?m)(?<!a$)\\r\\n", u"a\r\n",   0);
-    x(u"(?=a\\Z).", u"a\r\n",       0,  0,  1);
-    n(u"(?=a\\Z).", u"a\r",         0);
-    x(u"(?!a\\Z)..",u"a\r",         0,  0,  2);
-    x(u"(?m).*$",   u"aa\r\n",      0,  0,  2);
-    x(u"(?m).*$",   u"aa\r",        0,  0,  3);
-    x(u"\\R{3}",    u"\r\r\n\n",    0,  0,  4);
-    x(u"(?m)$",     u"\n",          0,  0,  0);
-    x(u"(?m)T$",    u"T\n",         0,  0,  1);
-    x(u"(?s).",     u"\r\n",        0,  0,  1);
-    x(u"(?s)..",    u"\r\n",        0,  0,  2);
-    x(u"(?m)^",     u"\n.",         1,  1,  1);
-    x(u"(?m)^",     u"\r\n.",       1,  2,  2);
-    x(u"(?m)^",     u"\r\n.",       2,  2,  2);
-    x(u"(?m)$",     u"\n\n",        1,  1,  1);
-    x(u"(?m)$",     u"\r\n\n",      1,  2,  2);
-    x(u"(?m)$",     u"\r\n\n",      2,  2,  2);
-    n(u"(?m)^$",    u"\n\r",        1);
-    x(u"(?m)^$",    u"\n\r\n",      1,  1,  1);
-    x(u"(?m)^$",    u"\r\n\n",      1,  2,  2);
-    x(u"\\Z",       u"\r\n\n",      1,  2,  2);
-    n(u".(?=\\Z)",  u"\r\n",        1);
-    x(u"(?=\\Z)",   u"\r\n",        1,  2,  2);
-    x(u"(?m)(?<=^).",   u"\r\n.",   0,  2,  3);
-    x(u"(?m)(?<=^).",   u"\r\n.",   1,  2,  3);
-    x(u"(?m)(?<=^).",   u"\r\n.",   2,  2,  3);
-    x(u"(?m)^a",    u"\r\na",       0,  2,  3);
-    x(u"(?m)^a",    u"\r\na",       1,  2,  3);
-    x(u"(?ms)$.{1,2}a", u"\r\na",   0,  0,  3);
-    n(u"(?ms)$.{1,2}a", u"\r\na",   1);
-    x(u".*b",       u"\r\naaab\r\n",1,  2,  6);
+    x("",       "\r\n",             0,  0,  0);
+    n(".",      "\r\n",             0);
+    n("..",     "\r\n",             0);
+    x("^",      "\r\n",             0,  0,  0);
+    x("(?m)\\n^",   "\r\nf",        0,  1,  2);
+    x("(?m)\\n^a",  "\r\na",        0,  1,  3);
+    x("$",      "\r\n",             0,  0,  0);
+    x("T$",     "T\r\n",            0,  0,  1);
+    x("T$",     "T\raT\r\n",        0,  3,  4);
+    x("\\z",    "\r\n",             0,  2,  2);
+    n("a\\z",   "a\r\n",            0);
+    x("\\Z",    "\r\n",             0,  0,  0);
+    x("\\Z",    "\r\na",            0,  3,  3);
+    x("\\Z",    "\r\n\r\n\n",       0,  4,  4);
+    x("\\Z",    "\r\n\r\nX",        0,  5,  5);
+    x("a\\Z",   "a\r\n",            0,  0,  1);
+    x("aaaaaaaaaaaaaaa\\Z", "aaaaaaaaaaaaaaa\r\n",  0,  0,  15);
+    x("(?m)a|$",    "b\r\n",        0,  1,  1);
+    x("(?m)$|b",    "\rb",          0,  1,  2);
+    x("(?m)a$|ab$", "\r\nab\r\n",   0,  2,  4);
+    x("a|\\Z",      "b\r\n",        0,  1,  1);
+    x("\\Z|b",      "\rb",          0,  1,  2);
+    x("a\\Z|ab\\Z", "\r\nab\r\n",   0,  2,  4);
+    x("(?=a$).",    "a\r\n",        0,  0,  1);
+    n("(?=a$).",    "a\r",          0);
+    x("(?!a$)..",   "a\r",          0,  0,  2);
+    x("(?m)(?<=a$)\\r\\n",  "a\r\n",    0,  1,  3);
+    n("(?m)(?<!a$)\\r\\n",  "a\r\n",    0);
+    x("(?=a\\Z).",  "a\r\n",        0,  0,  1);
+    n("(?=a\\Z).",  "a\r",          0);
+    x("(?!a\\Z)..", "a\r",          0,  0,  2);
+    x("(?m).*$",    "aa\r\n",       0,  0,  2);
+    x("(?m).*$",    "aa\r",         0,  0,  3);
+    x("\\R{3}",     "\r\r\n\n",     0,  0,  4);
+    x("(?m)$",      "\n",           0,  0,  0);
+    x("(?m)T$",     "T\n",          0,  0,  1);
+    x("(?s).",      "\r\n",         0,  0,  1);
+    x("(?s)..",     "\r\n",         0,  0,  2);
+    x("(?m)^",      "\n.",          1,  1,  1);
+    x("(?m)^",      "\r\n.",        1,  2,  2);
+    x("(?m)^",      "\r\n.",        2,  2,  2);
+    x("(?m)$",      "\n\n",         1,  1,  1);
+    x("(?m)$",      "\r\n\n",       1,  2,  2);
+    x("(?m)$",      "\r\n\n",       2,  2,  2);
+    n("(?m)^$",     "\n\r",         1);
+    x("(?m)^$",     "\n\r\n",       1,  1,  1);
+    x("(?m)^$",     "\r\n\n",       1,  2,  2);
+    x("\\Z",        "\r\n\n",       1,  2,  2);
+    n(".(?=\\Z)",   "\r\n",         1);
+    x("(?=\\Z)",    "\r\n",         1,  2,  2);
+    x("(?m)(?<=^).",    "\r\n.",    0,  2,  3);
+    x("(?m)(?<=^).",    "\r\n.",    1,  2,  3);
+    x("(?m)(?<=^).",    "\r\n.",    2,  2,  3);
+    x("(?m)^a",     "\r\na",        0,  2,  3);
+    x("(?m)^a",     "\r\na",        1,  2,  3);
+    x("(?ms)$.{1,2}a",  "\r\na",    0,  0,  3);
+    n("(?ms)$.{1,2}a",  "\r\na",    1);
+    x(".*b",        "\r\naaab\r\n", 1,  2,  6);
     
     
     print("\nRESULT   SUCC: %d,  FAIL: %d,  ERROR: %d\n" % (
