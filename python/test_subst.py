@@ -214,7 +214,13 @@ def main():
     xx("(A*)(B*)(C*)", "\\l$1$2$3", "BBCC",   "bBCC")
     xx("(A*)(B*)(C*)", "\\l$1$2$3", "BCC",    "bCC")
     xx("(A*)(B*)(C*)", "\\l$1$2$3", "CC",     "cC")
+    xx("Abc", "\\U$&\\L$&", "Abc", "ABCabc")
     
+    # nasted variable (bregonig.dll doesn't support this.)
+#    xx("^([23]),(.*),(.*)$", "${$1}", "2,1234,abcd", "1234")
+#    xx("^([23]),(.*),(.*)$", "${$1}", "3,1234,abcd", "abcd")
+#    xx("^(?<select>[ab]),(?<a>.*?),(?<b>.*?)$", "$+{$+{select}}", "a,1234,abcd", "1234")
+#    xx("^(?<select>[ab]),(?<a>.*?),(?<b>.*?)$", "$+{$+{select}}", "b,1234,abcd", "abcd")
     
     print("\nRESULT   SUCC: %d,  FAIL: %d,  ERROR: %d\n" % (
            nsucc, nfail, nerror))
