@@ -12,7 +12,7 @@
 int _tmain(int argc,TCHAR *argv[])
 {
 	TCHAR fname[512],line[4096],*p1;
-	TCHAR msg[80];
+	TCHAR msg[BREGEXP_MAX_ERROR_MESSAGE_LEN];
 	FILE *fp;
 	int len,ctr;
 	BREGEXP *rxp = 0;

@@ -142,7 +142,7 @@ static TBYTE freq[] = {	/* letter frequencies for mixed English/C */
 
 
 
-typedef int STRLEN;
+typedef ptrdiff_t STRLEN;
 
 void sv_free(register SV *sv)
 {
@@ -322,11 +322,11 @@ SV *littlestr,int mline,int kmode)
  * as temporary.
  */
 
-void sv_setpvn(register SV *sv, register TCHAR *ptr, register STRLEN len);
+void sv_setpvn(register SV *sv, register const TCHAR *ptr, register STRLEN len);
 
 
 
-void sv_grow(SV* sv,int len)
+void sv_grow(SV* sv,STRLEN len)
 {
 	len += 512;
 	TCHAR *ptr = new (std::nothrow) TCHAR[len];
@@ -348,7 +348,7 @@ sv_setsv(SV *dstr, register SV *sstr)
 {
     if (sstr == dstr)
 		return;
-	int len = sstr->xpv_cur;
+	ptrdiff_t len = sstr->xpv_cur;
     SvGROW(dstr, len +1);
 
 	memcpy(dstr->xpv_pv,sstr->xpv_pv,len*sizeof(TCHAR));
@@ -358,7 +358,7 @@ sv_setsv(SV *dstr, register SV *sstr)
 }
 
 
-void sv_catpvn(SV* sv,TCHAR*ptr,int len)
+void sv_catpvn(SV* sv,const TCHAR*ptr,STRLEN len)
 {
     SvGROW(sv, sv->xpv_cur + len +1);
 
@@ -368,7 +368,7 @@ void sv_catpvn(SV* sv,TCHAR*ptr,int len)
 }
 
 
-void sv_setpvn(register SV *sv, register TCHAR *ptr, register STRLEN len)
+void sv_setpvn(register SV *sv, register const TCHAR *ptr, register STRLEN len)
 {
     SvGROW(sv, len + 1 < 512 ? 512:len + 1);
     memcpy(SvPVX(sv),ptr,len*sizeof(TCHAR));

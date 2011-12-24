@@ -2,7 +2,7 @@
  *	bregonig.cpp
  */
 /*
- *	Copyright (C) 2006-2009  K.Takata
+ *	Copyright (C) 2006-2011  K.Takata
  *
  *	You may distribute under the terms of either the GNU General Public
  *	License or the Artistic License, as specified in the perl_license.txt file.
@@ -44,7 +44,7 @@ using namespace BREGONIG_NS;
 
 extern OnigSyntaxType OnigSyntaxPerl_NG_EX;
 #ifndef UNICODE
-OnigSyntaxType OnigSyntaxPerl_NG_EX = *ONIG_SYNTAX_PERL_NG;
+OnigSyntaxType OnigSyntaxPerl_NG_EX = OnigSyntaxPerl;
 /*
 OnigSyntaxType OnigSyntaxPerl_NG_EX = {
 	ONIG_SYNTAX_PERL_NG->op,
@@ -60,16 +60,10 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 	switch (fdwReason) {
 	case DLL_PROCESS_ATTACH:
 		OnigSyntaxPerl_NG_EX.op2 |=
-#ifdef USE_VTAB
-				ONIG_SYN_OP2_ESC_V_VTAB |
-#endif
-#ifndef PERL_5_8_COMPAT
-				ONIG_SYN_OP2_PLUS_POSSESSIVE_REPEAT |
-				ONIG_SYN_OP2_PLUS_POSSESSIVE_INTERVAL |
-#endif
-				ONIG_SYN_OP2_CCLASS_SET_OP;
-		OnigSyntaxPerl_NG_EX.behavior |= ONIG_SYN_DIFFERENT_LEN_ALT_LOOK_BEHIND;
-		OnigSyntaxPerl_NG_EX.options |= ONIG_OPTION_CAPTURE_GROUP;
+				ONIG_SYN_OP2_ESC_G_SUBEXP_CALL |			/* bregonig.dll extension */
+				ONIG_SYN_OP2_CCLASS_SET_OP;					/* bregonig.dll extension */
+		OnigSyntaxPerl_NG_EX.behavior |=
+				ONIG_SYN_DIFFERENT_LEN_ALT_LOOK_BEHIND;		/* bregonig.dll extension */
 		onig_init();
 		break;
 		
@@ -93,7 +87,7 @@ TCHAR *::BRegexpVersion(void)
 {
 	static TCHAR version[80];
 	_sntprintf(version, lengthof(version),
-			_T("bregonig.dll Ver.%d.%02d%hs with Oniguruma %hs"),
+			_T("bregonig.dll Ver.%d.%02d%hs with Onigmo %hs"),
 			BREGONIG_VERSION_MAJOR, BREGONIG_VERSION_MINOR,
 			BREGONIG_VERSION_SUFFIX,
 			onig_version());
@@ -150,24 +144,13 @@ int ::BTrans(TCHAR *str, TCHAR *target, TCHAR *targetendp,
 TRACE1(_T("BTrans(): %s\n"), str);
 	set_new_throw_bad_alloc();
 	
-	int plen;
-	if (check_params(str, target, target/*startp*/, targetendp,
-			rxp, true, msg, &plen) < 0) {
+	if (check_params(target, target/*startp*/, targetendp, rxp, msg, false) < 0) {
 		return -1;
 	}
 	bregonig *rx = static_cast<bregonig*>(*rxp);
-	if (rx == NULL) {
-		rx = compile_onig(str, plen, msg);
-		if (rx == NULL) {
-			*rxp = NULL;
-			return -1;
-		}
-	}
-	*rxp = rx;
-	
-	if (rx->outp) {				// free old result string
-		delete [] rx->outp;
-		rx->outp = NULL;
+	*rxp = rx = recompile_onig(rx, PTN_TRANS, str, msg);
+	if (*rxp == NULL) {
+		return -1;
 	}
 	
 	if (!(rx->pmflags & PMf_TRANSLATE)) {
@@ -188,24 +171,13 @@ int ::BSplit(TCHAR *str, TCHAR *target, TCHAR *targetendp,
 TRACE1(_T("BSplit(): %s\n"), str);
 	set_new_throw_bad_alloc();
 	
-	int plen;
-	if (check_params(str, target, target/*startp*/, targetendp,
-			rxp, false, msg, &plen) < 0) {
+	if (check_params(target, target/*startp*/, targetendp, rxp, msg, false) < 0) {
 		return -1;
 	}
 	bregonig *rx = static_cast<bregonig*>(*rxp);
-	if (rx == NULL) {
-		rx = compile_onig(str, plen, msg);
-		if (rx == NULL) {
-			*rxp = NULL;
-			return -1;
-		}
-	}
-	*rxp = rx;
-	
-	if (rx->splitp) {
-		delete [] rx->splitp;
-		rx->splitp = NULL;
+	*rxp = rx = recompile_onig(rx, PTN_MATCH, str, msg);
+	if (*rxp == NULL) {
+		return -1;
 	}
 	
 	int ctr = split_onig(rx,target,targetendp,limit,msg);
@@ -222,12 +194,68 @@ TRACE1(_T("BRegfree(): rx=0x%08x\n"), rx);
 }
 
 
+#ifndef _K2REGEXP_
+int ::BoMatch(const TCHAR *patternp, const TCHAR *optionp,
+		const TCHAR *strstartp,
+		const TCHAR *targetstartp, const TCHAR *targetendp,
+		BOOL one_shot,
+		BREGEXP **rxp, TCHAR *msg)
+{
+	set_new_throw_bad_alloc();
+	
+	const TCHAR *substp = NULL;
+	const TCHAR *patternendp = (patternp != NULL) ? patternp + _tcslen(patternp) : NULL;
+	const TCHAR *substendp = NULL;
+	const TCHAR *optionendp = (optionp != NULL) ? optionp + _tcslen(optionp) : NULL;
+	
+	if (check_params(strstartp, targetstartp, targetendp, rxp, msg, true) < 0) {
+		return -1;
+	}
+	
+	bregonig *rx = static_cast<bregonig*>(*rxp);
+	*rxp = rx = recompile_onig_ex(rx, PTN_MATCH, NULL, patternp, patternendp,
+			substp, substendp, optionp, optionendp, msg);
+	if (rx == NULL) {
+		return -1;
+	}
+	
+	int err_code = regexec_onig(rx, targetstartp, targetendp, strstartp,
+			0, 1, one_shot, msg);
+	
+	return err_code;
+}
+
+int ::BoSubst(const TCHAR *patternp, const TCHAR *substp, const TCHAR *optionp,
+		const TCHAR *strstartp,
+		const TCHAR *targetstartp, const TCHAR *targetendp,
+		BCallBack callback,
+		BREGEXP **rxp, TCHAR *msg)
+{
+	set_new_throw_bad_alloc();
+	
+	const TCHAR *patternendp = (patternp != NULL) ? patternp + _tcslen(patternp) : NULL;
+	const TCHAR *substendp = (substp != NULL) ? substp + _tcslen(substp) : NULL;
+	const TCHAR *optionendp = (optionp != NULL) ? optionp + _tcslen(optionp) : NULL;
+	
+	if (check_params(strstartp, targetstartp, targetendp, rxp, msg, true) < 0) {
+		return -1;
+	}
+	
+	bregonig *rx = static_cast<bregonig*>(*rxp);
+	*rxp = rx = recompile_onig_ex(rx, PTN_SUBST, NULL, patternp, patternendp,
+			substp, substendp, optionp, optionendp, msg);
+	if (rx == NULL) {
+		return -1;
+	}
+	return subst_onig(rx, strstartp, targetstartp, targetendp, msg, callback);
+}
+#endif
 
 
 
 namespace BREGONIG_NS {
 
-int onig_err_to_bregexp_msg(int err_code, OnigErrorInfo* err_info, TCHAR *msg)
+int onig_err_to_bregexp_msg(OnigPosition err_code, OnigErrorInfo* err_info, TCHAR *msg)
 {
 	char err_str[ONIG_MAX_ERROR_MESSAGE_LEN];
 	int ret = onig_error_code_to_str((UChar*) err_str, err_code, err_info);
@@ -236,48 +264,27 @@ int onig_err_to_bregexp_msg(int err_code, OnigErrorInfo* err_info, TCHAR *msg)
 	return ret;
 }
 
-int check_params(const TCHAR *str, const TCHAR *target, const TCHAR *targetstartp,
-		const TCHAR *targetendp,
-		BREGEXP **rxp, bool trans, TCHAR *msg, int *pplen)
+int check_params(const TCHAR *target, const TCHAR *targetstartp,
+		const TCHAR *targetendp, BREGEXP **rxp, TCHAR *msg, bool allownullstr)
 {
 	if (msg == NULL)		// no message area
 		return -1;
 	msg[0] = '\0';			// ensure no error
-TRACE3(_T("str:%s, len:%d, len:%d\n"), str, targetendp-target, targetendp-targetstartp);
-TRACE1(_T("rxp:0x%08x\n"), rxp);
 	
 	if (rxp == NULL) {
 		asc2tcs(msg, "invalid BREGEXP parameter", BREGEXP_MAX_ERROR_MESSAGE_LEN);
 		return -1;
 	}
-TRACE1(_T("rx:0x%08x\n"), *rxp);
+	const TCHAR *endp = targetendp;
+	if (allownullstr) {
+		endp++;
+	}
 	if (target == NULL || targetstartp == NULL || targetendp == NULL
-		|| targetstartp >= targetendp || target > targetstartp) { // bad target parameter ?
+			|| targetstartp >= endp || target > targetstartp) { // bad target parameter ?
 		asc2tcs(msg, "invalid target parameter", BREGEXP_MAX_ERROR_MESSAGE_LEN);
 		return -1;
 	}
 	
-	
-	int plen = (str == NULL) ? 0 : _tcslen(str);
-	*pplen = plen;
-	
-	bregonig *rx = static_cast<bregonig*>(*rxp);
-	if (plen == 0) {	// null string
-		if (rx == NULL) {
-			asc2tcs(msg, "invalid reg parameter", BREGEXP_MAX_ERROR_MESSAGE_LEN);
-			return -1;
-		}
-	} else if (rx) {
-		if ((trans == !(rx->pmflags & PMf_TRANSLATE)
-				|| rx->paraendp - rx->parap != plen
-				|| memcmp(str,rx->parap,plen*sizeof(TCHAR)) != 0)) {
-			// differ from the previous pattern
-			delete rx;
-			*rxp = NULL;
-TRACE0(_T("delete rx\n"));
-		}
-	}
-//	*rxp = rx;
 	return 0;
 }
 
@@ -286,31 +293,16 @@ int BMatch_s(TCHAR *str, TCHAR *target, TCHAR *targetstartp, TCHAR *targetendp,
 		int one_shot,
 		BREGEXP **rxp, TCHAR *msg)
 {
-TRACE1(_T("BMatch(): %s\n"), str);
+TRACE(_T("BMatch(): '%s' (%p), %p, %p, %p\n"), str, str, target, targetstartp, targetendp);
 	set_new_throw_bad_alloc();
 	
-	int plen;
-	if (check_params(str, target, targetstartp, targetendp,
-			rxp, false, msg, &plen) < 0) {
+	if (check_params(target, targetstartp, targetendp, rxp, msg, false) < 0) {
 		return -1;
 	}
 	bregonig *rx = static_cast<bregonig*>(*rxp);
+	*rxp = rx = recompile_onig(rx, PTN_MATCH, str, msg);
 	if (rx == NULL) {
-		rx = compile_onig(str, plen, msg);
-		if (rx == NULL) {
-			*rxp = NULL;
-			return -1;
-		}
-	}
-	*rxp = rx;
-	
-	if (rx->outp) {
-		delete [] rx->outp;
-		rx->outp = NULL;
-	}
-	
-	if (rx->prelen == 0) {			// no string
-		return 0;
+		return -1;
 	}
 	
 	int err_code = regexec_onig(rx, targetstartp, targetendp, target,
@@ -336,32 +328,16 @@ TRACE1(_T("BMatch(): %s\n"), str);
 int BSubst_s(TCHAR *str, TCHAR *target, TCHAR *targetstartp, TCHAR *targetendp,
 		BREGEXP **rxp, TCHAR *msg, BCallBack callback)
 {
-TRACE1(_T("BSubst(): %s\n"), str);
+TRACE(_T("BSubst(): '%s' (%p), %p, %p, %p\n"), str, str, target, targetstartp, targetendp);
 	set_new_throw_bad_alloc();
 	
-	int plen;
-	if (check_params(str, target, targetstartp, targetendp,
-			rxp, false, msg, &plen) < 0) {
+	if (check_params(target, targetstartp, targetendp, rxp, msg, false) < 0) {
 		return -1;
 	}
 	bregonig *rx = static_cast<bregonig*>(*rxp);
+	*rxp = rx = recompile_onig(rx, PTN_SUBST, str, msg);
 	if (rx == NULL) {
-		rx = compile_onig(str, plen, msg);
-		if (rx == NULL) {
-TRACE0(_T("rx == NULL\n"));
-			*rxp = NULL;
-			return -1;
-		}
-	}
-	*rxp = rx;
-	
-	if (rx->outp) {
-		delete [] rx->outp;
-		rx->outp = NULL;
-	}
-	
-	if (rx->prelen == 0) {			// no string
-		return 0;
+		return -1;
 	}
 	
 	if (rx->pmflags & PMf_SUBSTITUTE) {
@@ -414,6 +390,11 @@ bregonig::~bregonig()
 	delete [] transtblp;
 	delete [] startp;
 //	delete [] endp;
+	
+	delete [] patternp;
+//	delete [] prerepp;
+//	delete [] optionp;
+	
 	if (repstr) {
 		delete repstr;
 	}
@@ -421,45 +402,51 @@ bregonig::~bregonig()
 
 
 
-
-
-
-bregonig *compile_onig(const TCHAR *ptn, int plen, TCHAR *msg)
+pattern_type parse_pattern(const TCHAR *ptn, pattern_type typeold,
+		const TCHAR **patternp, const TCHAR **patternendp,
+		const TCHAR **prerepp, const TCHAR **prerependp,
+		const TCHAR **optionp, const TCHAR **optionendp,
+		TCHAR *msg)
 {
-TRACE0(_T("compile_onig()\n"));
-TRACE1(_T("ptn:%s\n"), ptn);
-TRACE1(_T("plen:%d\n"), plen);
-	TCHAR *parap = new (std::nothrow) TCHAR[plen+1];	// parameter copy
-	if (parap == NULL) {
-		asc2tcs(msg, "precompile out of space", BREGEXP_MAX_ERROR_MESSAGE_LEN);
-		return NULL;
+	if (ptn == NULL) {
+		*patternp = NULL;
+		*patternendp = NULL;
+		*prerepp = NULL;
+		*prerependp = NULL;
+		*optionp = NULL;
+		*optionendp = NULL;
+		return typeold;
 	}
-	memcpy(parap, ptn, (plen+1)*sizeof(TCHAR));	// copy include null
 	
-	TCHAR type = 'm';		// default is match
-	TCHAR *p = parap;
-	TCHAR *pend = p + plen;
+	pattern_type type = PTN_MATCH;
+	const TCHAR *p = ptn;
+	const TCHAR *ptnend = ptn + _tcslen(ptn);
 	TCHAR sep = '/';			// default separater
-	if (*p != '/') {
-		if (*p != 's' && *p != 'm' && memcmp(p,_T("tr"),2*sizeof(TCHAR)) != 0) {
-			asc2tcs(msg,"do not start 'm' or 's' or 'tr'",
+	
+	if (*p != sep) {
+		if (*p != 's' && *p != 'm' && *p != 'y'
+				&& (p[0] != 't' || p[1] != 'r')) {
+			asc2tcs(msg, "does not start with 'm', 's', 'tr' or 'y'",
 					BREGEXP_MAX_ERROR_MESSAGE_LEN);
-			delete [] parap;
-			return NULL;
+			return PTN_ERROR;
 		}
-		if (*p == 's')
-			type = 's';		// substitute command
-		else if (*p == 't') {
-			type = 't';		// translate command
+		if (*p == 's') {
+			type = PTN_SUBST;		// substitute command
+		} else if (*p == 'y') {
+			type = PTN_TRANS;		// translate command
+		} else if (*p == 't') {
+			type = PTN_TRANS;		// translate command
 			p++;
 		}
 		sep = *++p;
 	}
-	p++;
-	TCHAR *res = p;
-	TCHAR *resend = NULL, *rp = NULL, *rpend = NULL;
+	p++;		// skip separater
+	*patternp = p;
+	
+	const TCHAR *res = p;
+	const TCHAR *resend = NULL, *rp = NULL, *rpend = NULL;
 	TCHAR prev = 0;
-	while (*p != '\0') {
+	while (p < ptnend) {
 #ifndef UNICODE
 		if (iskanji(*p)) {
 			prev = 0; p += 2;
@@ -475,7 +462,7 @@ TRACE1(_T("plen:%d\n"), plen);
 			continue;
 		}
 		if (*p == sep && prev != '\\') {
-			if (!resend) {
+			if (resend == NULL) {
 				resend = p;
 				rp = ++p;
 				continue;
@@ -487,23 +474,37 @@ TRACE1(_T("plen:%d\n"), plen);
 		}
 		prev = *p++;
 	}
-	if (!resend || (!rpend && type != 'm')) {
+	if ((resend == NULL) || (rpend == NULL && type != PTN_MATCH)) {
 		asc2tcs(msg, "unmatch separater", BREGEXP_MAX_ERROR_MESSAGE_LEN);
-		delete [] parap;
-		return NULL;
+		return PTN_ERROR;
+	}
+	if (rpend == NULL) {
+		p = resend + 1;
+		rp = NULL;
 	}
 	
-	if (!rpend)
-		p = resend + 1;
+	*patternendp = resend;
+	*prerepp = rp;
+	*prerependp = rpend;
+	*optionp = p;
+	*optionendp = ptnend;
 	
+	return type;
+}
+
+void parse_option(const TCHAR *optionp, const TCHAR *optionendp,
+		OnigOptionType *onigoption, OnigEncoding *enc, int *flagp)
+{
+	const TCHAR *p = optionp;
 	int flag = 0;
 	OnigOptionType option = ONIG_OPTION_NONE;
 #ifdef UNICODE
-	OnigEncoding enc = ONIG_ENCODING_UTF16_LE;
+	*enc = ONIG_ENCODING_UTF16_LE;
 #else
-	OnigEncoding enc = ONIG_ENCODING_ASCII;
+	*enc = ONIG_ENCODING_ASCII;
 #endif
-	while (*p != '\0') {
+TRACE1(_T("option: %s"), optionp);
+	while (p < optionendp) {
 		switch (*p++) {
 		case 'g':
 			flag |= PMf_GLOBAL;
@@ -522,14 +523,20 @@ TRACE1(_T("plen:%d\n"), plen);
 		case 'k':
 			flag |= PMf_KANJI;
 #ifndef UNICODE
-			enc = ONIG_ENCODING_SJIS;
+			*enc = ONIG_ENCODING_CP932;
 #endif
 			break;
+#if !defined(UNICODE) && !defined(_K2REGEXP_)
+		case '8':		/* bregonig.dll extension */
+			*enc = ONIG_ENCODING_UTF8;
+			break;
+#endif
 		case 'c':
 			flag |= PMf_TRANS_COMPLEMENT;
 			break;
 		case 'd':
 			flag |= PMf_TRANS_DELETE;
+			option &= ~ONIG_OPTION_ASCII_RANGE;
 			break;
 		case 's':
 			flag |= PMf_TRANS_SQUASH;
@@ -539,86 +546,303 @@ TRACE1(_T("plen:%d\n"), plen);
 		case 'x':
 			option |= ONIG_OPTION_EXTEND;
 			break;
+		case 'a':
+			option |= ONIG_OPTION_ASCII_RANGE;
+			break;
+		case 'l':
+		case 'u':
+			option &= ~ONIG_OPTION_ASCII_RANGE;
+			break;
+		case 'R':
+			option |= ONIG_OPTION_NEWLINE_CRLF;
+			break;
 		default:
 			break;
 		}
 	}
+	*flagp = flag;
+	*onigoption = option;
+}
+
+
+bregonig *recompile_onig(bregonig *rxold, pattern_type type,
+		const TCHAR *ptn, TCHAR *msg)
+{
+	const TCHAR *patternp;
+	const TCHAR *patternendp;
+	const TCHAR *prerepp;
+	const TCHAR *prerependp;
+	const TCHAR *optionp;
+	const TCHAR *optionendp;
+	
+TRACE1(_T("recompile_onig(): %s\n"), ptn);
+	type = parse_pattern(ptn, type, &patternp, &patternendp,
+			&prerepp, &prerependp, &optionp, &optionendp, msg);
+	if (type == PTN_ERROR) {
+		return NULL;
+	}
+	return recompile_onig_ex(rxold, type, ptn, patternp, patternendp,
+			prerepp, prerependp, optionp, optionendp, msg);
+}
+
+
+/**
+ * Compare the old regexp object and new pattern.
+ *
+ * return:
+ *     -2: parameter error
+ *     -1: Need to compile.
+ *      0: No need to compile. The old regexp object can be reused.
+ *      1: Replace string needs to compile.
+ */
+int compare_pattern(const bregonig *rxold,
+		pattern_type type,
+		const TCHAR *patternp, const TCHAR *patternendp,
+		const TCHAR *prerepp, const TCHAR *prerependp,
+		const TCHAR *optionp, const TCHAR *optionendp)
+{
+	pattern_type typeold;
+	ptrdiff_t len1 = patternendp - patternp;
+	ptrdiff_t len2 = prerependp - prerepp;
+	ptrdiff_t len3 = optionendp - optionp;
+	
+TRACE2(_T("compare_pattern: %s, len: %d"), patternp, patternendp-patternp);
+	if (rxold == NULL) {
+		return -1;
+	}
+	
+	if (rxold->pmflags & PMf_TRANSLATE) {
+		typeold = PTN_TRANS;
+	} else if (rxold->pmflags & PMf_SUBSTITUTE) {
+		typeold = PTN_SUBST;
+	} else {
+		typeold = PTN_MATCH;
+	}
+	
+	if ((typeold == PTN_TRANS) || (type == PTN_TRANS)) {
+		if (typeold != type) {
+			return -1;
+		}
+		if (patternp == NULL) {
+			return 0;
+		}
+		if ((len1 != rxold->patternendp - rxold->patternp)
+				|| (len2 != rxold->prerependp - rxold->prerepp)
+				|| (len3 != rxold->optionendp - rxold->optionp)) {
+			return -1;
+		}
+		if ((memcmp(patternp, rxold->patternp, len1*sizeof(TCHAR)) != 0)
+				|| (memcmp(prerepp, rxold->prerepp, len2*sizeof(TCHAR)) != 0)
+				|| (memcmp(optionp, rxold->optionp, len3*sizeof(TCHAR)) != 0)) {
+			return -1;
+		}
+		return 0;
+	} else if (type == PTN_SUBST) {
+		if (prerepp == NULL) {
+			if (patternp == NULL) {
+				if (typeold == PTN_SUBST) {
+					return 0;
+				} else {
+					return -2;	// error
+				}
+			}
+			return -2;	// error
+		}
+		if (patternp != NULL) {
+			if ((len1 != rxold->patternendp - rxold->patternp)
+					|| (len3 != rxold->optionendp - rxold->optionp)) {
+				return -1;
+			}
+			if ((memcmp(patternp, rxold->patternp, len1*sizeof(TCHAR)) != 0)
+					|| (memcmp(optionp, rxold->optionp, len3*sizeof(TCHAR)) != 0)) {
+				return -1;
+			}
+		}
+		if ((typeold == PTN_SUBST)
+				&& (len2 == rxold->prerependp - rxold->prerepp)
+				&& (memcmp(prerepp, rxold->prerepp, len2*sizeof(TCHAR)) == 0)) {
+			return 0;
+		}
+		return 1;		// compile_rep() is needed
+	} else {
+		if (patternp == NULL) {
+			return 0;
+		}
+		if ((len1 != rxold->patternendp - rxold->patternp)
+				|| (len3 != rxold->optionendp - rxold->optionp)) {
+			return -1;
+		}
+		if ((memcmp(patternp, rxold->patternp, len1*sizeof(TCHAR)) != 0)
+				|| (memcmp(optionp, rxold->optionp, len3*sizeof(TCHAR)) != 0)) {
+			return -1;
+		}
+		return 0;
+	}
+}
+
+
+bregonig *recompile_onig_ex(bregonig *rxold,
+		pattern_type type, const TCHAR *ptn,
+		const TCHAR *patternp, const TCHAR *patternendp,
+		const TCHAR *prerepp, const TCHAR *prerependp,
+		const TCHAR *optionp, const TCHAR *optionendp,
+		TCHAR *msg)
+{
+	int flag, compare;
+	bregonig *rx;
+	OnigOptionType option;
+	OnigEncoding enc;
+TRACE0(_T("recompile_onig_ex()\n"));
+TRACE2(_T("patternp: %s, len: %d\n"), patternp, patternendp-patternp);
+TRACE2(_T("prerepp: %s, len: %d\n"), prerepp, prerependp-prerepp);
+TRACE2(_T("optionp: %s, len: %d\n"), optionp, optionendp-optionp);
 	
 	
-/*
-	TRACE1(_T("parap: %s\r\n"), parap);
-	TRACE1(_T("res: %s\r\n"), res);
-	TRACE1(_T("resend: %s\r\n"), resend);
-	TRACE1(_T("rp: %s\r\n"), rp);
-	TRACE1(_T("rpend: %s\r\n"), rpend);
-*/
+	compare = compare_pattern(rxold, type, patternp, patternendp,
+			prerepp, prerependp, optionp, optionendp);
+TRACE1(_T("compare: %d\n"), compare);
+	if (compare < 0) {
+		// need to compile
+		delete rxold;
+		rxold = NULL;
+		
+		if (patternp == NULL
+				|| ((type == PTN_SUBST || type == PTN_TRANS) && prerepp == NULL)) {
+			asc2tcs(msg, "invalid reg parameter", BREGEXP_MAX_ERROR_MESSAGE_LEN);
+			return NULL;
+		}
+	} else {
+		// no need to compile
+		if (rxold->outp) {
+			delete [] rxold->outp;
+			rxold->outp = NULL;
+		}
+		if (rxold->splitp) {
+			delete [] rxold->splitp;
+			rxold->splitp = NULL;
+		}
+	}
 	
-	if (type == 't') {
-		bregonig *rx = trcomp(res,resend,rp,rpend,flag,msg);
+	parse_option(optionp, optionendp, &option, &enc, &flag);
+	
+	if (type == PTN_TRANS) {
+		if (compare == 0) {
+			// no need to compile
+TRACE1(_T("rxold(1):0x%08x\n"), rxold);
+			return rxold;
+		}
+		rx = trcomp(patternp, patternendp, prerepp, prerependp, flag, msg);
 		if (rx == NULL) {
-			delete [] parap;
 			return NULL;
 		}
-		rx->parap = parap;
-		rx->paraendp = rx->parap + plen;
-		return rx;
+	} else {
+		if (compare == 0) {
+			// no need to compile
+TRACE1(_T("rxold(2):0x%08x\n"), rxold);
+			return rxold;
+		} else if (compare < 0) {
+			// pattern string needs to compile.
+			rx = new (std::nothrow) bregonig();
+			if (rx == NULL) {
+				asc2tcs(msg, "out of space regexp", BREGEXP_MAX_ERROR_MESSAGE_LEN);
+				return NULL;
+			}
+			OnigErrorInfo err_info;
+			int err_code = onig_new(&rx->reg,
+					(UChar*) patternp, (UChar*) patternendp,
+					option, enc, &OnigSyntaxPerl_NG_EX, &err_info);
+			if (err_code != ONIG_NORMAL) {
+				onig_err_to_bregexp_msg(err_code, &err_info, msg);
+				delete rx;
+				return NULL;
+			}
+			
+			rx->nparens = onig_number_of_captures(rx->reg);	//
+			rx->pmflags = flag;
+		} else {
+			// only replace string needs to compile.
+			rx = rxold;
+		}
+		if (rxold != NULL && rxold->repstr != NULL) {
+			delete rxold->repstr;
+			rxold->repstr = NULL;
+		}
+		if (type == PTN_SUBST) {						// substitute
+			try {
+				rx->pmflags |= PMf_SUBSTITUTE;
+				rx->repstr = compile_rep(rx, prerepp, prerependp);	// compile replace string
+			} catch (std::exception& ex) {
+				asc2tcs(msg, ex.what(), BREGEXP_MAX_ERROR_MESSAGE_LEN);
+				delete rx;
+				return NULL;
+			}
+		}
 	}
 	
-	
-	bregonig *rx = new (std::nothrow) bregonig();
-	if (rx == NULL) {
-		asc2tcs(msg, "out of space regexp", BREGEXP_MAX_ERROR_MESSAGE_LEN);
-		delete [] parap;
-		return NULL;
-	}
-//	OnigSyntaxPerl_NG_EX.behavior |= ONIG_SYN_DIFFERENT_LEN_ALT_LOOK_BEHIND;
-	OnigErrorInfo err_info;
-	int err_code = onig_new(&rx->reg, (UChar*) res, (UChar*) resend,
-			option, enc, /*ONIG_SYNTAX_PERL_NG*/&OnigSyntaxPerl_NG_EX, &err_info);
-	
-	if (err_code != ONIG_NORMAL) {
-TRACE0(_T("Error: onig_new()\n"));
-		onig_err_to_bregexp_msg(err_code, &err_info, msg);
-		delete rx;
-		delete [] parap;
-		return NULL;
-	}
-	
-	rx->nparens = onig_number_of_captures(rx->reg);	//
-	rx->parap = parap;
-	rx->paraendp = parap + plen;
-	rx->pmflags = flag;
-	rx->prelen = resend - res;
-	
-	if (type == 's') {						// substitute
-		try {
-			rx->pmflags |= PMf_SUBSTITUTE;
-			rx->repstr = compile_rep(rx, rp, rpend);	// compile replace string
-			rx->prerepp = rp;
-			rx->prerependp = rpend;
-		} catch (std::exception& ex) {
+	if (ptn != NULL) {
+		size_t plen = _tcslen(ptn);
+		delete [] rx->parap;
+		rx->parap = new (std::nothrow) TCHAR[plen+1];	// parameter copy
+		if (rx->parap == NULL) {
+			asc2tcs(msg, "precompile out of space", BREGEXP_MAX_ERROR_MESSAGE_LEN);
 			delete rx;
-		//	delete [] parap;		// deleted by the deconstructor of rx
-			asc2tcs(msg, ex.what(), BREGEXP_MAX_ERROR_MESSAGE_LEN);
 			return NULL;
 		}
+		memcpy(rx->parap, ptn, (plen+1)*sizeof(TCHAR));	// copy include null
+		rx->paraendp = rx->parap + plen;
 	}
+	
+	TCHAR *oldpatternp = rx->patternp;
+	
+	if (patternp == NULL) {
+		patternp = rx->patternp;
+		patternendp = rx->patternendp;
+		optionp = rx->optionp;
+		optionendp = rx->optionendp;
+	}
+	
+	/* save pattern, replace and option string */
+	ptrdiff_t len1 = patternendp - patternp;
+	ptrdiff_t len2 = prerependp - prerepp;
+	ptrdiff_t len3 = optionendp - optionp;
+	rx->patternp = new (std::nothrow) TCHAR[len1+1 + len2+1 + len3+1];
+	if (rx->patternp == NULL) {
+		delete rx;
+		delete [] oldpatternp;
+		return NULL;
+	}
+	memcpy(rx->patternp, patternp, len1*sizeof(TCHAR));
+	rx->patternp[len1] = 0;
+	rx->patternendp = rx->patternp + len1;
+	
+	rx->prerepp = rx->patternp + len1 + 1;
+	memcpy(rx->prerepp, prerepp, len2*sizeof(TCHAR));
+	rx->prerepp[len2] = 0;
+	rx->prerependp = rx->prerepp + len2;
+	
+	rx->optionp = rx->prerepp + len2 + 1;
+	memcpy(rx->optionp, optionp, len3*sizeof(TCHAR));
+	rx->optionp[len3] = 0;
+	rx->optionendp = rx->optionp + len3;
+	
+	
+	delete [] oldpatternp;
 	
 TRACE1(_T("rx:0x%08x\n"), rx);
 	return rx;
 }
 
 
-int regexec_onig(bregonig *rx, TCHAR *stringarg,
-	register TCHAR *strend,	/* pointer to null at end of string */
-	TCHAR *strbeg,	/* real beginning of string */
+int regexec_onig(bregonig *rx, const TCHAR *stringarg,
+	const TCHAR *strend,	/* pointer to null at end of string */
+	const TCHAR *strbeg,	/* real beginning of string */
 	int minend,		/* end of match must be at least minend after stringarg */
 	int safebase,	/* no need to remember string in subbase */
 	int one_shot,	/* if not match then break without proceed str pointer */
 	TCHAR *msg)		/* fatal error message */
 {
 TRACE1(_T("one_shot: %d\n"), one_shot);
-	int err_code;
+	OnigPosition err_code;
 	
 	if (one_shot) {
 		OnigOptionType option = (minend > 0) ?
@@ -627,7 +851,7 @@ TRACE1(_T("one_shot: %d\n"), one_shot);
 				(UChar*) stringarg, rx->region,
 				option);
 	} else {
-		TCHAR *global_pos = stringarg;		/* \G */
+		const TCHAR *global_pos = stringarg;		/* \G */
 		if (minend > 0) {
 #ifdef UNICODE
 			int kanjiflag = 1;
@@ -640,7 +864,7 @@ TRACE1(_T("one_shot: %d\n"), one_shot);
 				stringarg++;
 			}
 		}
-		err_code = onig_search2(rx->reg, (UChar*) strbeg, (UChar*) strend,
+		err_code = onig_search_gpos(rx->reg, (UChar*) strbeg, (UChar*) strend,
 				(UChar*) global_pos,
 				(UChar*) stringarg, (UChar*) strend, rx->region,
 				ONIG_OPTION_NONE);
@@ -663,8 +887,8 @@ TRACE1(_T("one_shot: %d\n"), one_shot);
 		for (int i = 0; i < rx->region->num_regs; i++) {
 			if (rx->region->beg[i] != ONIG_REGION_NOTPOS) {
 				// found
-				rx->startp[i] = strbeg/**/ + rx->region->beg[i] / sizeof(TCHAR);
-				rx->endp[i] = strbeg/**/ + rx->region->end[i] / sizeof(TCHAR);
+				rx->startp[i] = const_cast<TCHAR *>(strbeg) + rx->region->beg[i] / sizeof(TCHAR);
+				rx->endp[i] = const_cast<TCHAR *>(strbeg) + rx->region->end[i] / sizeof(TCHAR);
 			} else {
 				// not found
 				rx->startp[i] = NULL;

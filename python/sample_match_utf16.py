@@ -12,7 +12,7 @@ print(BRegexpVersion())
 print()
 
 rxp = POINTER(BREGEXP)()
-msg = create_unicode_buffer(80)
+msg = create_unicode_buffer(BREGEXP_MAX_ERROR_MESSAGE_LEN)
 
 t1 = u" Yokohama 045-222-1111  Osaka 06-5555-6666  Tokyo 03-1111-9999 "
 t1p = cast(t1, c_void_p)

@@ -17,7 +17,7 @@ int __stdcall callback(int kind, int value, int index)
 
 int main()
 {
-	TCHAR msg[80];	// メッセージ領域
+	TCHAR msg[BREGEXP_MAX_ERROR_MESSAGE_LEN];	// メッセージ領域
 	BREGEXP *rxp = NULL;	// 必ずクリアしておくこと 
 	// 置換文字サンプル
 	TCHAR t1[] = _T(" Yokohama 045-222-1111  Osaka 06-5555-6666  Tokyo 03-1111-9999 ");

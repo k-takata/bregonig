@@ -5,24 +5,25 @@
 #
 
 #VER1 = 1
+USE_LTCG = 1
+#USE_MSVCRT = 1
+#USE_ONIG_DLL = 1
 
 BASEADDR = 0x60500000
 
-ONIG_DIR = ../onig-5.9.2-mod
+ONIG_DIR = ../onigmo-5.11.0
 !ifdef USE_ONIG_DLL
 ONIG_LIB = $(ONIG_DIR)/onig.lib
 !else
 ONIG_LIB = $(ONIG_DIR)/onig_s.lib
 !endif
 
-#CPPFLAGS = /O2 /W3 /GX /LD /nologo /I$(ONIG_DIR)
 CPPFLAGS = /O2 /W3 /EHsc /LD /nologo /I$(ONIG_DIR)
-#CPPFLAGS = /O2 /W3 /EHac /LD /nologo /I$(ONIG_DIR)
 !ifdef VER1
 CPPFLAGS = $(CPPFLAGS) /DUSE_VTAB /DPERL_5_8_COMPAT /DNAMEGROUP_RIGHTMOST
 !endif
 LD = link
-LDFLAGS = /DLL /nologo /MAP /opt:nowin98 /BASE:$(BASEADDR) /merge:.rdata=.text
+LDFLAGS = /DLL /nologo /MAP /BASE:$(BASEADDR) /merge:.rdata=.text
 
 !ifdef USE_MSVCRT
 CPPFLAGS = $(CPPFLAGS) /MD
@@ -32,6 +33,26 @@ CPPFLAGS = $(CPPFLAGS) /MT
 
 !ifndef USE_ONIG_DLL
 CPPFLAGS = $(CPPFLAGS) /DONIG_EXTERN=extern
+!endif
+
+# Get the version of cl.exe.
+#  1. Write the version to a work file (mscver.~).
+!if [(echo _MSC_VER>mscver.c) && ($(CC) /EP mscver.c 2>nul > mscver.~)]
+!endif
+#  2. Command string to get the version.
+_MSC_VER = [for /f %i in (mscver.~) do @exit %i]
+
+!if DEFINED(USE_LTCG) && $(USE_LTCG)
+# Use LTCG (Link Time Code Generation).
+# Check if cl.exe is newer than VC++ 7.0 (_MSC_VER >= 1300).
+!if $(_MSC_VER) >= 1300
+CPPFLAGS = $(CPPFLAGS) /GL
+LDFLAGS = $(LDFLAGS) /LTCG
+!endif
+!endif
+
+!if $(_MSC_VER) < 1500
+LDFLAGS = $(LDFLAGS) /opt:nowin98
 !endif
 
 !ifdef DEBUG
@@ -101,3 +122,7 @@ clean :
 	del $(BROBJS) bregonig.lib bregonig.dll bregonig.exp bregonig.map
 	del k2regexp.obj k2regexp.res k2regexp.lib k2regexp.dll k2regexp.exp k2regexp.map
 
+
+# clean up
+!if [del mscver.~ mscver.c]
+!endif

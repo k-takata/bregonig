@@ -1,20 +1,21 @@
-/*     bregexp.h      
-	external use header file 
+/*     bregexp.h
+	external use header file
 						1999.11.22  T.Baba
 */
 /*
  *	2002.08.24	modified by K2
- *	2006.08.28	modified by K.Takata
+ *	2011.06.17	modified by K.Takata
  */
 
+#include <stddef.h>
 
 #ifdef _BREGEXP_
 /* for internal use */
-#define BREGEXPAPI	__declspec(dllexport) 
+#define BREGEXPAPI	__declspec(dllexport)
 #define BREGCONST
 #else
 /* for external use */
-#define BREGEXPAPI	__declspec(dllimport) 
+#define BREGEXPAPI	__declspec(dllimport)
 #define BREGCONST	const
 #endif
 
@@ -28,7 +29,12 @@
 #define BSplit		BSplitW
 #define BRegfree	BRegfreeW
 #define BRegexpVersion	BRegexpVersionW
+
+#define BoMatch		BoMatchW
+#define BoSubst		BoSubstW
 #endif /* UNICODE */
+
+#define BREGEXP_MAX_ERROR_MESSAGE_LEN	80
 
 
 typedef struct bregexp {
@@ -45,9 +51,7 @@ typedef struct bregexp {
 	int nparens;				/* number of parentheses */
 } BREGEXP;
 
-#if defined(_BREGEXP_) || defined(_K2REGEXP_)
-typedef int (__stdcall *BCallBack)(int kind, int value, int index);
-#endif
+typedef BOOL (__stdcall *BCallBack)(int kind, int value, ptrdiff_t index);
 
 #if defined(__cplusplus)
 extern "C"
@@ -93,6 +97,26 @@ void BRegfree(BREGEXP *rx);
 
 BREGEXPAPI
 TCHAR *BRegexpVersion(void);
+
+
+#ifndef _K2REGEXP_
+/* bregonig.dll native APIs */
+
+BREGEXPAPI
+int BoMatch(const TCHAR *patternp, const TCHAR *optionp,
+		const TCHAR *strstartp,
+		const TCHAR *targetstartp, const TCHAR *targetendp,
+		BOOL one_shot,
+		BREGEXP **rxp, TCHAR *msg);
+
+BREGEXPAPI
+int BoSubst(const TCHAR *patternp, const TCHAR *substp, const TCHAR *optionp,
+		const TCHAR *strstartp,
+		const TCHAR *targetstartp, const TCHAR *targetendp,
+		BCallBack callback,
+		BREGEXP **rxp, TCHAR *msg);
+
+#endif
 
 
 #if defined(__cplusplus)
