@@ -45,9 +45,11 @@ def cc_to_cb(s, enc, cc):
       enc -- encoding name
       cc -- char count
     """
-    if cc > len(s):
+    s = s.encode('UTF-32LE')
+    clen = cc * 4
+    if clen > len(s):
         raise IndexError
-    return len(s[0:cc].encode(enc))
+    return len(s[:clen].decode('UTF-32LE').encode(enc))
 
 def print_result(result, pattern, file=None):
     if not file:

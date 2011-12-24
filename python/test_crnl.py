@@ -45,9 +45,11 @@ def cc_to_cb(s, enc, cc):
       enc -- encoding name
       cc -- char count
     """
-    if cc > len(s):
+    s = s.encode('UTF-32LE')
+    clen = cc * 4
+    if clen > len(s):
         raise IndexError
-    return len(s[0:cc].encode(enc))
+    return len(s[:clen].decode('UTF-32LE').encode(enc))
 
 def xx(pattern, target, start_offset, s_from, s_to, not_match):
     global nerror
