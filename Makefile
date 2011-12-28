@@ -11,7 +11,7 @@ USE_LTCG = 1
 
 BASEADDR = 0x60500000
 
-ONIG_DIR = ../onigmo-5.11.0
+ONIG_DIR = ../onigmo-5.12.0
 !ifdef USE_ONIG_DLL
 ONIG_LIB = $(ONIG_DIR)/onig.lib
 !else
