@@ -14,21 +14,16 @@ nfail = 0
 
 encoding = "CP932"
 
-# work around for Python 2.x
-org_print = print
-def print(*args, **kwargs):
-    kw = dict(kwargs)
-    kw.setdefault('end', '\n')      # 'end' must be a unicode string
-    return org_print(*args, **kw)
-
-
 class strptr:
     """a helper class to get a pointer to a string"""
     def __init__(self, s):
         if not isinstance(s, bytes):
             raise TypeError
         self._str = s
-        self._ptr = cast(self._str, c_void_p)
+        try:
+            self._ptr = cast(self._str, c_void_p)   # CPython 2.x/3.x
+        except TypeError:
+            self._ptr = c_void_p(self._str)         # PyPy 1.x
 
     def getptr(self, offset=0):
         if offset == -1:    # -1 means the end of the string
@@ -173,8 +168,25 @@ def main():
         outenc = sys.argv[2]
     else:
         outenc = locale.getpreferredencoding()
-    sys.stdout = io.open(sys.stdout.fileno(), "w", encoding=outenc, closefd=False)
-    sys.stderr = io.open(sys.stderr.fileno(), "w", encoding=outenc, closefd=False)
+    
+    class TextWriter:
+        def __init__(self, fileno, **kwargs):
+            kw = dict(kwargs)
+            kw.setdefault('errors', 'backslashreplace')
+            kw.setdefault('closefd', False)
+            self._writer = io.open(fileno, mode='w', **kw)
+            
+            # work around for Python 2.x
+            _write = self._writer.write    # save the original write() function
+            enc = locale.getpreferredencoding()
+            self._writer.write = lambda s: _write(s.decode(enc)) \
+                    if isinstance(s, bytes) else _write(s)  # convert to unistr
+        
+        def getwriter(self):
+            return self._writer
+    
+    sys.stdout = TextWriter(sys.stdout.fileno(), encoding=outenc).getwriter()
+    sys.stderr = TextWriter(sys.stderr.fileno(), encoding=outenc).getwriter()
     
     
     LoadBregonig(unicode_func)
