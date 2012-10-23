@@ -75,13 +75,14 @@ OBJDIR = obj
 OBJDIR = $(OBJDIR)d
 !endif
 OBJDIR = $(OBJDIR)$(TARGET_CPU)
+WOBJDIR = $(OBJDIR)\unicode
 
 OBJS = $(OBJDIR)\subst.obj $(OBJDIR)\bsplit.obj $(OBJDIR)\btrans.obj $(OBJDIR)\sv.obj
-WOBJS = $(OBJDIR)\substw.obj $(OBJDIR)\bsplitw.obj $(OBJDIR)\btransw.obj $(OBJDIR)\svw.obj
+WOBJS = $(WOBJDIR)\subst.obj $(WOBJDIR)\bsplit.obj $(WOBJDIR)\btrans.obj $(WOBJDIR)\sv.obj
 !ifdef VER1
 BROBJS = $(OBJDIR)\bregonig.obj $(OBJDIR)\bregonig.res $(OBJS)
 !else
-BROBJS = $(OBJDIR)\bregonig.obj $(OBJDIR)\bregonigw.obj $(OBJDIR)\bregonig.res $(OBJS) $(WOBJS)
+BROBJS = $(OBJDIR)\bregonig.obj $(WOBJDIR)\bregonig.obj $(OBJDIR)\bregonig.res $(OBJS) $(WOBJS)
 !endif
 K2OBJS = $(OBJDIR)\k2regexp.obj $(OBJDIR)\k2regexp.res $(OBJS)
 
@@ -89,34 +90,36 @@ K2OBJS = $(OBJDIR)\k2regexp.obj $(OBJDIR)\k2regexp.res $(OBJS)
 all: $(OBJDIR)\bregonig.dll $(OBJDIR)\k2regexp.dll
 
 
-$(OBJDIR)\bregonig.dll: $(OBJDIR) $(BROBJS) $(ONIG_LIB)
+$(OBJDIR)\bregonig.dll: $(WOBJDIR) $(BROBJS) $(ONIG_LIB)
 	$(LD) $(BROBJS) $(ONIG_LIB) /out:$@ $(LDFLAGS)
 
-$(OBJDIR)\k2regexp.dll: $(OBJDIR) $(K2OBJS) $(ONIG_LIB)
+$(OBJDIR)\k2regexp.dll: $(WOBJDIR) $(K2OBJS) $(ONIG_LIB)
 	$(LD) $(K2OBJS) $(ONIG_LIB) /out:$@ $(LDFLAGS)
 
 
-$(OBJDIR):
+$(WOBJDIR):
 	if not exist $(OBJDIR)\nul  mkdir $(OBJDIR)
+	if not exist $(WOBJDIR)\nul mkdir $(WOBJDIR)
 
 
 .cpp{$(OBJDIR)\}.obj::
 	$(CPP) $(CPPFLAGS) /Fo$(OBJDIR)\ /c $<
+.cpp{$(WOBJDIR)\}.obj::
+	$(CPP) $(CPPFLAGS) /DUNICODE /D_UNICODE /Fo$(WOBJDIR)\ /c $<
 
 .rc{$(OBJDIR)\}.res:
 	$(RC) $(RFLAGS) /Fo$@ /r $<
 
 $(OBJDIR)\bregonig.obj: bregonig.cpp bregexp.h bregonig.h mem_vc6.h dbgtrace.h version.h $(ONIG_DIR)/oniguruma.h
 
-$(OBJDIR)\bregonigw.obj: bregonig.cpp bregexp.h bregonig.h mem_vc6.h dbgtrace.h version.h $(ONIG_DIR)/oniguruma.h
-	$(CPP) $(CPPFLAGS) /c /DUNICODE /D_UNICODE /Fo$@ bregonig.cpp
+$(WOBJDIR)\bregonig.obj: bregonig.cpp bregexp.h bregonig.h mem_vc6.h dbgtrace.h version.h $(ONIG_DIR)/oniguruma.h
 
 $(OBJDIR)\bregonig.res: bregonig.rc version.h
 
 $(OBJDIR)\k2regexp.obj: bregonig.cpp bregexp.h bregonig.h mem_vc6.h dbgtrace.h version.h $(ONIG_DIR)/oniguruma.h
 	$(CPP) $(CPPFLAGS) /c /D_K2REGEXP_ /Fo$@ bregonig.cpp
 
-#$(OBJDIR)\k2regexpw.obj: bregonig.cpp bregexp.h bregonig.h mem_vc6.h dbgtrace.h version.h $(ONIG_DIR)/oniguruma.h
+#$(WOBJDIR)\k2regexp.obj: bregonig.cpp bregexp.h bregonig.h mem_vc6.h dbgtrace.h version.h $(ONIG_DIR)/oniguruma.h
 #	$(CPP) $(CPPFLAGS) /c /D_K2REGEXP_ /DUNICODE /D_UNICODE /Fo$@ bregonig.cpp
 
 $(OBJDIR)\k2regexp.res: bregonig.rc version.h
@@ -125,23 +128,19 @@ $(OBJDIR)\k2regexp.res: bregonig.rc version.h
 
 $(OBJDIR)\subst.obj: subst.cpp bregexp.h bregonig.h mem_vc6.h dbgtrace.h $(ONIG_DIR)/oniguruma.h
 
-$(OBJDIR)\substw.obj: subst.cpp bregexp.h bregonig.h mem_vc6.h dbgtrace.h $(ONIG_DIR)/oniguruma.h
-	$(CPP) $(CPPFLAGS) /c /DUNICODE /D_UNICODE /Fo$@ subst.cpp
+$(WOBJDIR)\subst.obj: subst.cpp bregexp.h bregonig.h mem_vc6.h dbgtrace.h $(ONIG_DIR)/oniguruma.h
 
 $(OBJDIR)\bsplit.obj: bsplit.cpp bregexp.h bregonig.h mem_vc6.h dbgtrace.h $(ONIG_DIR)/oniguruma.h
 
-$(OBJDIR)\bsplitw.obj: bsplit.cpp bregexp.h bregonig.h mem_vc6.h dbgtrace.h $(ONIG_DIR)/oniguruma.h
-	$(CPP) $(CPPFLAGS) /c /DUNICODE /D_UNICODE /Fo$@ bsplit.cpp
+$(WOBJDIR)\bsplit.obj: bsplit.cpp bregexp.h bregonig.h mem_vc6.h dbgtrace.h $(ONIG_DIR)/oniguruma.h
 
 $(OBJDIR)\btrans.obj: btrans.cpp bregexp.h bregonig.h mem_vc6.h dbgtrace.h sv.h $(ONIG_DIR)/oniguruma.h
 
-$(OBJDIR)\btransw.obj: btrans.cpp bregexp.h bregonig.h mem_vc6.h dbgtrace.h sv.h $(ONIG_DIR)/oniguruma.h
-	$(CPP) $(CPPFLAGS) /c /DUNICODE /D_UNICODE /Fo$@ btrans.cpp
+$(WOBJDIR)\btrans.obj: btrans.cpp bregexp.h bregonig.h mem_vc6.h dbgtrace.h sv.h $(ONIG_DIR)/oniguruma.h
 
 $(OBJDIR)\sv.obj: sv.cpp sv.h
 
-$(OBJDIR)\svw.obj: sv.cpp sv.h
-	$(CPP) $(CPPFLAGS) /c /DUNICODE /D_UNICODE /Fo$@ sv.cpp
+$(WOBJDIR)\sv.obj: sv.cpp sv.h
 
 
 clean:
