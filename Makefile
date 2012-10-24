@@ -47,10 +47,15 @@ CPPFLAGS = $(CPPFLAGS) /DONIG_EXTERN=extern
 
 # Get the version of cl.exe.
 #  1. Write the version to a work file (mscver$(_NMAKE_VER).~).
-!if [(echo _MSC_VER>mscver$(_NMAKE_VER).c) && ($(CC) /EP mscver$(_NMAKE_VER).c 2>nul > mscver$(_NMAKE_VER).~)]
+!if ![(echo MSC_VER = _MSC_VER>mscver$(_NMAKE_VER).c) && \
+	($(CC) /EP mscver$(_NMAKE_VER).c 2>nul > mscver$(_NMAKE_VER).~)]
+#  2. Include it.
+!include mscver$(_NMAKE_VER).~
+_MSC_VER = $(MSC_VER)
+#  3. Clean up.
+!if [del mscver$(_NMAKE_VER).~ mscver$(_NMAKE_VER).c]
 !endif
-#  2. Command string to get the version.
-_MSC_VER = [for /f %i in (mscver$(_NMAKE_VER).~) do @exit %i]
+!endif
 
 !if DEFINED(USE_LTCG) && $(USE_LTCG)
 # Use LTCG (Link Time Code Generation).
@@ -146,8 +151,3 @@ $(WOBJDIR)\sv.obj: sv.cpp sv.h
 clean:
 	del $(BROBJS) $(OBJDIR)\bregonig.lib $(OBJDIR)\bregonig.dll $(OBJDIR)\bregonig.exp $(OBJDIR)\bregonig.map \
 		$(OBJDIR)\k2regexp.obj $(OBJDIR)\k2regexp.res $(OBJDIR)\k2regexp.lib $(OBJDIR)\k2regexp.dll $(OBJDIR)\k2regexp.exp $(OBJDIR)\k2regexp.map
-
-
-# clean up
-!if [del mscver$(_NMAKE_VER).~ mscver$(_NMAKE_VER).c]
-!endif
