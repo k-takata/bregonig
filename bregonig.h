@@ -35,6 +35,11 @@ struct repinfo {
 	ptrdiff_t dlen;		/* data length / backref num */
 	casetype nextcase;		/* \l or \u */
 	casetype currentcase;	/* \L or \U */
+
+	repinfo() {
+		startp = 0; dlen = 0;
+		nextcase = CASE_NONE; currentcase = CASE_NONE;
+	}
 };
 
 typedef struct repstr {
