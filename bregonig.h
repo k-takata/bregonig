@@ -2,7 +2,7 @@
  *	bregonig.h
  */
 /*
- *	Copyright (C) 2006-2011  K.Takata
+ *	Copyright (C) 2006-2012  K.Takata
  *
  *	You may distribute under the terms of either the GNU General Public
  *	License or the Artistic License, as specified in the perl_license.txt file.
