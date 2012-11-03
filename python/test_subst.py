@@ -196,6 +196,8 @@ def main():
     xx("abc", "def", "abc", "def")
     xx("abc", "def", "abcabcabc", "defdefdef")
     xx("‚ ‚¢‚¤", "‚¦‚¨", "‚ ‚¢‚¤‚ ‚¢‚¤", "‚¦‚¨‚¦‚¨")
+    xx("x?", "!", "abcde", "!a!b!c!d!e!")
+    xx("\\Gx?", "!", "abcde", "!abcde")
     
     # variable
     xx("abc", "$&_$&_$&", "abc", "abc_abc_abc")
