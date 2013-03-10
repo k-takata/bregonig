@@ -930,17 +930,17 @@ def main():
     x2("B (?i:a)", "B a", 0, 3)
     x2("B(?i: a)", "B a", 0, 3)
     if is_unicode_encoding(encoding):
-        x2("(?a)[\p{Space}\d]", u"\u00a0", 0, 1)
-        x2("(?a)[\d\p{Space}]", u"\u00a0", 0, 1)
-        n("(?a)[^\p{Space}\d]", u"\u00a0")
-        n("(?a)[^\d\p{Space}]", u"\u00a0")
-    n("x.*?\\Z$", u"x\ny")
-    n("x.*?\\Z$", u"x\r\ny")
-    x2("x.*?\\Z$", u"x\n", 0, 1)
-    x2("x.*?\\Z$", u"x\r\n", 0, 2)  # \Z will match between \r and \n.
-    x2("(?<=fo).*", u"foo", 2, 3)
-    x2("(?s)(?<=fo).*", u"foo", 2, 3)   #XXX: m -> s
-    x2("(?s)(?<=fo).+", u"foo", 2, 3)   #XXX: m -> s
+        x2("(?a)[\p{Space}\d]", "\u00a0", 0, 1)
+        x2("(?a)[\d\p{Space}]", "\u00a0", 0, 1)
+        n("(?a)[^\p{Space}\d]", "\u00a0")
+        n("(?a)[^\d\p{Space}]", "\u00a0")
+    n("x.*?\\Z$", "x\ny")
+    n("x.*?\\Z$", "x\r\ny")
+    x2("x.*?\\Z$", "x\n", 0, 1)
+    x2("x.*?\\Z$", "x\r\n", 0, 2)   # \Z will match between \r and \n.
+    x2("(?<=fo).*", "foo", 2, 3)
+    x2("(?s)(?<=fo).*", "foo", 2, 3)    #XXX: m -> s
+    x2("(?s)(?<=fo).+", "foo", 2, 3)    #XXX: m -> s
     
     # character classes (tests for character class optimization)
     x2("[@][a]", "@a", 0, 2);
