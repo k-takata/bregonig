@@ -54,7 +54,7 @@ BEGIN
 #endif
             VALUE "FileVersion", BREGONIG_VERSION_STRING "\0"
             VALUE "InternalName", "bregonig.dll\0"
-            VALUE "LegalCopyright", "Copyright (C) 2006-2012 K.Takata\0"
+            VALUE "LegalCopyright", "Copyright (C) 2006-2013 K.Takata\0"
             VALUE "LegalTrademarks", "\0"
 #ifdef _K2REGEXP_
             VALUE "OriginalFilename", "k2regonig.dll\0"
