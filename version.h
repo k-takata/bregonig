@@ -2,6 +2,7 @@
 #define BREGONIG_VERSION_MAJOR	2
 #define BREGONIG_VERSION_MINOR	07
 #define BREGONIG_VERSION_SUFFIX	""
+#define BREGONIG_COPYRIGHT_STRING	"Copyright (C) 2006-2013 K.Takata"
 
 
 #define TOSTR_(a)	#a
