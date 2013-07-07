@@ -941,6 +941,10 @@ def main():
     x2("(?<=fo).*", "foo", 2, 3)
     x2("(?s)(?<=fo).*", "foo", 2, 3)    #XXX: m -> s
     x2("(?s)(?<=fo).+", "foo", 2, 3)    #XXX: m -> s
+    x2("\\n?\\z", "hello", 5, 5)
+    x2("\\z", "hello", 5, 5)
+    x2("\\n?\\z", "‚±‚ñ‚É‚¿‚Í", 5, 5)
+    x2("\\z", "‚±‚ñ‚É‚¿‚Í", 5, 5)
     
     # character classes (tests for character class optimization)
     x2("[@][a]", "@a", 0, 2);
@@ -1074,6 +1078,10 @@ def main():
     n("(?:(?<x>a)|(?<y>b))(?:(?(<y>)cd|x)e|fg)", "bxe")
     x2("((?<=a))?(?(1)b|c)", "abc", 1, 2)
     x2("((?<=a))?(?(1)b|c)", "bc", 1, 2)
+    x2("((?<x>x)|(?<y>y))(?(<x>)y|x)", "xy", 0, 2)
+    x2("((?<x>x)|(?<y>y))(?(<x>)y|x)", "yx", 0, 2)
+    n("((?<x>x)|(?<y>y))(?(<x>)y|x)", "xx")
+    n("((?<x>x)|(?<y>y))(?(<x>)y|x)", "yy")
     
     # Implicit-anchor optimization
     x2("(?s:.*abc)", "dddabdd\nddabc", 0, 13)   # optimized /(?s:.*abc)/ ==> /\A(?s:.*abc)/
@@ -1085,6 +1093,16 @@ def main():
     x2("(?s:.*\\Z)", "dddabdd\nddabc", 0, 13)   # optimized /(?s:.*\Z)/ ==> /\A(?s:.*\Z)/
     x2("(?-s:.*\\Z)", "dddabdd\nddabc", 8, 13)  # optimized /(?-s:.*\Z)/ ==> /(?:^|\A)(?s:.*\Z)/
     x2("(.*)X\\1", "1234X2345", 1, 8)           # not optimized
+    
+    # Allow options in look-behind
+    x2("(?<=(?i)ab)cd", "ABcd", 2, 4)
+    x2("(?<=(?i:ab))cd", "ABcd", 2, 4)
+    n("(?<=(?i)ab)cd", "ABCD")
+    n("(?<=(?i:ab))cd", "ABCD")
+    x2("(?<!(?i)ab)cd", "aacd", 2, 4)
+    x2("(?<!(?i:ab))cd", "aacd", 2, 4)
+    n("(?<!(?i)ab)cd", "ABcd")
+    n("(?<!(?i:ab))cd", "ABcd")
     
     
     print("\nRESULT   SUCC: %d,  FAIL: %d,  ERROR: %d\n" % (
