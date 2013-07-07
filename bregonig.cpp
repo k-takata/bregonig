@@ -93,9 +93,8 @@ TCHAR *::BRegexpVersion(void)
 {
 	static TCHAR version[80];
 	_sntprintf(version, lengthof(version),
-			_T("bregonig.dll Ver.%d.%02d%hs with Oniguruma %hs"),
-			BREGONIG_VERSION_MAJOR, BREGONIG_VERSION_MINOR,
-			BREGONIG_VERSION_SUFFIX,
+			_T("bregonig.dll Ver.%hs with Oniguruma %hs"),
+			BREGONIG_VERSION_STRING,
 			onig_version());
 	version[lengthof(version) - 1] = '\0';	// Ensure NUL termination.
 	
