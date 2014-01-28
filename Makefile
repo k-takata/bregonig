@@ -47,11 +47,10 @@ CPPFLAGS = $(CPPFLAGS) /DONIG_EXTERN=extern
 
 # Get the version of cl.exe.
 #  1. Write the version to a work file (mscver$(_NMAKE_VER).~).
-!if ![(echo MSC_VER = _MSC_VER>mscver$(_NMAKE_VER).c) && \
-	($(CC) /EP mscver$(_NMAKE_VER).c 2>nul > mscver$(_NMAKE_VER).~)]
+!if ![(echo _MSC_VER>mscver$(_NMAKE_VER).c) && \
+	(for /f %I in ('"$(CC) /EP mscver$(_NMAKE_VER).c 2>nul"') do @echo _MSC_VER=%I> mscver$(_NMAKE_VER).~)]
 #  2. Include it.
 !include mscver$(_NMAKE_VER).~
-_MSC_VER = $(MSC_VER)
 #  3. Clean up.
 !if [del mscver$(_NMAKE_VER).~ mscver$(_NMAKE_VER).c]
 !endif
