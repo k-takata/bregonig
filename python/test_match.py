@@ -143,46 +143,60 @@ def n(pattern, target):
 def is_unicode_encoding(enc):
     return enc in ("UTF-16LE", "UTF-8")
 
-def main():
+
+def set_encoding(enc):
     global encoding
-    
+
     unicode_func = False
-    
-    # set encoding of the test target
-    if len(sys.argv) > 1:
-        encs = {"CP932": False,
-                "SJIS": False,
-                "UTF-8": False,
-                "UTF-16LE": True}
-        try:
-            unicode_func = encs[sys.argv[1]]
-        except KeyError:
-            print("test target encoding error")
-            print("Usage: python test_match.py [test target encoding] [output encoding]")
-            sys.exit()
-        encoding = sys.argv[1]
-    
-    # set encoding of stdout/stderr
-    if len(sys.argv) > 2:
-        outenc = sys.argv[2]
-    else:
-        outenc = locale.getpreferredencoding()
-    
-    def get_text_writer(fileno, **kwargs):
+
+    encs = {"CP932": False,
+            "SJIS": False,
+            "UTF-8": False,
+            "UTF-16LE": True}
+    unicode_func = encs[enc]
+    encoding = enc
+
+    return unicode_func
+
+
+def set_output_encoding(enc=None):
+    if enc is None:
+        enc = locale.getpreferredencoding()
+
+    def get_text_writer(fo, **kwargs):
         kw = dict(kwargs)
-        kw.setdefault('errors', 'backslashreplace')
+        kw.setdefault('errors', 'backslashreplace') # use \uXXXX style
         kw.setdefault('closefd', False)
-        writer = io.open(fileno, mode='w', **kw)
-        
+        writer = io.open(fo.fileno(), mode='w', **kw)
+
         # work around for Python 2.x
         write = writer.write    # save the original write() function
         enc = locale.getpreferredencoding()
         writer.write = lambda s: write(s.decode(enc)) \
                 if isinstance(s, bytes) else write(s)  # convert to unistr
         return writer
+
+    sys.stdout = get_text_writer(sys.stdout, encoding=enc)
+    sys.stderr = get_text_writer(sys.stderr, encoding=enc)
+
+
+def main():
+    unicode_func = False
     
-    sys.stdout = get_text_writer(sys.stdout.fileno(), encoding=outenc)
-    sys.stderr = get_text_writer(sys.stderr.fileno(), encoding=outenc)
+    # set encoding of the test target
+    if len(sys.argv) > 1:
+        try:
+            unicode_func = set_encoding(sys.argv[1])
+        except KeyError:
+            print("test target encoding error")
+            print("Usage: python test_match.py [test target encoding] [output encoding]")
+            sys.exit()
+    
+    # set encoding of stdout/stderr
+    outenc = None
+    if len(sys.argv) > 2:
+        outenc = sys.argv[2]
+    set_output_encoding(outenc)
     
     
     LoadBregonig(unicode_func)
