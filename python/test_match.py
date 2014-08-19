@@ -55,7 +55,7 @@ def print_result(result, pattern, file=None):
     except UnicodeEncodeError as e:
         print('(' + str(e) + ')')
 
-def xx(pattern, target, s_from, s_to, mem, not_match):
+def xx(pattern, target, s_from, s_to, mem, not_match, opt="", err=False):
     global nerror
     global nsucc
     global nfail
@@ -66,7 +66,7 @@ def xx(pattern, target, s_from, s_to, mem, not_match):
     pattern2 = pattern
     if not isinstance(pattern, bytes):
         pattern2 = pattern.encode(encoding)
-    pattern3 = "/".encode(encoding) + pattern2 + "/k".encode(encoding)
+    pattern3 = "/".encode(encoding) + pattern2 + ("/k" + opt).encode(encoding)
     
     target2 = target
     if not isinstance(target, bytes):
@@ -86,7 +86,7 @@ def xx(pattern, target, s_from, s_to, mem, not_match):
         option = "8"
     else:
         option = "k"
-    option = option.encode(encoding)
+    option = (option + opt).encode(encoding)
     
     if encoding == "UTF-16LE":
         pattern2 = pattern2.decode(encoding)
@@ -100,12 +100,20 @@ def xx(pattern, target, s_from, s_to, mem, not_match):
         r = BMatch(pattern3, tp.getptr(), tp.getptr(-1), byref(rxp), msg)
     
     if r < 0:
-        nerror += 1
-        print_result("ERROR", "%s (/%s/ '%s')" % (msg.value, pattern, target),
-                file=sys.stderr)
+        if err:
+            nsucc += 1
+            print_result("OK(E)", "%s (/%s/ '%s')" % (msg.value, pattern, target))
+        else:
+            nerror += 1
+            print_result("ERROR", "%s (/%s/ '%s')" % (msg.value, pattern, target),
+                    file=sys.stderr)
         return
-    
-    if r == 0:
+
+    if err:
+        nfail += 1
+        print_result("FAIL(E)", "/%s/ '%s'" % (pattern, target))
+
+    elif r == 0:
         if not_match:
             nsucc += 1
             print_result("OK(N)", "/%s/ '%s'" % (pattern, target))
@@ -130,14 +138,14 @@ def xx(pattern, target, s_from, s_to, mem, not_match):
     if (rxp):
         BRegfree(rxp)
 
-def x2(pattern, target, s_from, s_to):
-    xx(pattern, target, s_from, s_to, 0, False)
+def x2(pattern, target, s_from, s_to, **kwargs):
+    xx(pattern, target, s_from, s_to, 0, False, **kwargs)
 
-def x3(pattern, target, s_from, s_to, mem):
-    xx(pattern, target, s_from, s_to, mem, False)
+def x3(pattern, target, s_from, s_to, mem, **kwargs):
+    xx(pattern, target, s_from, s_to, mem, False, **kwargs)
 
-def n(pattern, target):
-    xx(pattern, target, 0, 0, 0, True)
+def n(pattern, target, **kwargs):
+    xx(pattern, target, 0, 0, 0, True, **kwargs)
 
 
 def is_unicode_encoding(enc):
