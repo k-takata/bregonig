@@ -952,6 +952,16 @@ def main():
         x2("\\p{Other_Default_Ignorable_Code_Point}+", "\u034F\uFFF8\U000E0FFF", 0, 3)
         # The longest block name
         x2("\\p{In_Unified_Canadian_Aboriginal_Syllabics_Extended}+", "\u18B0\u18FF", 0, 2)
+        # Unicode case fold
+        x2("(?i)\u1ffc", "\u2126\u1fbe", 0, 2)
+        x2("(?i)\u1ffc", "\u1ff3", 0, 1)
+        x2("(?i)\u0390", "\u03b9\u0308\u0301", 0, 3)
+        x2("(?i)\u03b9\u0308\u0301", "\u0390", 0, 1)
+        x2("(?i)ff", "\ufb00", 0, 1)
+        x2("(?i)\ufb01", "fi", 0, 2)
+        x2("(?i)\u0149\u0149", "\u0149\u0149", 0, 2)
+        # Other Unicode tests
+        x2("\\x{25771}", "\U00025771", 0, 1)
     x2("[0-9-a]+", " 0123456789-a ", 1, 13)     # same as [0-9\-a]
     x2("[0-9-\\s]+", " 0123456789-a ", 0, 12)   # same as [0-9\-\s]
     x2("(?i:a) B", "a B", 0, 3)
@@ -959,10 +969,12 @@ def main():
     x2("B (?i:a)", "B a", 0, 3)
     x2("B(?i: a)", "B a", 0, 3)
     if is_unicode_encoding(encoding):
-        x2("(?a)[\p{Space}\d]", "\u00a0", 0, 1)
-        x2("(?a)[\d\p{Space}]", "\u00a0", 0, 1)
-        n("(?a)[^\p{Space}\d]", "\u00a0")
-        n("(?a)[^\d\p{Space}]", "\u00a0")
+        x2("(?a)[\\p{Space}\\d]", "\u00a0", 0, 1)
+        x2("(?a)[\\d\\p{Space}]", "\u00a0", 0, 1)
+        n("(?a)[^\\p{Space}\\d]", "\u00a0")
+        n("(?a)[^\\d\\p{Space}]", "\u00a0")
+        x2("(?d)[[:space:]\\d]", "\u00a0", 0, 1)
+        n("(?d)[^\\d[:space:]]", "\u00a0")
     n("x.*?\\Z$", "x\ny")
     n("x.*?\\Z$", "x\r\ny")
     x2("x.*?\\Z$", "x\n", 0, 1)
@@ -974,7 +986,33 @@ def main():
     x2("\\z", "hello", 5, 5)
     x2("\\n?\\z", "Ç±ÇÒÇ…ÇøÇÕ", 5, 5)
     x2("\\z", "Ç±ÇÒÇ…ÇøÇÕ", 5, 5)
+    x2("()" * 32767, "", 0, 0)      # Issue #24
+#    x2("\\h+ \\H+", " 0123456789aBcDeF gh", 1, 20)
+#    x2("[\\h]+ [\\H]+", " 0123456789aBcDeF gh", 1, 20)
+    x2("\\A(|.|(?:(.)\\g<1>\\k<2+0>))\\z", "reer", 0, 4)
+    x2("\\A(?<a>|.|(?:(?<b>.)\\g<a>\\k<b+0>))\\z", "reer", 0, 4)
+    x2(''' # Extended pattern
+      (?<element> \g<stag> \g<content>* \g<etag> ){0}
+      (?<stag> < \g<name> \s* > ){0}
+      (?<name> [a-zA-Z_:]+ ){0}
+      (?<content> [^<&]+ (\g<element> | [^<&]+)* ){0}
+      (?<etag> </ \k<name+1> >){0}
+      \g<element>''',
+      "<foo>f<bar>bbb</bar>f</foo>", 0, 27, opt="x")
+    x2("\\p{Print}+", "\n a", 1, 3)
+    x2("\\p{Graph}+", "\n a", 2, 3)
+    n("a(?!b)", "ab");
+    x2("(?:(.)\\1)*", "a" * 300, 0, 300)
+#    x2("\\cA\\C-B\\a[\\b]\\t\\n\\v\\f\\r\\e\\c?", "\x01\x02\x07\x08\x09\x0a\x0b\x0c\x0d\x1b\x7f", 0, 11)
+    x2("(?<=(?:[a-z]|\\w){3})x", "ab1x", 3, 4)  # repeat inside look-behind
+    x2("(?<n>(a|b\\g<n>c){3,5}?)", "baaaaca", 1, 4)
+    x2("\\p{WoRd}", "a", 0, 1)  # property name is not case sensitive
+    n("[[:WoRd:]]", "a", err=True)   # POSIX bracket name is case sensitive
     
+    # ONIG_OPTION_FIND_LONGEST option
+    x2("foo|foobar", "foobar", 0, 3)
+#    x2("foo|foobar", "foobar", 0, 6, opt=onig.ONIG_OPTION_FIND_LONGEST)
+
     # character classes (tests for character class optimization)
     x2("[@][a]", "@a", 0, 2);
     x2(".*[a][b][c][d][e]", "abcde", 0, 5);
@@ -989,6 +1027,20 @@ def main():
     n("a++a", "aaaa")       # Ver.1.xx fails
     n("a{2,3}+a", "aaa")    # Ver.1.xx fails
     
+    # automatic possessification
+    x2("\\w+\\W", "abc#", 0, 4)
+    x2("[a-c]+\\W", "abc#", 0, 4)
+    x2("[a-c#]+\\W", "abc#", 0, 4)
+    x2("[^a-c]+\\W", "def#", 0, 4)
+    x2("(?a)[^a-c]+\\W", "def#", 0, 4)
+    x2("a+\\w", "aaaa", 0, 4)
+    x2("#+\\w", "###a", 0, 4)
+    x2("(?a)a+\\w", "aaaa", 0, 4)
+    x2("(?a)Ç†+\\w", "Ç†Ç†Ç†a", 0, 4)
+    x2("[a-c]+[d-f]", "abcd", 0, 4)
+    x2("[^d-f]+[d-f]", "abcd", 0, 4)
+    x2("[a-cÇ†]+[d-f]", "abcd", 0, 4)
+
     # linebreak
     x2("\\R", "\n", 0, 1)
     x2("\\R", "\r", 0, 1)
@@ -1013,7 +1065,7 @@ def main():
     # named group and subroutine call
     x2("(?<name_2>ab)(?&name_2)", "abab", 0, 4);
     x2("(?<name_2>ab)(?1)", "abab", 0, 4);
-    x2("(?<n>|\\((?&n)\\))+$", "()(())", 0, 6);
+    x2("(?'n'|\\((?&n)\\))+$", "()(())", 0, 6);
     x2("(a|x(?-1)x)", "xax", 0, 3);
     x2("(a|(x(?-2)x))", "xax", 0, 3);
     x2("a|x(?0)x", "xax", 0, 3);
@@ -1023,6 +1075,9 @@ def main():
     x2("(?-i:(?+1))(?i:(a)){0}", "A", 0, 1);
     x2("(?-i:\g<+1>)(?i:(a)){0}", "A", 0, 1);
     x2("(?-i:\g'+1')(?i:(a)){0}", "A", 0, 1);
+    n("(.(?=\\g<1>))", "", err=True)
+#    n("(a)(?<n>b)\\g<1>\\g<n>", "abab", err=onig.ONIGERR_NUMBERED_BACKREF_OR_CALL_NOT_ALLOWED)
+    x2("(a)(?<n>b)(?1)(?&n)", "abab", 0, 4)
     
     # character set modifiers
     x2("(?u)\\w+", "Ç†a#", 0, 2);
@@ -1038,13 +1093,57 @@ def main():
     x2("(?a)\\B", "Ç† ", 0, 0);
     x2("(?a)\\B", "aÇ† ", 2, 2);
     
+    x2("(?a)a\\b", " a", 1, 2)
+    x2("(?u)a\\b", " a", 1, 2)
+    n("(?a)a\\B", " a")
+    n("(?a)Ç†\\b", " Ç†")
+    x2("(?u)Ç†\\b", " Ç†", 1, 2)
+    x2("(?a)Ç†\\B", " Ç†", 1, 2)
+    n("(?u)Ç†\\B", " Ç†")
+
     x2("(?a)\\p{Alpha}\\P{Alpha}", "aÅB", 0, 2);
     x2("(?u)\\p{Alpha}\\P{Alpha}", "aÅB", 0, 2);
     x2("(?a)[[:word:]]+", "aÇ†", 0, 1);
     x2("(?a)[[:^word:]]+", "aÇ†", 1, 2);
     x2("(?u)[[:word:]]+", "aÇ†", 0, 2);
     n("(?u)[[:^word:]]+", "aÇ†");
+
+    x2("(?iu)\\p{lower}\\p{upper}", "Ab", 0, 2);
+    x2("(?ia)\\p{lower}\\p{upper}", "Ab", 0, 2);
+    x2("(?iu)[[:lower:]][[:upper:]]", "Ab", 0, 2);
+    x2("(?ia)[[:lower:]][[:upper:]]", "Ab", 0, 2);
+
+    if is_unicode_encoding(encoding):
+        n("(?ia)\\w+", "\u212a\u017f");      # KELVIN SIGN, LATIN SMALL LETTER LONG S
+        n("(?ia)[\\w]+", "\u212a\u017f");
+        n("(?ia)[^\\W]+", "\u212a\u017f");
+        x2("(?ia)[^\\W]+", "ks", 0, 2);
+        n("(?iu)\\p{ASCII}", "\u212a");
+        n("(?iu)\\P{ASCII}", "s");
+        n("(?iu)[\\p{ASCII}]", "\u212a");
+        n("(?iu)[\\P{ASCII}]", "s");
+        n("(?ia)\\p{ASCII}", "\u212a");
+        n("(?ia)\\P{ASCII}", "s");
+        n("(?ia)[\\p{ASCII}]", "\u212a");
+        n("(?ia)[\\P{ASCII}]", "s");
+        x2("(?iu)[s]+", "Ss\u017f ", 0, 3);
+        x2("(?ia)[s]+", "Ss\u017f ", 0, 3);
+        x2("(?iu)[^s]+", "Ss\u017f ", 3, 4);
+        x2("(?ia)[^s]+", "Ss\u017f ", 3, 4);
+        x2("(?iu)[[:lower:]]", "\u017f", 0, 1);
+        n("(?ia)[[:lower:]]", "\u017f");
+        x2("(?u)[[:upper:]]", "\u212a", 0, 1);
+        n("(?a)[[:upper:]]", "\u212a");
     
+    # \< and \>
+#    x2("\\<abc\\>", " abc ", 1, 4, syn=onig.ONIG_SYNTAX_GREP)
+#    n("\\<abc\\>", "zabc ", syn=onig.ONIG_SYNTAX_GREP)
+#    n("\\<abc\\>", " abcd", syn=onig.ONIG_SYNTAX_GREP)
+#    n("\\<abc\\>", "Ç†abcÇ¢", syn=onig.ONIG_SYNTAX_GREP)
+#    x2("\\<abc\\>", "Ç†abcÇ¢", 1, 4, syn=onig.ONIG_SYNTAX_GREP, opt=onig.ONIG_OPTION_ASCII_RANGE)
+#    n("\\<abc\\>", "zabcÇ¢", syn=onig.ONIG_SYNTAX_GREP, opt=onig.ONIG_OPTION_ASCII_RANGE)
+#    n("\\<abc\\>", "Ç†abcd", syn=onig.ONIG_SYNTAX_GREP, opt=onig.ONIG_OPTION_ASCII_RANGE)
+
     # \g{} backref
     x2("((?<name1>\\d)|(?<name2>\\w))(\\g{name1}|\\g{name2})", "ff", 0, 2);
     x2("(?:(?<x>)|(?<x>efg))\\g{x}", "", 0, 0);
@@ -1086,6 +1185,12 @@ def main():
     x2("(?<a>a)(?<a>b)\\k<a>", "aba", 0, 3)
     x2("(?<a>a)(?<a>b)(?&a)", "aba", 0, 3)
     x2("(?<a>(a|.)(?<a>b))(?&a)", "abcb", 0, 4)
+#    n("(?<a>a)(?<a>b)\\g{a}", "abb")
+#    n("(?<a>a)(?<a>b)\\g<a>", "aba", err=onig.ONIGERR_MULTIPLEX_DEFINITION_NAME_CALL)
+    x2("(?<a>[ac])(?<a>b)(?&a)", "abc", 0, 3)
+    n("(?<a>[ac])(?<a>b)(?&a)", "abb")
+    x2("(?:(?<x>abc)|(?<x>efg))(?i:\\k<x>)", "abcefgEFG", 3, 9)
+    x2("(?<x>a)(?<x>b)(?i:\\k<x>)+", "abAB", 0, 4)
     
     # branch reset
 #    x3("(?|(c)|(?:(b)|(a)))", "a", 0, 1, 2)
@@ -1111,6 +1216,8 @@ def main():
     x2("((?<x>x)|(?<y>y))(?(<x>)y|x)", "yx", 0, 2)
     n("((?<x>x)|(?<y>y))(?(<x>)y|x)", "xx")
     n("((?<x>x)|(?<y>y))(?(<x>)y|x)", "yy")
+#    n("(a)?(?<n>b)?(?(1)a)(?(<n>)b)", "aa", err=onig.ONIGERR_NUMBERED_BACKREF_OR_CALL_NOT_ALLOWED)
+    x2("(a)?(?<n>b)?(?(1)a)(?(<n>)b)", "aa", 0, 2)
     
     # Implicit-anchor optimization
     x2("(?s:.*abc)", "dddabdd\nddabc", 0, 13)   # optimized /(?s:.*abc)/ ==> /\A(?s:.*abc)/
@@ -1133,6 +1240,8 @@ def main():
     n("(?<!(?i)ab)cd", "ABcd")
     n("(?<!(?i:ab))cd", "ABcd")
     
+    # Perl syntax
+    x2("\\Q()\\\\E", "()\\", 0, 3)
     
     print("\nRESULT   SUCC: %d,  FAIL: %d,  ERROR: %d\n" % (
            nsucc, nfail, nerror))
