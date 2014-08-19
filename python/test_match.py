@@ -75,6 +75,13 @@ def xx(pattern, target, s_from, s_to, mem, not_match):
         target2 = target.encode(encoding)
     tp = strptr(target2)
     
+    # cut very long outputs
+    limit = 100
+    if len(target) > limit:
+        target = target[:limit] + "..."
+    if len(pattern) > limit:
+        pattern = pattern[:limit] + "..."
+
     if encoding == "UTF-8":
         option = "8"
     else:
