@@ -1,7 +1,7 @@
 #
 # Makefile for bregonig.dll
 #
-#  Copyright (C) 2006-2012  K.Takata
+#  Copyright (C) 2006-2014  K.Takata
 #
 
 #VER1 = 1
@@ -21,7 +21,7 @@ TARGET_CPU = x86
 
 BASEADDR = 0x60500000
 
-ONIG_DIR = ../onig-5.9.2-mod
+ONIG_DIR = ../onig-5.9.5-mod
 !ifdef USE_ONIG_DLL
 ONIG_LIB = $(ONIG_DIR)/onig.lib
 !else
