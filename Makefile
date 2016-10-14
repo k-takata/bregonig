@@ -10,7 +10,7 @@ USE_LTCG = 1
 #USE_ONIG_DLL = 1
 
 !ifndef TARGET_CPU
-!if ("$(CPU)"=="AMD64" && !DEFINED(386)) || DEFINED(AMD64) || "$(Platform)"=="x64"
+!if ("$(CPU)"=="AMD64" && !DEFINED(386)) || DEFINED(AMD64) || "$(PLATFORM)"=="x64" || "$(PLATFORM)"=="X64"
 TARGET_CPU = x64
 !elseif DEFINED(IA64)
 TARGET_CPU = ia64
