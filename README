@@ -1,7 +1,7 @@
 This is a source code package of bregonig.dll regular expression library.
 
 Binary packages and documents are available at the following site:
-http://homepage3.nifty.com/k-takata/mysoft/bregonig.html (Japanese)
+http://k-takata.o.oo7.jp/mysoft/bregonig.html (Japanese)
 
 Bregonig.dll is a regular expression library compatible with bregexp.dll.
 Bregexp.dll was widely used in Japanese Win32 applications, but the regexp
@@ -18,7 +18,7 @@ References:
     http://www.hi-ho.ne.jp/babaq/bregexp.html (Japanese)
 
   Oniguruma:
-    http://www.geocities.jp/kosako3/oniguruma/
+    http://github.com/kkos/oniguruma
     Compatible with Perl 5.8's regexp patterns.
 
   Onigmo (Oniguruma-mod):
