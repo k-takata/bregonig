@@ -22,8 +22,12 @@
 #include <ctype.h>
 #include <string.h>
 #include <mbstring.h>
-#include <oniguruma.h>
 #include <tchar.h>
+#ifdef USE_ONIGMO_6
+# include <onigmo.h>
+#else
+# include <oniguruma.h>
+#endif
 #include "bregexp.h"
 //#include "global.h"
 #include "bregonig.h"

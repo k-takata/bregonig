@@ -8,6 +8,7 @@
 USE_LTCG = 1
 #USE_MSVCRT = 1
 #USE_ONIG_DLL = 1
+USE_ONIGMO_6 = 1
 
 !ifndef TARGET_CPU
 !if ("$(CPU)"=="AMD64" && !DEFINED(386)) || DEFINED(AMD64) || "$(PLATFORM)"=="x64" || "$(PLATFORM)"=="X64"
@@ -21,16 +22,40 @@ TARGET_CPU = x86
 
 BASEADDR = 0x60500000
 
-ONIG_DIR = ../onigmo-5.15.0
+!ifdef DEBUG
+DBGFLG = d
+!else
+DBGFLG =
+!endif
+
+!ifdef USE_ONIGMO_6
+# Onigmo 6.0 or later
+ONIG_DIR = ../onigmo-6.0.0
+!ifdef USE_ONIG_DLL
+ONIG_LIB = $(ONIG_DIR)/build_$(TARGET_CPU)$(DBGFLG)/onigmo.lib
+!else
+ONIG_LIB = $(ONIG_DIR)/build_$(TARGET_CPU)$(DBGFLG)/onigmo_s.lib
+!endif
+ONIG_H = $(ONIG_DIR)/onigmo.h
+
+!else
+# Onigmo 5.15 or earlier
+ONIG_DIR = ../onig-5.15.0
 !ifdef USE_ONIG_DLL
 ONIG_LIB = $(ONIG_DIR)/onig.lib
 !else
 ONIG_LIB = $(ONIG_DIR)/onig_s.lib
 !endif
+ONIG_H = $(ONIG_DIR)/oniguruma.h
+
+!endif
 
 CPPFLAGS = /O2 /W3 /EHsc /LD /nologo /I$(ONIG_DIR)
 !ifdef VER1
 CPPFLAGS = $(CPPFLAGS) /DUSE_VTAB /DPERL_5_8_COMPAT /DNAMEGROUP_RIGHTMOST
+!endif
+!ifdef USE_ONIGMO_6
+CPPFLAGS = $(CPPFLAGS) /DUSE_ONIGMO_6
 !endif
 LD = link
 LDFLAGS = /DLL /nologo /MAP /BASE:$(BASEADDR) /merge:.rdata=.text
@@ -70,15 +95,11 @@ LDFLAGS = $(LDFLAGS) /opt:nowin98
 !endif
 
 !ifdef DEBUG
-CPPFLAGS = $(CPPFLAGS) /D_DEBUG
+CPPFLAGS = $(CPPFLAGS) /D_DEBUG /Zi
 RFLAGS = $(RFLAGS) /D_DEBUG
 !endif
 
-OBJDIR = obj
-!ifdef DEBUG
-OBJDIR = $(OBJDIR)d
-!endif
-OBJDIR = $(OBJDIR)$(TARGET_CPU)
+OBJDIR = obj$(TARGET_CPU)$(DBGFLG)
 WOBJDIR = $(OBJDIR)\unicode
 
 OBJS = $(OBJDIR)\subst.obj $(OBJDIR)\bsplit.obj $(OBJDIR)\btrans.obj $(OBJDIR)\sv.obj
@@ -114,33 +135,33 @@ $(WOBJDIR):
 .rc{$(OBJDIR)\}.res:
 	$(RC) $(RFLAGS) /Fo$@ /r $<
 
-$(OBJDIR)\bregonig.obj: bregonig.cpp bregexp.h bregonig.h mem_vc6.h dbgtrace.h version.h $(ONIG_DIR)/oniguruma.h
+$(OBJDIR)\bregonig.obj: bregonig.cpp bregexp.h bregonig.h mem_vc6.h dbgtrace.h version.h $(ONIG_H)
 
-$(WOBJDIR)\bregonig.obj: bregonig.cpp bregexp.h bregonig.h mem_vc6.h dbgtrace.h version.h $(ONIG_DIR)/oniguruma.h
+$(WOBJDIR)\bregonig.obj: bregonig.cpp bregexp.h bregonig.h mem_vc6.h dbgtrace.h version.h $(ONIG_H)
 
 $(OBJDIR)\bregonig.res: bregonig.rc version.h
 
-$(OBJDIR)\k2regexp.obj: bregonig.cpp bregexp.h bregonig.h mem_vc6.h dbgtrace.h version.h $(ONIG_DIR)/oniguruma.h
+$(OBJDIR)\k2regexp.obj: bregonig.cpp bregexp.h bregonig.h mem_vc6.h dbgtrace.h version.h $(ONIG_H)
 	$(CPP) $(CPPFLAGS) /c /D_K2REGEXP_ /Fo$@ bregonig.cpp
 
-#$(WOBJDIR)\k2regexp.obj: bregonig.cpp bregexp.h bregonig.h mem_vc6.h dbgtrace.h version.h $(ONIG_DIR)/oniguruma.h
+#$(WOBJDIR)\k2regexp.obj: bregonig.cpp bregexp.h bregonig.h mem_vc6.h dbgtrace.h version.h $(ONIG_H)
 #	$(CPP) $(CPPFLAGS) /c /D_K2REGEXP_ /DUNICODE /D_UNICODE /Fo$@ bregonig.cpp
 
 $(OBJDIR)\k2regexp.res: bregonig.rc version.h
 	$(RC) $(RFLAGS) /D_K2REGEXP_ /Fo$@ /r bregonig.rc
 
 
-$(OBJDIR)\subst.obj: subst.cpp bregexp.h bregonig.h mem_vc6.h dbgtrace.h $(ONIG_DIR)/oniguruma.h
+$(OBJDIR)\subst.obj: subst.cpp bregexp.h bregonig.h mem_vc6.h dbgtrace.h $(ONIG_H)
 
-$(WOBJDIR)\subst.obj: subst.cpp bregexp.h bregonig.h mem_vc6.h dbgtrace.h $(ONIG_DIR)/oniguruma.h
+$(WOBJDIR)\subst.obj: subst.cpp bregexp.h bregonig.h mem_vc6.h dbgtrace.h $(ONIG_H)
 
-$(OBJDIR)\bsplit.obj: bsplit.cpp bregexp.h bregonig.h mem_vc6.h dbgtrace.h $(ONIG_DIR)/oniguruma.h
+$(OBJDIR)\bsplit.obj: bsplit.cpp bregexp.h bregonig.h mem_vc6.h dbgtrace.h $(ONIG_H)
 
-$(WOBJDIR)\bsplit.obj: bsplit.cpp bregexp.h bregonig.h mem_vc6.h dbgtrace.h $(ONIG_DIR)/oniguruma.h
+$(WOBJDIR)\bsplit.obj: bsplit.cpp bregexp.h bregonig.h mem_vc6.h dbgtrace.h $(ONIG_H)
 
-$(OBJDIR)\btrans.obj: btrans.cpp bregexp.h bregonig.h mem_vc6.h dbgtrace.h sv.h $(ONIG_DIR)/oniguruma.h
+$(OBJDIR)\btrans.obj: btrans.cpp bregexp.h bregonig.h mem_vc6.h dbgtrace.h sv.h $(ONIG_H)
 
-$(WOBJDIR)\btrans.obj: btrans.cpp bregexp.h bregonig.h mem_vc6.h dbgtrace.h sv.h $(ONIG_DIR)/oniguruma.h
+$(WOBJDIR)\btrans.obj: btrans.cpp bregexp.h bregonig.h mem_vc6.h dbgtrace.h sv.h $(ONIG_H)
 
 $(OBJDIR)\sv.obj: sv.cpp sv.h
 
