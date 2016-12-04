@@ -1,0 +1,29 @@
+version: 1.0.{build}
+
+environment:
+  matrix:
+  - ARCH: x64
+    PYOPT: -3
+  - ARCH: x86
+    PYOPT: -3.4-32
+
+build_script:
+- cmd: |-
+    "C:\Program Files\Microsoft SDKs\Windows\v7.1\Bin\SetEnv.cmd" /%ARCH% /release
+    git clone -q --branch=bregonig --depth 1 https://github.com/k-takata/Onigmo.git C:\projects\onigmo
+    cd \projects\onigmo
+    nmake -f win32\Makefile build_%ARCH%\onigmo_s.lib
+    cd ..\bregonig
+    nmake ONIG_DIR=..\onigmo
+    dir obj%ARCH%\*.dll
+    \msys64\usr\bin\file obj%ARCH%\*.dll
+
+test_script:
+- cmd: |-
+    copy obj%ARCH%\bregonig.dll python
+    cd python
+    py %PYOPT% test_match.py SJIS
+    py %PYOPT% test_match.py UTF-8
+    py %PYOPT% test_match.py UTF-16LE
+
+# vim: ts=2 sw=2 sts=2 et
