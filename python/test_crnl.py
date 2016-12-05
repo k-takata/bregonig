@@ -101,7 +101,8 @@ def main():
     x(".*b",        "\r\naaab\r\n", 1,  2,  6);
     
     
-    print("\nRESULT   SUCC: %d,  FAIL: %d,  ERROR: %d\n" % (
+    print("\nEncoding:", get_encoding())
+    print("RESULT   SUCC: %d,  FAIL: %d,  ERROR: %d\n" % (
            get_nsucc(), get_nfail(), get_nerror()))
 
     if (get_nfail() == 0 and get_nerror() == 0):

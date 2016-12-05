@@ -159,7 +159,8 @@ def main():
 #    xx("^(?<select>[ab]),(?<a>.*?),(?<b>.*?)$", "$+{$+{select}}", "a,1234,abcd", "1234")
 #    xx("^(?<select>[ab]),(?<a>.*?),(?<b>.*?)$", "$+{$+{select}}", "b,1234,abcd", "abcd")
     
-    print("\nRESULT   SUCC: %d,  FAIL: %d,  ERROR: %d\n" % (
+    print("\nEncoding:", get_encoding())
+    print("RESULT   SUCC: %d,  FAIL: %d,  ERROR: %d\n" % (
            get_nsucc(), get_nfail(), get_nerror()))
 
     if (get_nfail() == 0 and get_nerror() == 0):
