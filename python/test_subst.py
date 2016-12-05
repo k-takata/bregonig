@@ -246,6 +246,10 @@ def main():
     print("\nRESULT   SUCC: %d,  FAIL: %d,  ERROR: %d\n" % (
            nsucc, nfail, nerror))
 
+    if (nfail == 0 and nerror == 0):
+        exit(0)
+    else:
+        exit(-1)
 
 if __name__ == '__main__':
     main()
