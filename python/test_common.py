@@ -103,6 +103,7 @@ def xx(pattern, target, s_from, s_to, mem, not_match, opt="", err=False,
     if not isinstance(target, bytes):
         s_from = cc_to_cb(target, encoding, s_from)
         s_to = cc_to_cb(target, encoding, s_to)
+        start_offset = cc_to_cb(target, encoding, start_offset)
         target2 = target.encode(encoding)
     tp = strptr(target2)
     
