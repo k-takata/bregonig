@@ -22,8 +22,14 @@ test_script:
 - cmd: |-
     copy obj%ARCH%\bregonig.dll python
     cd python
+    py %PYOPT% test_crnl.py SJIS
+    py %PYOPT% test_crnl.py UTF-8
+    py %PYOPT% test_crnl.py UTF-16LE
     py %PYOPT% test_match.py SJIS
     py %PYOPT% test_match.py UTF-8
     py %PYOPT% test_match.py UTF-16LE
+    py %PYOPT% test_subst.py SJIS
+    py %PYOPT% test_subst.py UTF-8
+    py %PYOPT% test_subst.py UTF-16LE
 
 # vim: ts=2 sw=2 sts=2 et
