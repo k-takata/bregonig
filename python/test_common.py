@@ -120,9 +120,9 @@ def xx(pattern, target, s_from, s_to, mem, not_match, opt="", err=False,
     option = (option + opt).encode(encoding)
     
     if encoding == "UTF-16LE":
-        pattern2 = pattern2.decode(encoding)
-        pattern3 = pattern3.decode(encoding)
-        option = option.decode(encoding)
+        pattern2 = ctypes.c_wchar_p(pattern2.decode(encoding))
+        pattern3 = ctypes.c_wchar_p(pattern3.decode(encoding))
+        option = ctypes.c_wchar_p(option.decode(encoding))
     
     try:
         r = BoMatch(pattern2, option, tp.getptr(), tp.getptr(start_offset), tp.getptr(-1),

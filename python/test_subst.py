@@ -33,9 +33,9 @@ def xx(pattern, replacement, target, s_result, not_match=False):
     option = option.encode(encoding)
     
     if encoding == "UTF-16LE":
-        pattern2 = pattern2.decode(encoding)
-        replacement2 = replacement2.decode(encoding)
-        option = option.decode(encoding)
+        pattern2 = ctypes.c_wchar_p(pattern2.decode(encoding))
+        replacement2 = ctypes.c_wchar_p(replacement2.decode(encoding))
+        option = ctypes.c_wchar_p(option.decode(encoding))
     
     if isinstance(s_result, bytes):
         s_result = s_result.decode(encoding)
