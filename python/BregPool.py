@@ -28,7 +28,7 @@ class BregPool:
         self._nmax = 0
 
     def Get(self, regstr):
-        for i in xrange(self._nmax):
+        for i in range(self._nmax):
             r = self._rxpool[i]
             if (not r):
                 break
