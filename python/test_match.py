@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import print_function, unicode_literals
-from ctypes import *
+import ctypes
 from bregonig import *
 import sys
 import io
@@ -12,6 +12,7 @@ nerror = 0
 nsucc = 0
 nfail = 0
 
+# default encoding
 encoding = "CP932"
 
 class strptr:
@@ -21,9 +22,11 @@ class strptr:
             raise TypeError
         self._str = s
         try:
-            self._ptr = cast(self._str, c_void_p)   # CPython 2.x/3.x
+            # CPython 2.x/3.x
+            self._ptr = ctypes.cast(self._str, ctypes.c_void_p)
         except TypeError:
-            self._ptr = c_void_p(self._str)         # PyPy 1.x
+            # PyPy 1.x
+            self._ptr = ctypes.c_void_p(self._str)
 
     def getptr(self, offset=0):
         if offset == -1:    # -1 means the end of the string
@@ -40,6 +43,8 @@ def cc_to_cb(s, enc, cc):
       enc -- encoding name
       cc -- char count
     """
+    if cc == -1:
+        return -1
     s = s.encode('UTF-32LE')
     clen = cc * 4
     if clen > len(s):
@@ -60,7 +65,7 @@ def xx(pattern, target, s_from, s_to, mem, not_match, opt="", err=False):
     global nsucc
     global nfail
     
-    rxp = POINTER(BREGEXP)()
+    rxp = ctypes.POINTER(BREGEXP)()
     msg = create_tchar_buffer(BREGEXP_MAX_ERROR_MESSAGE_LEN)
     
     pattern2 = pattern
@@ -95,11 +100,12 @@ def xx(pattern, target, s_from, s_to, mem, not_match, opt="", err=False):
     
     try:
         r = BoMatch(pattern2, option, tp.getptr(), tp.getptr(), tp.getptr(-1),
-                False, byref(rxp), msg)
+                False, ctypes.byref(rxp), msg)
     except RuntimeError:
-        r = BMatch(pattern3, tp.getptr(), tp.getptr(-1), byref(rxp), msg)
+        r = BMatch(pattern3, tp.getptr(), tp.getptr(-1), ctypes.byref(rxp), msg)
     
     if r < 0:
+        # Error
         if err:
             nsucc += 1
             print_result("OK(E)", "%s (/%s/ '%s')" % (msg.value, pattern, target))
@@ -114,6 +120,7 @@ def xx(pattern, target, s_from, s_to, mem, not_match, opt="", err=False):
         print_result("FAIL(E)", "/%s/ '%s'" % (pattern, target))
 
     elif r == 0:
+        # Not matched
         if not_match:
             nsucc += 1
             print_result("OK(N)", "/%s/ '%s'" % (pattern, target))
@@ -121,6 +128,7 @@ def xx(pattern, target, s_from, s_to, mem, not_match, opt="", err=False):
             nfail += 1
             print_result("FAIL", "/%s/ '%s'" % (pattern, target))
     else:
+        # Matched
         if not_match:
             nfail += 1
             print_result("FAIL(N)", "/%s/ '%s'" % (pattern, target))
@@ -151,23 +159,36 @@ def n(pattern, target, **kwargs):
 def is_unicode_encoding(enc):
     return enc in ("UTF-16LE", "UTF-8")
 
-
-def set_encoding(enc):
-    global encoding
-
-    unicode_func = False
-
+def is_wide_encoding(enc):
     encs = {"CP932": False,
             "SJIS": False,
             "UTF-8": False,
             "UTF-16LE": True}
-    unicode_func = encs[enc]
+    return encs[enc]
+
+
+def set_encoding(enc):
+    """Set the encoding used for testing.
+
+    arguments:
+      enc -- encoding name
+    """
+    global encoding
+
+    if enc == None:
+        return False
     encoding = enc
 
-    return unicode_func
+    return is_wide_encoding(enc)
 
 
 def set_output_encoding(enc=None):
+    """Set the encoding used for showing the results.
+
+    arguments:
+      enc -- Encoding name.
+             If omitted, locale.getpreferredencoding() is used.
+    """
     if enc is None:
         enc = locale.getpreferredencoding()
 
@@ -175,36 +196,63 @@ def set_output_encoding(enc=None):
         kw = dict(kwargs)
         kw.setdefault('errors', 'backslashreplace') # use \uXXXX style
         kw.setdefault('closefd', False)
-        writer = io.open(fo.fileno(), mode='w', **kw)
 
-        # work around for Python 2.x
-        write = writer.write    # save the original write() function
-        enc = locale.getpreferredencoding()
-        writer.write = lambda s: write(s.decode(enc)) \
-                if isinstance(s, bytes) else write(s)  # convert to unistr
+        if sys.version_info[0] < 3:
+            # Work around for Python 2.x
+            # New line conversion isn't needed here. Done in somewhere else.
+            writer = io.open(fo.fileno(), mode='w', newline='', **kw)
+            write = writer.write    # save the original write() function
+            enc = locale.getpreferredencoding()
+            def convwrite(s):
+                if isinstance(s, bytes):
+                    write(s.decode(enc))    # convert to unistr
+                else:
+                    write(s)
+                try:
+                    writer.flush()  # needed on Windows
+                except IOError:
+                    pass
+            writer.write = convwrite
+        else:
+            writer = io.open(fo.fileno(), mode='w', **kw)
         return writer
 
     sys.stdout = get_text_writer(sys.stdout, encoding=enc)
     sys.stderr = get_text_writer(sys.stderr, encoding=enc)
 
 
+def init(enc, outenc=None):
+    """Setup test target encoding, output encoding and warning function.
+
+    arguments:
+      enc    -- Encoding used for testing.
+      outenc -- Encoding used for showing messages.
+    """
+    ret = set_encoding(enc)
+    set_output_encoding(outenc)
+    return ret
+
+
 def main():
     unicode_func = False
     
-    # set encoding of the test target
+    # encoding of the test target
+    enc = None
     if len(sys.argv) > 1:
-        try:
-            unicode_func = set_encoding(sys.argv[1])
-        except KeyError:
-            print("test target encoding error")
-            print("Usage: python test_match.py [test target encoding] [output encoding]")
-            sys.exit()
-    
-    # set encoding of stdout/stderr
+        enc = sys.argv[1]
+
+    # encoding of stdout/stderr
     outenc = None
     if len(sys.argv) > 2:
         outenc = sys.argv[2]
-    set_output_encoding(outenc)
+
+    # Initialization
+    try:
+        unicode_func = init(enc, outenc)
+    except KeyError:
+        print("test target encoding error")
+        print("Usage: python test_match.py [test target encoding] [output encoding]")
+        sys.exit()
     
     
     LoadBregonig(unicode_func)
