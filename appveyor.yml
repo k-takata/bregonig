@@ -16,7 +16,7 @@ build_script:
     cd ..\bregonig
     nmake ONIG_DIR=..\onigmo
     dir obj%ARCH%\*.dll
-    \msys64\usr\bin\file obj%ARCH%\*.dll
+    \msys64\usr\bin\file obj%ARCH%/*.dll
 
 test_script:
 - cmd: |-
