@@ -4,64 +4,14 @@
 from __future__ import print_function, unicode_literals
 from ctypes import *
 from bregonig import *
+from test_common import *
 import sys
-import io
-import locale
-
-nerror = 0
-nsucc = 0
-nfail = 0
-
-encoding = "CP932"
-
-class strptr:
-    """a helper class to get a pointer to a string"""
-    def __init__(self, s):
-        if not isinstance(s, bytes):
-            raise TypeError
-        self._str = s
-        try:
-            self._ptr = cast(self._str, c_void_p)   # CPython 2.x/3.x
-        except TypeError:
-            self._ptr = c_void_p(self._str)         # PyPy 1.x
-
-    def getptr(self, offset=0):
-        if offset == -1:    # -1 means the end of the string
-            offset = len(self._str)
-        elif offset > len(self._str):
-            raise IndexError
-        return self._ptr.value + offset
-
-def cc_to_cb(s, enc, cc):
-    """convert char count to byte count
-    
-    arguments:
-      s -- unicode string
-      enc -- encoding name
-      cc -- char count
-    """
-    s = s.encode('UTF-32LE')
-    clen = cc * 4
-    if clen > len(s):
-        raise IndexError
-    return len(s[:clen].decode('UTF-32LE').encode(enc))
-
-def print_result(result, pattern, file=None):
-    if not file:
-        file = sys.stdout
-    print(result + ": ", end='', file=file)
-    try:
-        print(pattern, file=file)
-    except UnicodeEncodeError as e:
-        print('(' + str(e) + ')')
 
 def xx(pattern, replacement, target, s_result, not_match=False):
-    global nerror
-    global nsucc
-    global nfail
-    
     rxp = POINTER(BREGEXP)()
     msg = create_tchar_buffer(BREGEXP_MAX_ERROR_MESSAGE_LEN)
+    
+    encoding = get_encoding()
     
     pattern2 = pattern
     if not isinstance(pattern, bytes):
@@ -73,8 +23,6 @@ def xx(pattern, replacement, target, s_result, not_match=False):
     
     target2 = target
     if not isinstance(target, bytes):
-        #s_from = cc_to_cb(target, encoding, s_from)
-        #s_to = cc_to_cb(target, encoding, s_to)
         target2 = target.encode(encoding)
     tp = strptr(target2)
     
@@ -97,7 +45,7 @@ def xx(pattern, replacement, target, s_result, not_match=False):
             None, byref(rxp), msg)
     
     if r < 0:
-        nerror += 1
+        inc_nerror()
         print_result("ERROR",
                 "%s (s/%s/%s/g '%s')" % (msg.value, pattern, replacement, target),
                 file=sys.stderr)
@@ -105,14 +53,14 @@ def xx(pattern, replacement, target, s_result, not_match=False):
     
     if r == 0:
         if not_match:
-            nsucc += 1
+            inc_nsucc()
             print_result("OK(N)", "s/%s/%s/g '%s'" % (pattern, replacement, target))
         else:
-            nfail += 1
+            inc_nfail()
             print_result("FAIL", "s/%s/%s/g '%s'" % (pattern, replacement, target))
     else:
         if not_match:
-            nfail += 1
+            inc_nfail()
             print_result("FAIL(N)",
                     "s/%s/%s/g '%s' => '%s'" % (pattern, replacement, target, out_result))
         else:
@@ -120,70 +68,38 @@ def xx(pattern, replacement, target, s_result, not_match=False):
             if isinstance(out_result, bytes):
                 out_result = out_result.decode(encoding)
             if out_result == s_result:
-                nsucc += 1
+                inc_nsucc()
                 print_result("OK",
                         "s/%s/%s/g '%s' => '%s'" % (pattern, replacement, target, out_result))
             else:
-                nfail += 1
+                inc_nfail()
                 print_result("FAIL",
                         "s/%s/%s/g '%s' => '%s'" % (pattern, replacement, target, out_result))
     
     if (rxp):
         BRegfree(rxp)
 
-#def x2(pattern, target, s_from, s_to):
-#    xx(pattern, target, s_from, s_to, 0, False)
-
-#def x3(pattern, target, s_from, s_to, mem):
-#    xx(pattern, target, s_from, s_to, mem, False)
-
-#def n(pattern, target):
-#    xx(pattern, target, 0, 0, 0, True)
-
-
-def is_unicode_encoding(enc):
-    return enc in ("UTF-16LE", "UTF-8")
 
 def main():
-    global encoding
-    
     unicode_func = False
     
-    # set encoding of the test target
+    # encoding of the test target
+    enc = None
     if len(sys.argv) > 1:
-        encs = {"CP932": False,
-                "SJIS": False,
-                "UTF-8": False,
-                "UTF-16LE": True}
-        try:
-            unicode_func = encs[sys.argv[1]]
-        except KeyError:
-            print("test target encoding error")
-            print("Usage: python test_subst.py [test target encoding] [output encoding]")
-            sys.exit()
-        encoding = sys.argv[1]
-    
-    # set encoding of stdout/stderr
+        enc = sys.argv[1]
+
+    # encoding of stdout/stderr
+    outenc = None
     if len(sys.argv) > 2:
         outenc = sys.argv[2]
-    else:
-        outenc = locale.getpreferredencoding()
-    
-    def get_text_writer(fileno, **kwargs):
-        kw = dict(kwargs)
-        kw.setdefault('errors', 'backslashreplace')
-        kw.setdefault('closefd', False)
-        writer = io.open(fileno, mode='w', **kw)
-        
-        # work around for Python 2.x
-        write = writer.write    # save the original write() function
-        enc = locale.getpreferredencoding()
-        writer.write = lambda s: write(s.decode(enc)) \
-                if isinstance(s, bytes) else write(s)  # convert to unistr
-        return writer
-    
-    sys.stdout = get_text_writer(sys.stdout.fileno(), encoding=outenc)
-    sys.stderr = get_text_writer(sys.stderr.fileno(), encoding=outenc)
+
+    # Initialization
+    try:
+        unicode_func = init(enc, outenc)
+    except KeyError:
+        print("test target encoding error")
+        print("Usage: python test_match.py [test target encoding] [output encoding]")
+        sys.exit()
     
     
     LoadBregonig(unicode_func)
@@ -244,9 +160,9 @@ def main():
 #    xx("^(?<select>[ab]),(?<a>.*?),(?<b>.*?)$", "$+{$+{select}}", "b,1234,abcd", "abcd")
     
     print("\nRESULT   SUCC: %d,  FAIL: %d,  ERROR: %d\n" % (
-           nsucc, nfail, nerror))
+           get_nsucc(), get_nfail(), get_nerror()))
 
-    if (nfail == 0 and nerror == 0):
+    if (get_nfail() == 0 and get_nerror() == 0):
         exit(0)
     else:
         exit(-1)
