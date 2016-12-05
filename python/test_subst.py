@@ -2,13 +2,13 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import print_function, unicode_literals
-from ctypes import *
+import ctypes
 from bregonig import *
 from test_common import *
 import sys
 
 def xx(pattern, replacement, target, s_result, not_match=False):
-    rxp = POINTER(BREGEXP)()
+    rxp = ctypes.POINTER(BREGEXP)()
     msg = create_tchar_buffer(BREGEXP_MAX_ERROR_MESSAGE_LEN)
     
     encoding = get_encoding()
@@ -42,7 +42,7 @@ def xx(pattern, replacement, target, s_result, not_match=False):
     
     
     r = BoSubst(pattern2, replacement2, option, tp.getptr(), tp.getptr(), tp.getptr(-1),
-            None, byref(rxp), msg)
+            None, ctypes.byref(rxp), msg)
     
     if r < 0:
         inc_nerror()
