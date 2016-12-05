@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: cp932 -*-
+# -*- coding: utf-8 -*-
 
 from __future__ import print_function, unicode_literals
 from ctypes import *
@@ -195,7 +195,7 @@ def main():
     # fixed string
     xx("abc", "def", "abc", "def")
     xx("abc", "def", "abcabcabc", "defdefdef")
-    xx("Ç†Ç¢Ç§", "Ç¶Ç®", "Ç†Ç¢Ç§Ç†Ç¢Ç§", "Ç¶Ç®Ç¶Ç®")
+    xx("„ÅÇ„ÅÑ„ÅÜ", "„Åà„Åä", "„ÅÇ„ÅÑ„ÅÜ„ÅÇ„ÅÑ„ÅÜ", "„Åà„Åä„Åà„Åä")
     xx("x?", "!", "abcde", "!a!b!c!d!e!")
     xx("\\Gx?", "!", "abcde", "!abcde")
     
