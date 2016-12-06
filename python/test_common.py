@@ -85,6 +85,13 @@ def print_result(result, pattern, file=None):
     except UnicodeEncodeError as e:
         print('(' + str(e) + ')')
 
+def decode_errmsg(msg):
+    if isinstance(msg.value, bytes):
+        return msg.value.decode(encoding, 'replace')
+    else:
+        return msg.value
+
+
 def xx(pattern, target, s_from, s_to, mem, not_match, opt="", err=False,
         start_offset=0):
     global nerror
@@ -107,12 +114,15 @@ def xx(pattern, target, s_from, s_to, mem, not_match, opt="", err=False,
         target2 = target.encode(encoding)
     tp = strptr(target2)
     
-    # cut very long outputs
+    # cut very long outputs (used for showing message)
+    if sys.version_info[0] < 3:
+        pattern = pattern2.decode(encoding, 'replace')
+        target = target2.decode(encoding, 'replace')
     limit = 100
-    if len(target) > limit:
-        target = target[:limit] + "..."
     if len(pattern) > limit:
         pattern = pattern[:limit] + "..."
+    if len(target) > limit:
+        target = target[:limit] + "..."
 
     if encoding == "UTF-8":
         option = "8"
@@ -135,11 +145,12 @@ def xx(pattern, target, s_from, s_to, mem, not_match, opt="", err=False,
         # Error
         if err:
             nsucc += 1
-            print_result("OK(E)", "%s (/%s/ '%s')" % (msg.value, pattern, target))
+            print_result("OK(E)", "%s (/%s/ '%s')" % \
+                    (decode_errmsg(msg), pattern, target))
         else:
             nerror += 1
-            print_result("ERROR", "%s (/%s/ '%s')" % (msg.value, pattern, target),
-                    file=sys.stderr)
+            print_result("ERROR", "%s (/%s/ '%s')" % \
+                    (decode_errmsg(msg), pattern, target), file=sys.stderr)
         return
 
     if err:
