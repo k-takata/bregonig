@@ -8,7 +8,7 @@ import sys
 
 def main():
     unicode_func = False
-    
+
     # encoding of the test target
     enc = None
     if len(sys.argv) > 1:
@@ -26,24 +26,24 @@ def main():
         print("test target encoding error")
         print("Usage: python test_match.py [test target encoding] [output encoding]")
         sys.exit()
-    
-    
+
+
     LoadBregonig(unicode_func)
     #LoadBregexp()
-    
+
     print(BRegexpVersion())
     print()
-    
-    
+
+
     encoding = get_encoding()
-    
-    # onig-5.9.2/win32/testc.c からコピー
-    #   trigraph 対策の ?\? は ?? に置き換え
-    #   (?m) は (?s) に置き換え
-    #   \C-x はサポートしていないためコメントアウト
-    #   ONIG_OPTION_CAPTURE_GROUP を有効にしているため、バッファ番号を変更
-    #   マッチ位置の指定をバイト単位から文字数単位に変更
-    
+
+    # Copied from onig-5.9.2/testc.c
+    #   '?\?' which is used to avoid trigraph is replaced by '??'.
+    #   (?m) was replaced with (?s).
+    #   \C-x, \h and \uHHHH are commented out because they are not supported.
+    #   Buffer numbers are changed because of ONIG_OPTION_CAPTURE_GROUP.
+    #   Match positions are specified by unit of character instead of byte.
+
     x2("", "", 0, 0);
     x2("^", "", 0, 0);
     x2("$", "", 0, 0);
@@ -53,7 +53,7 @@ def main():
     x2("\\z", "", 0, 0);
     x2("^$", "", 0, 0);
     x2("\\ca", "\001", 0, 1);
-    #x2("\\C-b", "\002", 0, 1);  #XXX: \C-x is not supported
+#    x2("\\C-b", "\002", 0, 1);  #XXX: \C-x is not supported
     x2("\\c\\\\", "\034", 0, 1);
     x2("q[\\c\\\\]", "q\034", 0, 2);
     x2("", "a", 0, 0);
@@ -445,8 +445,8 @@ def main():
     x2("(?:(?<x>)|(?<x>efg))\\k<x>", "", 0, 0);
     x2("(?:(?<x>abc)|(?<x>efg))\\k<x>", "efgabcabc", 3, 9); #XXX: refers left-most group
     n("(?:(?<x>abc)|(?<x>efg))\\k<x>", "abcefg");
-    #x2("(?:(?<n1>.)|(?<n1>..)|(?<n1>...)|(?<n1>....)|(?<n1>.....)|(?<n1>......)|(?<n1>.......)|(?<n1>........)|(?<n1>.........)|(?<n1>..........)|(?<n1>...........)|(?<n1>............)|(?<n1>.............)|(?<n1>..............))\\k<n1>$", "a-pyumpyum", 2, 10);   #XXX: refers left-most group
-    #x3("(?:(?<n1>.)|(?<n1>..)|(?<n1>...)|(?<n1>....)|(?<n1>.....)|(?<n1>......)|(?<n1>.......)|(?<n1>........)|(?<n1>.........)|(?<n1>..........)|(?<n1>...........)|(?<n1>............)|(?<n1>.............)|(?<n1>..............))\\k<n1>$", "xxxxabcdefghijklmnabcdefghijklmn", 4, 18, 14); #XXX: refers left-most group
+#    x2("(?:(?<n1>.)|(?<n1>..)|(?<n1>...)|(?<n1>....)|(?<n1>.....)|(?<n1>......)|(?<n1>.......)|(?<n1>........)|(?<n1>.........)|(?<n1>..........)|(?<n1>...........)|(?<n1>............)|(?<n1>.............)|(?<n1>..............))\\k<n1>$", "a-pyumpyum", 2, 10);   #XXX: refers left-most group
+#    x3("(?:(?<n1>.)|(?<n1>..)|(?<n1>...)|(?<n1>....)|(?<n1>.....)|(?<n1>......)|(?<n1>.......)|(?<n1>........)|(?<n1>.........)|(?<n1>..........)|(?<n1>...........)|(?<n1>............)|(?<n1>.............)|(?<n1>..............))\\k<n1>$", "xxxxabcdefghijklmnabcdefghijklmn", 4, 18, 14); #XXX: refers left-most group
     x3("(?<name1>)(?<name2>)(?<name3>)(?<name4>)(?<name5>)(?<name6>)(?<name7>)(?<name8>)(?<name9>)(?<name10>)(?<name11>)(?<name12>)(?<name13>)(?<name14>)(?<name15>)(?<name16>aaa)(?<name17>)$", "aaa", 0, 3, 16);
     x2("(?<foo>a|\\(\\g<foo>\\))", "a", 0, 1);
     x2("(?<foo>a|\\(\\g<foo>\\))", "((((((a))))))", 0, 13);
@@ -746,8 +746,8 @@ def main():
     n("[^[^a-zあいう]&&[^bcdefgうえお]g-w]", "2");
     x2("a<b>バージョンのダウンロード<\\/b>", "a<b>バージョンのダウンロード</b>", 0, 20);
     x2(".<b>バージョンのダウンロード<\\/b>", "a<b>バージョンのダウンロード</b>", 0, 20);
-    
-    
+
+
     # additional test patterns
     if is_unicode_encoding(encoding):
         x2("\\x{3042}\\x{3044}", "あい", 0, 2)
@@ -760,6 +760,7 @@ def main():
     x2("(?<!(?<=a)b|c)d", "bd", 1, 2)
     x2("(a){2}z", "aaz", 0, 3)
     x2("(?<=a).*b", "aab", 1, 3)
+    x2("(?!a).*b", "ab", 1, 2)
     x2("(?<=(?<!A)B)C", "BBC", 2, 3)
     n("(?<=(?<!A)B)C", "ABC")
     n("(?i)(?<!aa|b)c", "Aac")
@@ -783,10 +784,19 @@ def main():
         x2("(?i)ff", "\ufb00", 0, 1)
         x2("(?i)\ufb01", "fi", 0, 2)
         x2("(?i)\u0149\u0149", "\u0149\u0149", 0, 2)
+        x2("(?i)(?<=\u0149)a", "\u02bcna", 2, 3)    # with look-behind
         # Other Unicode tests
         x2("\\x{25771}", "\U00025771", 0, 1)
     x2("[0-9-a]+", " 0123456789-a ", 1, 13)     # same as [0-9\-a]
     x2("[0-9-\\s]+", " 0123456789-a ", 0, 12)   # same as [0-9\-\s]
+#    n("[0-9-a]", "", syn=onigmo.ONIG_SYNTAX_GREP, err=onigmo.ONIGERR_UNMATCHED_RANGE_SPECIFIER_IN_CHAR_CLASS)
+    x2("[0-9-あ\\\\/\u0001]+", " 0123456789-あ\\/\u0001 ", 1, 16)
+    x2("[a-b-]+", "ab-", 0, 3)
+    x2("[a-b-&&-]+", "ab-", 2, 3)
+    x2("(?i)[a[b-あ]]+", "abあ", 0, 3)
+    if is_unicode_encoding(encoding):
+        x2("(?i)[\\d[:^graph:]]+", "0あ", 0, 1)
+    x2("(?ia)[\\d[:^print:]]+", "0あ", 0, 2)
     x2("(?i:a) B", "a B", 0, 3)
     x2("(?i:a )B", "a B", 0, 3)
     x2("B (?i:a)", "B a", 0, 3)
@@ -801,7 +811,8 @@ def main():
     n("x.*?\\Z$", "x\ny")
     n("x.*?\\Z$", "x\r\ny")
     x2("x.*?\\Z$", "x\n", 0, 1)
-    x2("x.*?\\Z$", "x\r\n", 0, 2)   # \Z will match between \r and \n.
+    x2("x.*?\\Z$", "x\r\n", 0, 2)   # \Z will match between \r and \n, if
+                                    # "R" option isn't specified.
     x2("(?<=fo).*", "foo", 2, 3)
     x2("(?s)(?<=fo).*", "foo", 2, 3)    #XXX: m -> s
     x2("(?s)(?<=fo).+", "foo", 2, 3)    #XXX: m -> s
@@ -810,10 +821,13 @@ def main():
     x2("\\n?\\z", "こんにちは", 5, 5)
     x2("\\z", "こんにちは", 5, 5)
     x2("()" * 32767, "", 0, 0)      # Issue #24
+    n("()" * 32768, "", err=True)
 #    x2("\\h+ \\H+", " 0123456789aBcDeF gh", 1, 20)
 #    x2("[\\h]+ [\\H]+", " 0123456789aBcDeF gh", 1, 20)
     x2("\\A(|.|(?:(.)\\g<1>\\k<2+0>))\\z", "reer", 0, 4)
     x2("\\A(?<a>|.|(?:(?<b>.)\\g<a>\\k<b+0>))\\z", "reer", 0, 4)
+    x2("(?i)\\A(|.|(?:(.)\\g<1>\\k<2+0>))\\z", "reER", 0, 4)
+    x2("(?i)\\A(?<a>|.|(?:(?<b>.)\\g<a>\\k<b+0>))\\z", "REer", 0, 4)
     x2(''' # Extended pattern
       (?<element> \g<stag> \g<content>* \g<etag> ){0}
       (?<stag> < \g<name> \s* > ){0}
@@ -822,6 +836,7 @@ def main():
       (?<etag> </ \k<name+1> >){0}
       \g<element>''',
       "<foo>f<bar>bbb</bar>f</foo>", 0, 27, opt="x")
+    x2("(.)(?<a>a)(?<a>b)\\k<a>", "xaba", 0, 4)
     x2("\\p{Print}+", "\n a", 1, 3)
     x2("\\p{Graph}+", "\n a", 2, 3)
     n("a(?!b)", "ab");
@@ -831,10 +846,68 @@ def main():
     x2("(?<n>(a|b\\g<n>c){3,5}?)", "baaaaca", 1, 4)
     x2("\\p{WoRd}", "a", 0, 1)  # property name is not case sensitive
     n("[[:WoRd:]]", "a", err=True)   # POSIX bracket name is case sensitive
-    
+    n("(\\2)(\\1)", "")     # Onigmo Issue #65
+    n("(0?0|(?(1)||)|(?(1)||))?", "", err=True) # Ruby Bug#12418
+    n("[\\40000000000", "", err=True)  # Ruby Bug#12420
+    n("[\\600000000000\n", "", err=True)   # Ruby Bug#12423
+    n("[]", "", err=True)
+    n("[c-a]", "", err=True)
+    x2("[[:ab:\\x{30}]]+", ":ab0x", 0, 4)
+    x2("[[:x\\]:]+", "[x:]", 0, 4)
+    x2("[!--x]+", "!-x", 0, 3)
+    x2(" ]", " ]", 0, 2)    # warning: ']' without escape
+    n("\\x{FFFFFFFF}", "", err=True);
+    n("\\x{100000000}", "", err=True);
+    #x2("\\u0026", "\u0026", 0, 1)              #XXX: not on Perl
+    #x2("[\\u0024-\\u0027]", "\u0026", 0, 1)    #XXX: not on Perl
+    #n("\\u026x", "", err=True)                 #XXX: not on Perl
+    n("()(?\\!(?'a')\\1)", "", err=True)
+    x2("\\i", "i", 0, 1)    # unknown escape warning
+    n("\\((", "", err=True)
+    n("(|", "", err=True)
+    x2("%{(.*?)}", "%{HOSTNAME}", 0, 11)
+    if not is_wide_encoding(encoding):
+        n(b"'/g\\\xff\xff\xff\xff&))", "", err=True)
+        n(b"\\\xff0", "")
+    if encoding == "UTF-8":
+        n(b"[0-0-\xe2  ", "", err=True)
+    n("\\p{foobarbaz}", "", err=True)
+    n("\\p{あ}", "", err=True)
+    if is_unicode_encoding(encoding):
+        n("\\p{\U00025771}", "", err=True)
+    if encoding == "UTF-8":
+        x2("[\\xce\\xb1\\xce\\xb2]", "β", 0, 1)
+    elif encoding == "SJIS" or encoding == "CP932":
+        n("[\\x84A]", "", err=True)
+    elif is_wide_encoding(encoding):
+        n("[\\x420]", "", err=True)
+    x2("(?:a?)*", "aa", 0, 2)   # tests for reducing nested quantifiers
+    x2("(?:a?)*?", "aa", 0, 0)
+    x2("(?:a*)??", "aa", 0, 0)
+    x2("(?:a+?)*", "aa", 0, 1)
+    x2("(?:a*){2,3}", "aaa", 0, 3)
+    n("(?:a+){2,3}", "a")
+    x2("a{", "a{", 0, 2)        # invalid interval is allowed
+    n("a{100001}", "", err=True)
+    n("a{0,100001}", "", err=True)
+    n("a{5,1}", "", err=True)
+    x2("abc{1}", "abcc", 0, 3)
+    x3("\\(((?:[^(]|\\g<0>)*)\\)", "(abc)(abc)", 1, 4, 1)   # Issue #48
+    x3("\\(((?:[^(]|\\g<0>)*)\\)", "((abc)(abc))", 1, 11, 1)
+    x3("\\(((?:[^(]|(\\g<0>))*)\\)", "((abc)(abc))", 6, 11, 2)
+
     # ONIG_OPTION_FIND_LONGEST option
     x2("foo|foobar", "foobar", 0, 3)
-#    x2("foo|foobar", "foobar", 0, 6, opt=onig.ONIG_OPTION_FIND_LONGEST)
+#    x2("foo|foobar", "foobar", 0, 6, opt=onigmo.ONIG_OPTION_FIND_LONGEST)
+#    x2("a*", "aa aaa aaaa aaaaa ", 12, 17, opt=onigmo.ONIG_OPTION_FIND_LONGEST)
+
+    # ONIG_OPTION_FIND_NOT_EMPTY option
+    x2("\w*", " a", 0, 0)
+#    x2("\w*", " a", 1, 2, opt=onigmo.ONIG_OPTION_FIND_NOT_EMPTY)
+
+    # ONIG_OPTION_DONT_CAPTURE_GROUP option
+#    x2("(ab|cd)*", "cdab", 0, 4, opt=onigmo.ONIG_OPTION_DONT_CAPTURE_GROUP)
+#    n("(ab|cd)*\\1", "", opt=onigmo.ONIG_OPTION_DONT_CAPTURE_GROUP, err=onigmo.ONIGERR_INVALID_BACKREF)
 
     # character classes (tests for character class optimization)
     x2("[@][a]", "@a", 0, 2);
@@ -842,14 +915,18 @@ def main():
     x2("(?i)[A\\x{41}]", "a", 0, 1);
     x2("[abA]", "a", 0, 1);
     x2("[[ab]&&[ac]]+", "aaa", 0, 3);
+    x2("[[ab]&&[^b]]+", "aaa", 0, 3);
+    x2("[[^b]&&[ab]]+", "aaa", 0, 3);
     x2("[[あい]&&[あう]]+", "あああ", 0, 3);
-    
+    x2("[[あい]&&[^い]]+", "あああ", 0, 3);
+    x2("[[^い]&&[あい]]+", "あああ", 0, 3);
+
     # possessive quantifiers
     n("a?+a", "a")          # Ver.1.xx fails
     n("a*+a", "aaaa")       # Ver.1.xx fails
     n("a++a", "aaaa")       # Ver.1.xx fails
     n("a{2,3}+a", "aaa")    # Ver.1.xx fails
-    
+
     # automatic possessification
     x2("\\w+\\W", "abc#", 0, 4)
     x2("[a-c]+\\W", "abc#", 0, 4)
@@ -868,12 +945,32 @@ def main():
     x2("\\R", "\n", 0, 1)
     x2("\\R", "\r", 0, 1)
     x2("\\R{3}", "\r\r\n\n", 0, 4)
-    
+
+    if (is_unicode_encoding(encoding)):
+        x2("\\R", "\u0085", 0, 1)
+        x2("\\R", "\u2028", 0, 1)
+        x2("\\R", "\u2029", 0, 1)
+
     # extended grapheme cluster
     x2("\\X{5}", "あいab\n", 0, 5)
+    x2("\\X", "\n", 0, 1)
+    x2("\\X", "\r", 0, 1)
+    x2("\\X{3}", "\r\r\n\n", 0, 4)
     if is_unicode_encoding(encoding):
         x2("\\X", "\u306F\u309A\n", 0, 2)
-    
+        x2("\\A\\X\\z", "\u0020\u200d", 0, 2)
+        x2("\\A\\X\\z", "\u0600\u0600", 0, 2)
+        x2("\\A\\X\\z", "\u0600\u0020", 0, 2)
+        x2("\\A\\X\\z", "\u261d\U0001F3FB", 0, 2)
+        x2("\\A\\X\\z", "\U0001f600", 0, 1)
+        x2("\\A\\X\\z", "\u0020\u0308", 0, 2)
+        x2("\\A\\X\\X\\z", "\u000a\u0308", 0, 2)
+        x2("\\A\\X\\X\\z", "\u000d\u0308", 0, 2)
+        x2("\\A\\X\\z", "\U0001F477\U0001F3FF\u200D\u2640\uFE0F", 0, 5)
+        x2("\\A\\X\\z", "\U0001F468\u200D\U0001F393", 0, 3)
+        x2("\\A\\X\\z", "\U0001F46F\u200D\u2642\uFE0F", 0, 4)
+        x2("\\A\\X\\z", "\U0001F469\u200d\u2764\ufe0f\u200d\U0001F469", 0, 6)
+
     # keep
     x2("ab\\Kcd", "abcd", 2, 4)
     x2("ab\\Kc(\\Kd|z)", "abcd", 3, 4)
@@ -884,7 +981,7 @@ def main():
     x2("ab(?=c\Kd)", "abcd", 2, 2)          # This behaviour is currently not well defined. (see: perlre)
     x2("(?<=a\\Kb|aa)cd", "abcd", 1, 4)     # This behaviour is currently not well defined. (see: perlre)
     x2("(?<=ab|a\\Ka)cd", "abcd", 2, 4)     # This behaviour is currently not well defined. (see: perlre)
-    
+
     # named group and subroutine call
     x2("(?<name_2>ab)(?&name_2)", "abab", 0, 4);
     x2("(?<name_2>ab)(?1)", "abab", 0, 4);
@@ -899,23 +996,34 @@ def main():
     x2("(?-i:\g<+1>)(?i:(a)){0}", "A", 0, 1);
     x2("(?-i:\g'+1')(?i:(a)){0}", "A", 0, 1);
     n("(.(?=\\g<1>))", "", err=True)
-#    n("(a)(?<n>b)\\g<1>\\g<n>", "abab", err=onig.ONIGERR_NUMBERED_BACKREF_OR_CALL_NOT_ALLOWED)
+    x2("(a)(?<n>b)\\g<1>\\g<n>", "abab", 0, 4)  #XXX: supported by bregonig
     x2("(a)(?<n>b)(?1)(?&n)", "abab", 0, 4)
-    
+    x2("((?<v>)a)|b\\g<0>b", "bbabb", 0, 5)
+    x2("((?<v>)a)|b(?0)b", "bbabb", 0, 5)
+    x2("((?<v>)a|b(?1)b)", "bbabb", 0, 5)
+    x2("((?<v>a|b(?&v)b))", "bbabb", 0, 5)
+    n("(?<", "", err=True)
+    n("(?<>)", "", err=True)
+    n("(?<.>)", "", err=True)
+    n("\\g<1->", "", err=True)
+    n("\\k<1/>", "", err=True)
+    n("\\k<1-1/>", "", err=True)
+    n("\\k<a/>", "", err=True)
+
     # character set modifiers
     x2("(?u)\\w+", "あa#", 0, 2);
     x2("(?a)\\w+", "あa#", 1, 2);
     x2("(?u)\\W+", "あa#", 2, 3);
     x2("(?a)\\W+", "あa#", 0, 1);
-    
+
     x2("(?a)\\b", "あa", 1, 1);
     x2("(?a)\\w\\b", "aあ", 0, 1);
     x2("(?a)\\B", "a ああ ", 2, 2);
-    
+
     x2("(?u)\\B", "あ ", 2, 2);
     x2("(?a)\\B", "あ ", 0, 0);
     x2("(?a)\\B", "aあ ", 2, 2);
-    
+
     x2("(?a)a\\b", " a", 1, 2)
     x2("(?u)a\\b", " a", 1, 2)
     n("(?a)a\\B", " a")
@@ -957,15 +1065,31 @@ def main():
         n("(?ia)[[:lower:]]", "\u017f");
         x2("(?u)[[:upper:]]", "\u212a", 0, 1);
         n("(?a)[[:upper:]]", "\u212a");
-    
+
+    # Grep syntax
+    # \+, \?, \|, \{n,m\}
+#    x2("a\\+", "aa", 0, 2, syn=onigmo.ONIG_SYNTAX_GREP)
+#    n("a\\+", "b", syn=onigmo.ONIG_SYNTAX_GREP)
+#    x2("a\\?", "", 0, 0, syn=onigmo.ONIG_SYNTAX_GREP)
+#    x2("a\\?", "a", 0, 1, syn=onigmo.ONIG_SYNTAX_GREP)
+#    x2("ab\\|cd", "cd", 0, 2, syn=onigmo.ONIG_SYNTAX_GREP)
+#    x2("a\\{1,2\\}", "aaa", 0, 2, syn=onigmo.ONIG_SYNTAX_GREP)
+#    x2("a\\{2\\}", "aaa", 0, 2, syn=onigmo.ONIG_SYNTAX_GREP)
+#    n("a\\{|", "", syn=onigmo.ONIG_SYNTAX_GREP, err=onigmo.ONIGERR_END_PATTERN_AT_LEFT_BRACE)
     # \< and \>
-#    x2("\\<abc\\>", " abc ", 1, 4, syn=onig.ONIG_SYNTAX_GREP)
-#    n("\\<abc\\>", "zabc ", syn=onig.ONIG_SYNTAX_GREP)
-#    n("\\<abc\\>", " abcd", syn=onig.ONIG_SYNTAX_GREP)
-#    n("\\<abc\\>", "あabcい", syn=onig.ONIG_SYNTAX_GREP)
-#    x2("\\<abc\\>", "あabcい", 1, 4, syn=onig.ONIG_SYNTAX_GREP, opt=onig.ONIG_OPTION_ASCII_RANGE)
-#    n("\\<abc\\>", "zabcい", syn=onig.ONIG_SYNTAX_GREP, opt=onig.ONIG_OPTION_ASCII_RANGE)
-#    n("\\<abc\\>", "あabcd", syn=onig.ONIG_SYNTAX_GREP, opt=onig.ONIG_OPTION_ASCII_RANGE)
+#    x2("\\<abc\\>", " abc ", 1, 4, syn=onigmo.ONIG_SYNTAX_GREP)
+#    n("\\<abc\\>", "zabc ", syn=onigmo.ONIG_SYNTAX_GREP)
+#    n("\\<abc\\>", " abcd", syn=onigmo.ONIG_SYNTAX_GREP)
+#    n("\\<abc\\>", "あabcい", syn=onigmo.ONIG_SYNTAX_GREP)
+#    x2("\\<abc\\>", "あabcい", 1, 4, syn=onigmo.ONIG_SYNTAX_GREP, opt=onigmo.ONIG_OPTION_ASCII_RANGE)
+#    n("\\<abc\\>", "zabcい", syn=onigmo.ONIG_SYNTAX_GREP, opt=onigmo.ONIG_OPTION_ASCII_RANGE)
+#    n("\\<abc\\>", "あabcd", syn=onigmo.ONIG_SYNTAX_GREP, opt=onigmo.ONIG_OPTION_ASCII_RANGE)
+    # others
+#    n("[^a]", "\n", syn=onigmo.ONIG_SYNTAX_GREP)
+#    x2("*", "*", 0, 1, syn=onigmo.ONIG_SYNTAX_GREP)
+    #x2("\\{1\\}", "{1}", 0, 3, syn.onigmo.ONIG_SYNTAX_GREP)    # fails
+#    n("*", "", err=onigmo.ONIGERR_TARGET_OF_REPEAT_OPERATOR_NOT_SPECIFIED)
+#    n("{1}", "", err=onigmo.ONIGERR_TARGET_OF_REPEAT_OPERATOR_NOT_SPECIFIED)
 
     # \g{} backref
     x2("((?<name1>\\d)|(?<name2>\\w))(\\g{name1}|\\g{name2})", "ff", 0, 2);
@@ -977,48 +1101,50 @@ def main():
     x2("((.*)a\\g{-1}f)", "bacbabf", 3, 7);
     x2("(.*)a\\g{-1}f", "baczzzzzz\nbazz\nzzzzbabf", 19, 23);
     x2("(あ*)(い*)\\g{-2}\\g{-1}", "あああいいあああいい", 0, 10);
-    
+
     # Python/PCRE compatible named group
     x2("(?P<name_2>ab)(?P>name_2)", "abab", 0, 4);
     x2("(?P<n>|\\((?P>n)\\))+$", "()(())", 0, 6);
     x2("((?P<name1>\\d)|(?P<name2>\\w))((?P=name1)|(?P=name2))", "ff", 0, 2);
-    
+    n("(?P", "", err=True)
+    n("(?PX", "", err=True)
+
     # Fullwidth Alphabet
     n("ａｂｃｄｅｆｇｈｉｊｋｌｍｎｏｐｑｒｓｔｕｖｗｘｙｚ", "ＡＢＣＤＥＦＧＨＩＪＫＬＭＮＯＰＱＲＳＴＵＶＷＸＹＺ");
     x2("(?i)ａｂｃｄｅｆｇｈｉｊｋｌｍｎｏｐｑｒｓｔｕｖｗｘｙｚ", "ａｂｃｄｅｆｇｈｉｊｋｌｍｎｏｐｑｒｓｔｕｖｗｘｙｚ", 0, 26);
     x2("(?i)ａｂｃｄｅｆｇｈｉｊｋｌｍｎｏｐｑｒｓｔｕｖｗｘｙｚ", "ＡＢＣＤＥＦＧＨＩＪＫＬＭＮＯＰＱＲＳＴＵＶＷＸＹＺ", 0, 26);
     x2("(?i)ＡＢＣＤＥＦＧＨＩＪＫＬＭＮＯＰＱＲＳＴＵＶＷＸＹＺ", "ａｂｃｄｅｆｇｈｉｊｋｌｍｎｏｐｑｒｓｔｕｖｗｘｙｚ", 0, 26);
     x2("(?i)ＡＢＣＤＥＦＧＨＩＪＫＬＭＮＯＰＱＲＳＴＵＶＷＸＹＺ", "ＡＢＣＤＥＦＧＨＩＪＫＬＭＮＯＰＱＲＳＴＵＶＷＸＹＺ", 0, 26);
-    
+
     # Greek
     n("αβγδεζηθικλμνξοπρστυφχψω", "ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩ");
     x2("(?i)αβγδεζηθικλμνξοπρστυφχψω", "αβγδεζηθικλμνξοπρστυφχψω", 0, 24);
     x2("(?i)αβγδεζηθικλμνξοπρστυφχψω", "ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩ", 0, 24);
     x2("(?i)ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩ", "αβγδεζηθικλμνξοπρστυφχψω", 0, 24);
     x2("(?i)ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩ", "ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩ", 0, 24);
-    
+
     # Cyrillic
     n("абвгдеёжзийклмнопрстуфхцчшщъыьэюя", "АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ");
     x2("(?i)абвгдеёжзийклмнопрстуфхцчшщъыьэюя", "абвгдеёжзийклмнопрстуфхцчшщъыьэюя", 0, 33);
     x2("(?i)абвгдеёжзийклмнопрстуфхцчшщъыьэюя", "АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ", 0, 33);
     x2("(?i)АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ", "абвгдеёжзийклмнопрстуфхцчшщъыьэюя", 0, 33);
     x2("(?i)АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ", "АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ", 0, 33);
-    
+
     # multiple name definition
     x2("(?<a>a)(?<a>b)\\k<a>", "aba", 0, 3)
     x2("(?<a>a)(?<a>b)(?&a)", "aba", 0, 3)
     x2("(?<a>(a|.)(?<a>b))(?&a)", "abcb", 0, 4)
-#    n("(?<a>a)(?<a>b)\\g{a}", "abb")
+    n("(?<a>a)(?<a>b)\\g{a}", "abb")
 #    n("(?<a>a)(?<a>b)\\g<a>", "aba", err=onig.ONIGERR_MULTIPLEX_DEFINITION_NAME_CALL)
     x2("(?<a>[ac])(?<a>b)(?&a)", "abc", 0, 3)
     n("(?<a>[ac])(?<a>b)(?&a)", "abb")
     x2("(?:(?<x>abc)|(?<x>efg))(?i:\\k<x>)", "efgabcABC", 3, 9) #XXX: refers left-most group
     x2("(?<x>a)(?<x>b)(?i:\\k<x>)+", "abAB", 0, 3)  #XXX: refers left-most group
-    
+
     # branch reset
 #    x3("(?|(c)|(?:(b)|(a)))", "a", 0, 1, 2)
 #    x3("(?|(c)|(?|(b)|(a)))", "a", 0, 1, 1)
-    
+
     # conditional expression
     x2("(?:(a)|(b))(?(1)cd)e", "acde", 0, 4)
     n("(?:(a)|(b))(?(1)cd)e", "ae")
@@ -1041,7 +1167,9 @@ def main():
     n("((?<x>x)|(?<y>y))(?(<x>)y|x)", "yy")
 #    n("(a)?(?<n>b)?(?(1)a)(?(<n>)b)", "aa", err=onig.ONIGERR_NUMBERED_BACKREF_OR_CALL_NOT_ALLOWED)
     x2("(a)?(?<n>b)?(?(1)a)(?(<n>)b)", "aa", 0, 2)
-    
+    n("()(?(2))", "", err=True)
+    n("(?(700000))", "", err=True)
+
     # Implicit-anchor optimization
     x2("(?s:.*abc)", "dddabdd\nddabc", 0, 13)   # optimized /(?s:.*abc)/ ==> /\A(?s:.*abc)/
     x2("(?s:.+abc)", "dddabdd\nddabc", 0, 13)   # optimized
@@ -1052,7 +1180,7 @@ def main():
     x2("(?s:.*\\Z)", "dddabdd\nddabc", 0, 13)   # optimized /(?s:.*\Z)/ ==> /\A(?s:.*\Z)/
     x2("(?-s:.*\\Z)", "dddabdd\nddabc", 8, 13)  # optimized /(?-s:.*\Z)/ ==> /(?:^|\A)(?s:.*\Z)/
     x2("(.*)X\\1", "1234X2345", 1, 8)           # not optimized
-    
+
     # Allow options in look-behind
     x2("(?<=(?i)ab)cd", "ABcd", 2, 4)
     x2("(?<=(?i:ab))cd", "ABcd", 2, 4)
@@ -1062,10 +1190,80 @@ def main():
     x2("(?<!(?i:ab))cd", "aacd", 2, 4)
     n("(?<!(?i)ab)cd", "ABcd")
     n("(?<!(?i:ab))cd", "ABcd")
-    
+
     # Perl syntax
-    x2("\\Q()\\\\E", "()\\", 0, 3)
-    
+    x2("\\Q()\\[a]\\E[b]", "()\\[a]b", 0, 7)
+    x2("\\Q()\\[a]", "()\\[a]", 0, 6)  # no \E
+    x2("(?a)(?d)\\w+", "あ", 0, 1) # For now (?d) == (?u)
+    x2("(?a)(?l)\\w+", "あ", 0, 1) # For now (?l) == (?u)
+    x2("(?a)(?^)\\w+", "あ", 0, 1)
+    n("(?i)(?^)a", "A")
+    n("(?m)(?^)a$", "a\nb")
+    x2("(?s)(?^).*", "a\nb", 0, 1)
+    x2("\\o{046}", "\046", 0, 1);
+    x2("[\\o{044}-\\o{047}]", "\046", 0, 1);
+    n("\\o{40000000000}", "", err=True)
+    n("\\o{100000000000}", "", err=True)
+    n("[\\o{40000000000}]", "", err=True)
+    n("[\\o{100000000000}]", "", err=True)
+
+    # Backward search
+#    x2("abc", "abcabc", 3, 6, searchtype=SearchType.BACKWARD)
+#    x2("あいう", "あいうあいう", 3, 6, searchtype=SearchType.BACKWARD)
+#    x2("(?i)abc", "ABCABC", 3, 6, searchtype=SearchType.BACKWARD)
+#    x2("(?i)ａｂｃ", "ＡＢＣＡＢＣ", 3, 6, searchtype=SearchType.BACKWARD)
+#    x2("[a-z]{3}$", "abcabc", 3, 6, searchtype=SearchType.BACKWARD)
+#    x2("[あ-ん]{3}$", "あいうあいう", 3, 6, searchtype=SearchType.BACKWARD)
+
+    # These match differently. Is it okay?
+#    x2(".*[a-z]bc", "abcabc", 0, 6, searchtype=SearchType.BACKWARD)
+#    x2(".+[a-z]bc", "abcabc", 0, 6, searchtype=SearchType.BACKWARD)
+#    x2(".{1,3}[a-z]bc", "abcabc", 2, 6, searchtype=SearchType.BACKWARD)
+
+    # onig_match()
+#    x2("abc", "abcabc", 0, 3, searchtype=SearchType.MATCH)
+#    n("abc", " abcabc", searchtype=SearchType.MATCH)
+
+    # onig_search_gpos()
+#    n("\\Gabc", "123abcdef", gpos=2)
+#    x2("\\Gabc", "123abcdef", 3, 6, gpos=3)
+#    x2("\\Gabc", "123abcdef", 3, 6, startpos=3)
+#    n("\\Gabc", "123abcdef", gpos=0, startpos=3)
+#    x2("abc\\G", "abc", 0, 3, searchtype=SearchType.BACKWARD)
+#    n("abc\\G", "abc ", searchtype=SearchType.BACKWARD)
+#    x2("abc\\G", "abc ", 0, 3, searchtype=SearchType.BACKWARD, endpos=3)
+#    x2("abc\\G", "abc ", 0, 3, searchtype=SearchType.BACKWARD, gpos=3)
+
+    # stack size
+#    stack_size = onigmo.onig_get_match_stack_limit_size()
+#    print("Default stack size:", stack_size)
+#    onigmo.onig_set_match_stack_limit_size(1000)
+#    print("New stack size:", onigmo.onig_get_match_stack_limit_size())
+    # These patterns need deep stack.
+#    n("^a*$", "a" * 200 + "b")
+#    n("^a*$", "a" * 2000 + "b", execerr=onigmo.ONIGERR_MATCH_STACK_LIMIT_OVER)
+#    onigmo.onig_set_match_stack_limit_size(0)
+
+    # parse depth
+#    parse_depth = onigmo.onig_get_parse_depth_limit()
+#    print("Default parse depth:", parse_depth)
+#    onigmo.onig_set_parse_depth_limit(1000)
+#    print("New parse depth:", onigmo.onig_get_parse_depth_limit())
+    # These patterns need deep parse stack.
+#    x2("(" * 200 + "a" + ")" * 200, "a", 0, 1)
+#    n("(" * 2000 + "a" + ")" * 2000, "a", err=onigmo.ONIGERR_PARSE_DEPTH_LIMIT_OVER)
+#    onigmo.onig_set_match_stack_limit_size(0)
+
+    # syntax functions
+#    onigmo.onig_set_syntax_op(syntax_default,
+#        onigmo.onig_get_syntax_op(onigmo.ONIG_SYNTAX_DEFAULT))
+#    onigmo.onig_set_syntax_op2(syntax_default,
+#        onigmo.onig_get_syntax_op2(onigmo.ONIG_SYNTAX_DEFAULT))
+#    onigmo.onig_set_syntax_behavior(syntax_default,
+#        onigmo.onig_get_syntax_behavior(onigmo.ONIG_SYNTAX_DEFAULT))
+#    onigmo.onig_set_default_syntax(None)
+
+
     print("\nEncoding:", get_encoding())
     print("RESULT   SUCC: %d,  FAIL: %d,  ERROR: %d\n" % (
            get_nsucc(), get_nfail(), get_nerror()))
