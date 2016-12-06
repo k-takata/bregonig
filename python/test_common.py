@@ -115,9 +115,8 @@ def xx(pattern, target, s_from, s_to, mem, not_match, opt="", err=False,
     tp = strptr(target2)
     
     # cut very long outputs (used for showing message)
-    if sys.version_info[0] < 3:
-        pattern = pattern2.decode(encoding, 'replace')
-        target = target2.decode(encoding, 'replace')
+    pattern = pattern2.decode(encoding, 'replace')
+    target = target2.decode(encoding, 'replace')
     limit = 100
     if len(pattern) > limit:
         pattern = pattern[:limit] + "..."
