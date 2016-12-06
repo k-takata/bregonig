@@ -858,9 +858,9 @@ def main():
     x2(" ]", " ]", 0, 2)    # warning: ']' without escape
     n("\\x{FFFFFFFF}", "", err=True);
     n("\\x{100000000}", "", err=True);
-    #x2("\\u0026", "\u0026", 0, 1)              #XXX: not on Perl
-    #x2("[\\u0024-\\u0027]", "\u0026", 0, 1)    #XXX: not on Perl
-    #n("\\u026x", "", err=True)                 #XXX: not on Perl
+#    x2("\\u0026", "\u0026", 0, 1)              #XXX: not in Perl
+#    x2("[\\u0024-\\u0027]", "\u0026", 0, 1)    #XXX: not in Perl
+#    n("\\u026x", "", err=True)                 #XXX: not in Perl
     n("()(?\\!(?'a')\\1)", "", err=True)
     x2("\\i", "i", 0, 1)    # unknown escape warning
     n("\\((", "", err=True)
