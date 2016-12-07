@@ -602,6 +602,27 @@ TRACE0(_T("compile_rep()\n"));
 						ender = prvch;
 					}
 					break;
+				case 'o':	// '\o{OOO}'
+					if (*p == '{') {
+						const TCHAR *q = p;
+						unsigned int code = scan_oct(++q, 11, &numlen);
+						q += numlen;
+						if (*q == '}') {
+							code = convert_char_case(enc, code, nextcase,
+									currentcase);
+							int len = ONIGENC_CODE_TO_MBC(
+									enc, code, (UChar*) dst)
+										/ sizeof(TCHAR);
+							dst += len - 1;
+							ender = *dst;
+							p = q+1;
+							nextcase = CASE_NONE;
+							break;
+						}
+					}
+					// SYNTAX ERROR
+					ender = prvch;
+					break;
 				case 'c':	// '\cx'	(ex. '\c[' == Ctrl-[ == '\x1b')
 					ender = *p++;
 					if (ender == '\\')	// '\c\x' == '\cx'

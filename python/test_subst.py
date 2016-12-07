@@ -114,6 +114,7 @@ def main():
     xx("あいう", "えお", "あいうあいう", "えおえお")
     xx("x?", "!", "abcde", "!a!b!c!d!e!")
     xx("\\Gx?", "!", "abcde", "!abcde")
+    xx("abc", "\\r\\n\\t\\f\\e\\a\\b\\c[\\x30\\x{31}\\62\\o{63}", "abc", "\r\n\t\f\x1b\a\b\x1b0123")
     
     # variable
     xx("abc", "$&_$&_$&", "abc", "abc_abc_abc")

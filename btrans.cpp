@@ -330,6 +330,19 @@ static TWORD specchar(const TCHAR *p, int *next)
 			numlen = 0;
 		}
 		break;
+	case 'o':
+		if (*p == '{') {	// '\o{OOO}'
+			TWORD code = (TWORD)scan_oct(++p, 11, &numlen);
+			if (p[numlen] == '}') {
+				ender = code;
+				numlen += 2;
+				break;
+			}
+		}
+		// SYNTAX ERROR
+		ender = p[-1];
+		numlen = 0;
+		break;
 	case 'c':
 		ender = *p++;
 		if (isLOWER(ender))
