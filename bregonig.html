@@ -1,0 +1,2011 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="Shift_JIS">
+<!--[[
+  <link rel="stylesheet" href="../style.css" type="text/css">
+  <link rel="stylesheet" href="back.css" type="text/css">
+]]-->
+  <title>K.Takata's software: bregonig.dll</title>
+  <style type="text/css">
+    <!--
+      BODY { line-height: 135%; padding: 0.5em; }
+      CODE { background: #EEEEEE; padding: 0.05em 0.1em; }
+      VAR { font-style: italic; padding-right: 0.2em; }
+      DL { margin-left: 1em; margin-right: 1em; }
+      DD { margin-left: 3em; margin-bottom: 1em; }
+      DL.params DT { float: left; width: 8em; margin-bottom: 0.30em; }
+      DL.params DD { margin-left: 8em; margin-bottom: 0.50em; }
+      DL.compact DT { float: left; width: 3.5em; margin-bottom: 0.30em; }
+      DL.compact DD { margin-left: 3.5em; margin-bottom: 0.50em; }
+      DL.normal DT { width: auto; }
+      DL.normal DD { clear: both; margin-left: 3em; }
+      PRE { margin-left: 1em; margin-right: 1em; }
+      PRE.code { border-style: solid; border-width: thin; padding: 0.1em 1em; }
+      TABLE { border: solid 1px; border-collapse: collapse; margin: 0 auto;
+        max-width: 90%; }
+      TH, TD { border: solid 1px; padding: 0.1em 0.5em; }
+      P.renew { text-align: right; }
+      P.copyright { text-align: center; font-size: larger; }
+      H1 { text-align: center; }
+    -->
+  </style>
+</head>
+
+<body>
+
+<h1>正規表現ライブラリ bregonig.dll</h1>
+<p class="copyright">bregonig.dll Ver.4.00   Copyright (C) 2006-2016  K.Takata</p>
+
+<p class="renew">2016/12/xx 更新</p>
+
+<!--[[
+<h2>ダウンロード</h2>
+<ul>
+  <li><!-$BITBUCKET_ARCHIVE{k_takata, bregonig}->: 最新バージョン</li>
+  <li>旧バージョンは、<a href="https://bitbucket.org/k_takata/bregonig/downloads/">BitBucket</a> 上で公開しています。</li>
+</ul>
+<p>ソースコードは、<a href="http://github.com/k-takata/bregonig">GitHub</a> 上で公開しています。</p>
+]]-->
+
+<h2>目次</h2>
+<ul>
+  <li><a href="#SCT-1.">1. 概要</a>
+  <li><a href="#SCT-2.">2. 動作環境</a>
+  <li><a href="#SCT-3.">3. インストール</a>
+  <ul>
+    <li><a href="#SCT-3.1.">3.1. bregonig.dll に標準で対応しているアプリケーションの場合</a>
+    <li><a href="#SCT-3.2.">3.2. bregonig.dll に標準で対応していないアプリケーションの場合</a>
+    <li><a href="#SCT-3.3.">3.3. K2Editor の場合</a>
+  </ul>
+  <li><a href="#SCT-4.">4. API</a>
+  <ul>
+    <li><a href="#SCT-4.1.">4.1. Bregexp.dll 互換 API (ANSI/Shift_JIS)</a>
+    <li><a href="#SCT-4.2.">4.2. Unicode 版 API</a>
+    <ul>
+      <li><a href="#SCT-4.2.1.">4.2.1. 暗黙的リンク</a>
+      <li><a href="#SCT-4.2.2.">4.2.2. 明示的リンク</a>
+      <li><a href="#SCT-4.2.3.">4.2.3. 注意事項</a>
+    </ul>
+    <li><a href="#SCT-4.3.">4.3. bregonig.dll 独自 API</a>
+    <ul>
+      <li><a href="#SCT-4.3.1.">4.3.1. 検索</a>
+      <li><a href="#SCT-4.3.2.">4.3.2. 置換</a>
+      <li><a href="#SCT-4.3.3.">4.3.3. コールバック関数</a>
+    </ul>
+  </ul>
+  <li><a href="#SCT-5.">5. 使用可能な正規表現</a>
+  <ul>
+    <li><a href="#SCT-5.1.">5.1. 検索パターン</a>
+    <ul>
+      <li><a href="#SCT-5.1.1.">5.1.1. 基本要素</a>
+      <li><a href="#SCT-5.1.2.">5.1.2. 文字</a>
+      <li><a href="#SCT-5.1.3.">5.1.3. 文字種、文字の並び、特殊記号</a>
+      <li><a href="#SCT-5.1.4.">5.1.4. 量指定子</a>
+      <li><a href="#SCT-5.1.5.">5.1.5. 錨 (アンカー)</a>
+      <li><a href="#SCT-5.1.6.">5.1.6. 文字集合</a>
+      <li><a href="#SCT-5.1.7.">5.1.7. 拡張式集合</a>
+      <li><a href="#SCT-5.1.8.">5.1.8. 後方参照</a>
+      <li><a href="#SCT-5.1.9.">5.1.9. 部分式呼出し</a>
+      <li><a href="#SCT-5.1.10.">5.1.10. PCRE/Python サポート</a>
+      <li><a href="#SCT-5.1.11.">5.1.11. 未対応機能</a>
+      <li><a href="#SCT-5.1.12.">5.1.12. Unicode 利用時の検索パターン</a>
+    </ul>
+    <li><a href="#SCT-5.2.">5.2. オプション指定</a>
+    <li><a href="#SCT-5.3.">5.3. 置換パターン</a>
+    <li><a href="#SCT-5.4.">5.4. Bregexp.dll との非互換点</a>
+  </ul>
+  <li><a href="#SCT-6.">6. 制限事項・注意事項など</a>
+  <ul>
+    <li><a href="#SCT-6.1.">6.1. 制限事項・注意事項</a>
+    <li><a href="#SCT-6.2.">6.2. 各メジャーバージョンの位置づけ</a>
+    <li><a href="#SCT-6.3.">6.3. 今後の課題</a>
+  </ul>
+  <li><a href="#SCT-7.">7. コンパイル方法</a>
+  <li><a href="#SCT-8.">8. 更新履歴</a>
+  <ul>
+    <li><a href="#SCT-8.1.">8.1. ANSI/Shift_JIS 専用版 (Ver.0.xx, Ver.1.xx)</a>
+    <li><a href="#SCT-8.2.">8.2. Unicode (UTF-16LE) 対応版 (Ver.2.0x)</a>
+    <li><a href="#SCT-8.3.">8.3. Perl 5.14 対応版（鬼雲利用版） (Ver.2.50 betaX, Ver.3.00 以降)</a>
+  </ul>
+  <li><a href="#SCT-9.">9. ライセンス</a>
+  <li><a href="#SCT-10.">10. 謝辞</a>
+  <li><a href="#SCT-11.">11. 連絡先</a>
+</ul>
+
+
+<h2 id="SCT-1.">1. 概要</h2>
+<p>
+　Tatsuo Baba氏による正規表現ライブラリである <a href="http://www.hi-ho.ne.jp/babaq/bregexp.html">Bregexp.dll</a> 互換の正規表現ライブラリです。Windows アプリで Perl 互換の正規表現が使えるようになります。
+</p>
+<p>
+　正規表現エンジンとして、<a href="https://github.com/kkos/oniguruma.git">鬼車 (Oniguruma)</a> を改良した<a href="https://github.com/k-takata/Onigmo">鬼雲 (Onigmo, Oniguruma-mod)</a> を採用することにより、オリジナルの Bregexp.dll よりも高度な正規表現を使用できるようになっています。具体的には、戻り読み (look-behind) 《<code>(?&lt;=式)</code>, <code>(?&lt;!式)</code>》、式オプション 《<code>(?imsx-imsx:式)</code>》、POSIX ブラケット 《<code>[:ascii:]</code>》、文字プロパティ 《<code>\p{Ascii}</code>》、名前付き捕獲式集合と名前指定後方参照 《<code>(?&lt;name&gt;式)</code>, <code>\k&lt;name&gt;</code>》 などが新たに使えるようになります。
+</p>
+<p>
+　K2Editor で使われている <a href="http://k2top.jpn.org/index.php?K2Editor">K2Regexp.dll</a> と、サクラエディタで使われている <a href="http://sourceforge.net/projects/sakura-editor/files/bregexp/">Bregexp.dll for SAKURA</a> にも対応しています。K2Editor やサクラエディタなどで、この bregonig.dll を使うことで、検索機能や置換機能が大幅に強化されます。
+</p>
+
+
+<h2 id="SCT-2.">2. 動作環境</h2>
+<ul>
+  <li>Windows XP / Vista / 7 / 8 / 8.1 / 10</li>
+  <li>bregonig.dll または Bregexp.dll に対応したアプリケーション<br>
+  作者が動作を確認したアプリケーションは以下の通りです。ただし、動作を保証するものではありません。また、本リストは最新の情報が反映されているとは限りません。
+  <ul>
+    <li>K2Editor r.1.5.7 Build 519 (k2regexp.dll)</li>
+    <li>JmEditor2 Version 2.0.25</li>
+    <li>サクラエディタ Ver. 1.6.6.0, Ver. 2.0.4.0</li>
+    <li>Spam Mail Killer Ver.2.28</li>
+    <li>INCM version 1.23c</li>
+    <li>ttPage-R Ver.0.98r28</li>
+    <li>秀丸エディタ Ver7.00 + BRegIf.DLL v0,0,2,2</li>
+    <li>Speeeeed Ver1.43</li>
+  </ul>
+  </li>
+</ul>
+
+
+<h2 id="SCT-3.">3. インストール</h2>
+<p>
+　32bit アプリには、アーカイブを解凍した直下のディレクトリにあるファイルを、64bit アプリには、x64 ディレクトリにあるファイルをお使いください。
+</p>
+
+<h3 id="SCT-3.1.">3.1. bregonig.dll に標準で対応しているアプリケーションの場合</h3>
+<p>
+　サクラエディタ 1.6.0 以降など、bregonig.dll に標準で対応しているアプリケーションの場合は、bregonig.dll をそのままアプリケーションと同じ場所に置いてください。（ただし、アプリケーションによってはインストール方法が異なる場合もありますので、詳細はそれぞれのマニュアルでご確認ください。）
+</p>
+<p>
+　使用している OS に関わらず、アプリケーションが 32bit 版の場合は 32bit 版の bregonig.dll を、アプリケーションが 64bit 版の場合は 64bit 版の bregonig.dll をお使いください。64bit 版の bregonig.dll は、アーカイブファイルを解凍した先の x64 フォルダの中に入っています。
+</p>
+<h3 id="SCT-3.2.">3.2. bregonig.dll に標準で対応していないアプリケーションの場合</h3>
+<p>
+　Bregexp.dll に対応しているが、bregonig.dll には標準で対応していないアプリケーションの場合、bregonig.dll の名前を bregexp.dll に変更し、それをアプリケーションと同じフォルダに置いてください。（ただし、アプリケーションによってはインストール方法が異なる場合もありますので、詳細はそれぞれのマニュアルでご確認ください。）
+</p>
+<h3 id="SCT-3.3.">3.3. K2Editor の場合</h3>
+<p>
+　K2Editor の場合は、同梱の k2regexp.dll を K2Editor.exe のあるフォルダにコピーしてください。（K2Regexp.dll は Bregexp.dll を元に作られているものの、オリジナルの Bregexp.dll とは互換性が無いため、別ファイルになっています。）
+</p>
+<p>
+（いずれの場合も、元々のファイルはバックアップしておき、何か問題があればすぐに戻せるようにしておくことをお薦めします。）
+</p>
+
+
+<h2 id="SCT-4.">4. API</h2>
+<h3 id="SCT-4.1.">4.1. Bregexp.dll 互換 API (ANSI/Shift_JIS)</h3>
+<p>
+以下の Bregexp.dll 互換の API が使用できます。
+</p>
+<ul>
+  <li><code>BMatch()</code></li>
+  <li><code>BSubst()</code></li>
+  <li><code>BTrans()</code></li>
+  <li><code>BSplit()</code></li>
+  <li><code>BRegfree()</code></li>
+  <li><code>BRegexpVersion()</code></li>
+</ul>
+<p>
+また、以下の Bregexp.dll for SAKURA 互換の API も使用できます。
+</p>
+<ul>
+  <li><code>BMatchEx()</code></li>
+  <li><code>BSubstEx()</code></li>
+</ul>
+
+
+<h3 id="SCT-4.2.">4.2. Unicode 版 API</h3>
+<p>
+　bregonig.dll Ver.2 以降では、<a href="#SCT-4.1.">4.1.</a> の各 API について、Unicode (UTF-16LE) 版 API が用意されています。以下のいずれかの方法で使用できます。
+</p>
+
+<h4 id="SCT-4.2.1.">4.2.1. 暗黙的リンク</h4>
+<p>
+　以下のように、<code>UNICODE</code>, <code>_UNICODE</code> を定義した状態で、同梱の src.7z に入っている bregexp.h をインクルードし、bregonig.lib をリンクすることで Unicode 版 API が使用できるようになります。（Bregexp.dll に付属の bregexp.h は不可）
+</p>
+<pre class="code">
+#define UNICODE
+#define _UNICODE
+#include "bregexp.h"
+</pre>
+
+<h4 id="SCT-4.2.2.">4.2.2. 明示的リンク</h4>
+<p>
+　<code>LoadLibrary()</code>, <code>GetProcAddress()</code> を使って明示的リンクをする場合は、API 名の末尾に <code>W</code> を付けた名前を使って、<code>GetProcAddress()</code> を呼ぶことで、Unicode 版 API の関数アドレスを取得できます。
+</p>
+<pre class="code">
+hBregOnig = LoadLibrary(_T("bregonig.dll"));
+pBMatch = GetProcAddress(hBregOnig, "BMatchW");
+pBRegfree = GetProcAddress(hBregOnig, "BRegfreeW");
+</pre>
+
+<h4 id="SCT-4.2.3.">4.2.3. 注意事項</h4>
+<ul>
+  <li>同じ <code>BREGEXP</code> 構造体を使って、Unicode 版 API と ANSI 版 API を混在して呼び出してはいけません。混在して呼び出すと予期しない結果が起こる可能性があります。</li>
+  <li>メモリを解放する <code>BRegfree()</code> も、Unicode 版と ANSI 版は別になっていますので注意してください。</li>
+  <li>現バージョンの k2regexp.dll では Unicode 版 API は使えません。Ver.1.xx と異なる点は、使える正規表現が拡張されている点のみです。</li>
+</ul>
+
+
+<h3 id="SCT-4.3.">4.3. bregonig.dll 独自 API</h3>
+<p>
+　Ver.3 から、新たに 2つの API を公開しており、それぞれ Unicode 版と ANSI 版が用意されています。
+</p>
+<p>
+　従来の API では、検索・置換パターンを <code>m/<var>pattern1</var>/<var>options</var></code> や <code>s/<var>pattern1</var>/<var>pattern2</var>/<var>options</var></code> のように単一の文字列で指定していましたが、新 API では、<code><var>pattern1</var></code>, <code><var>pattern2</var></code>, <code><var>options</var></code> をそれぞれ個別の文字列で指定します。従来 API とは異なり、パターンを <code>"/"</code> で囲ってはいけません。その代わり、パターンに <code>"/"</code> が含まれる場合でもエスケープする必要はありません。
+</p>
+<p>
+　従来の API とは異なり、各 API の検索対象文字列について、空文字列を受け付けるようになっています。
+</p>
+
+<h4 id="SCT-4.3.1.">4.3.1. 検索</h4>
+<h5>関数宣言</h5>
+<pre>
+#include "bregexp.h"
+
+int BoMatch(const TCHAR *<var>patternp</var>, const TCHAR *<var>optionp</var>,
+            const TCHAR *<var>strstartp</var>,
+            const TCHAR *<var>targetstartp</var>, const TCHAR *<var>targetendp</var>,
+            BOOL <var>one_shot</var>,
+            BREGEXP **<var>rxp</var>, TCHAR *<var>msg</var>);
+</pre>
+<h5>引数</h5>
+<dl class="params">
+  <dt><code><var>patternp</var></code></dt><dd>検索パターン（NUL 文字終端） (<a href="#SCT-5.1.">5.1.</a> 参照)<br>
+    <code>NULL</code> を指定すると、前回のコンパイル済みパターンを使用する。</dd>
+  <dt><code><var>optionp</var></code></dt><dd>オプション（NUL 文字終端） (<a href="#SCT-4.3.1-OPTIONS">下記</a>参照)<br>
+    <code><var>patternp</var></code> が <code>NULL</code> の場合は無視される。不要時は空文字または <code>NULL</code> を指定する。</dd>
+  <dt><code><var>strstartp</var></code></dt><dd>検索対象文字列（<code>NULL</code> 不可）</dd>
+  <dt><code><var>targetstartp</var></code></dt><dd>検索開始位置（<code>NULL</code> 不可）</dd>
+  <dt><code><var>targetendp</var></code></dt><dd>検索終了位置（<code>NULL</code> 不可）</dd>
+  <dt><code><var>one_shot</var></code></dt>
+  <dd>
+  <dl class="compact">
+    <dt><code>TRUE</code></dt><dd>ワンショットモード<br>
+      検索開始位置で検索パターンがマッチするか調べる。</dd>
+    <dt><code>FALSE</code></dt><dd>通常モード</dd>
+  </dl>
+  </dd>
+  <dt><code><var>rxp</var></code></dt><dd><code>BREGEXP</code> 構造体ポインタ (<code><var>rx</var></code>) へのポインタ<br>
+    初回呼び出し時は <code>BREGEXP</code> 構造体ポインタ (<code><var>rx</var></code>) を <code>NULL</code> で初期化しておかなければならない。<br>
+    使用終了後は、<code>BRegfree()</code> で解放すること。</dd>
+  <dt><code><var>msg</var></code></dt><dd>エラーメッセージの格納先（<code>NULL</code> 不可）<br>
+    終端の NUL 文字を含めて <code>BREGEXP_MAX_ERROR_MESSAGE_LEN</code> (= 80) 文字分の領域が必要</dd>
+</dl>
+<h5>戻り値</h5>
+<dl class="compact">
+  <dt>負</dt><dd>エラー</dd>
+  <dt>0 </dt><dd>マッチ失敗</dd>
+  <dt>正</dt><dd>マッチ成功</dd>
+</dl>
+<h5>検索結果</h5>
+<dl class="params">
+  <dt><code><var>rx</var>-&gt;nparen</code></dt><dd>パターンの中の <code>()</code> の数 (*1)</dd>
+  <dt><code><var>rx</var>-&gt;start[0]</code></dt><dd>マッチ範囲の開始位置 (*2)</dd>
+  <dt><code><var>rx</var>-&gt;end[0]</code></dt><dd>マッチ範囲の終了位置 (*2)</dd>
+  <dt><code><var>rx</var>-&gt;start[<var>n</var>]</code></dt><dd><code>$<var>n</var></code> の開始位置 (1 &lt;= <var>n</var> &lt;= nparen) (*2) (*3)</dd>
+  <dt><code><var>rx</var>-&gt;end[<var>n</var>]</code></dt><dd><code>$<var>n</var></code> の終了位置 (1 &lt;= <var>n</var> &lt;= nparen) (*2) (*3)</dd>
+</dl>
+<dl class="compact">
+  <dt>(*1)</dt><dd>パターンのコンパイルが成功していれば、マッチの失敗・成功に関わらず有効な値が入る。</dd>
+  <dt>(*2)</dt><dd>マッチ成功時のみに有効な値が入る。</dd>
+  <dt>(*3)</dt><dd>マッチしなかった部分には <code>NULL</code> が入る。例えば
+    <code>"(a)|(b)"</code> というパターンを <code>"b"</code> にマッチさせた場合、<code>$1</code>
+    にはマッチしないため、<code><var>rx</var>-&gt;start[1]</code> == <code><var>rx</var>-&gt;end[1]</code> == <code>NULL</code> となる。</dd>
+</dl>
+<h5 id="SCT-4.3.1-OPTIONS">オプション</h5>
+<dl>
+  <dt>Perl 5.8 互換オプション</dt>
+  <dd>
+  <dl class="compact">
+    <dt><code>i</code></dt><dd>大文字小文字を区別しない</dd>
+    <dt><code>m</code></dt><dd><code>^</code>, <code>$</code> が文字列中の改行直後・直前にマッチする</dd>
+    <dt><code>s</code></dt><dd><code>.</code> が改行にマッチする</dd>
+    <dt><code>g</code></dt><dd>置換：グローバルな置換</dd>
+    <dt><code>x</code></dt><dd>拡張正規表現を使用する</dd>
+  </dl>
+  </dd>
+
+  <dt>文字コードオプション（ANSI API のみ）</dt>
+  <dd>
+  <dl class="compact">
+    <dt><code>k</code></dt><dd>文字を日本語（Shift_JIS）として扱う (Bregexp.dll 独自拡張)</dd>
+    <dt><code>8</code></dt><dd>文字を UTF-8 として扱う (bregonig.dll 独自拡張)</dd>
+  </dl>
+
+  Unicode API では、オプションの指定に関わらず UTF-16LE として扱う
+  </dd>
+
+  <dt>Perl 5.14 互換文字セット修飾子（限定サポート）</dt>
+  <dd>
+  <dl class="compact">
+    <dt><code>a</code></dt><dd>ASCII<br>
+      <code>\d</code>, <code>\s</code>, <code>\w</code>, POSIX ブラケットのマッチ範囲を ASCII 内に制限する</dd>
+    <dt><code>u</code></dt><dd>Unicode
+    <dl class="normal">
+      <dt>Unicode API (UTF-16LE):</dt>
+      <dd><code>\d</code>, <code>\s</code>, <code>\w</code>, POSIX ブラケットのマッチ範囲は Unicode に準拠する</dd>
+      <dt>ANSI API (<code>8</code> オプション指定時 (UTF-8)):</dt>
+      <dd><code>\d</code>, <code>\s</code>, <code>\w</code>, POSIX ブラケットのマッチ範囲は Unicode に準拠する</dd>
+      <dt>ANSI API (<code>k</code> オプション指定時 (Shift_JIS)):</dt>
+      <dd><code>\w</code> と POSIX ブラケットの一部は、多バイト文字にマッチする</dd>
+      <dt>ANSI API (<code>8</code>, <code>k</code> オプション無指定時 (ASCII)):</dt>
+      <dd><code>\d</code>, <code>\s</code>, <code>\w</code>, POSIX ブラケットのマッチ範囲は ASCII 内に制限される</dd>
+    </dl>
+    </dd>
+  <dt><code>d</code></dt><dd>(Default: 現バージョンでは <code>u</code> と同義)</dd>
+  <dt><code>l</code></dt><dd>(Locale:  現バージョンでは <code>u</code> と同義)</dd>
+</dl>
+</dd>
+
+<dt>改行コードオプション</dt>
+<dd>
+<dl class="compact">
+  <dt><code>R</code></dt><dd>LF だけでなく、CRLF も改行として扱う (bregonig.dll 独自拡張)<br>
+    <code>.</code>, <code>^</code>, <code>$</code>, <code>\Z</code> の動作が変更される。</dd>
+</dl>
+</dd>
+</dl>
+
+<h4 id="SCT-4.3.2.">4.3.2. 置換</h4>
+<h5>関数宣言</h5>
+<pre>
+#include "bregexp.h"
+
+int BoSubst(const TCHAR *<var>patternp</var>, const TCHAR *<var>substp</var>, const TCHAR *<var>optionp</var>,
+          const TCHAR *<var>strstartp</var>,
+          const TCHAR *<var>targetstartp</var>, const TCHAR *<var>targetendp</var>,
+          BCallBack <var>callback</var>,
+          BREGEXP **<var>rxp</var>, TCHAR *<var>msg</var>);
+</pre>
+<h5>引数</h5>
+<dl class="params">
+  <dt><code><var>patternp</var></code>    </dt><dd>検索パターン（NUL 文字終端） (<a href="#SCT-5.1.">5.1.</a> 参照)<br>
+  <code>NULL</code> を指定すると、前回のコンパイル済みパターンを使用する。</dd>
+  <dt><code><var>substp</var></code>      </dt><dd>置換パターン (NUL 文字終端) (<a href="#SCT-5.3.">5.3.</a> 参照)<br>
+  <code>NULL</code> を指定すると、前回のコンパイル済みパターンを使用する。</dd>
+  <dt><code><var>optionp</var></code>     </dt><dd>オプション（NUL 文字終端） (<a href="#SCT-4.3.1-OPTIONS">4.3.1. のオプション項目</a>参照)<br>
+  <code><var>patternp</var></code> が <code>NULL</code> の場合は無視される。
+  不要時は空文字または <code>NULL</code> を指定する。</dd>
+  <dt><code><var>strstartp</var></code>   </dt><dd>置換対象文字列（<code>NULL</code> 不可）</dd>
+  <dt><code><var>targetstartp</var></code></dt><dd>置換開始位置（<code>NULL</code> 不可）</dd>
+  <dt><code><var>targetendp</var></code>  </dt><dd>置換終了位置（<code>NULL</code> 不可）</dd>
+  <dt><code><var>callback</var></code>    </dt><dd>コールバック関数へのポインタ。(<a href="#SCT-4.3.3.">4.3.3.</a> 参照)<br>
+  不要時は <code>NULL</code> を指定すること。</dd>
+  <dt><code><var>rxp</var></code>         </dt><dd><code>BREGEXP</code> 構造体ポインタ (<code><var>rx</var></code>) へのポインタ<br>
+  初回呼び出し時は <code>BREGEXP</code> 構造体ポインタ (<code><var>rx</var></code>) を <code>NULL</code> で初期化しておかなければならない。<br>
+  使用終了後は、<code>BRegfree()</code> で解放すること。</dd>
+  <dt><code><var>msg</var></code>         </dt><dd>エラーメッセージの格納先（<code>NULL</code> 不可）<br>
+    終端の NUL 文字を含めて <code>BREGEXP_MAX_ERROR_MESSAGE_LEN</code> (= 80) 文字分の領域が必要</dd>
+</dl>
+<h5>戻り値</h5>
+<dl class="compact">
+  <dt>負</dt><dd>エラー</dd>
+  <dt>0 </dt><dd>置換失敗</dd>
+  <dt>正</dt><dd>置換成功</dd>
+</dl>
+
+<h5>置換結果</h5>
+<dl class="params">
+  <dt><code><var>rx</var>-&gt;outp</code></dt><dd>置換結果の先頭（置換成功時のみ有効）</dd>
+  <dt><code><var>rx</var>-&gt;outendp</code></dt><dd>置換結果の末尾（置換成功時のみ有効）</dd>
+</dl>
+<p>
+　置換結果は NUL 文字終端されているため、置換結果に NUL 文字が含まれていないことが分かっているのであれば、<code><var>rx</var>-&gt;outendp</code> を参照する必要はありません。
+</p>
+<h5>検索結果</h5>
+<p>
+　検索結果も、<code>BoMatch()</code> 同様に有効です。
+</p>
+<h5>補足</h5>
+<p>
+　<code>BoMatch()</code> で検索後、同じパターンを用いて <code>BoSubst()</code>
+で置換を行う場合は、<code><var>patternp</var></code>, <code><var>optionp</var></code> に
+<code>NULL</code> を渡すことで、パターンのコンパイルを省略することができます。その際、<code><var>substp</var></code>
+の指定は必須です。逆に、<code>BoSubst()</code> で置換後、同じパターンを用いて
+<code>BoMatch()</code> で検索することもできます。
+</p>
+<p>
+　<code>BoSubst()</code> で置換時、<code><var>patternp</var></code> に <code>NULL</code>
+を指定し <code><var>substp</var></code> に <code>NULL</code> 以外を指定することで、前回の
+<code><var>patternp</var></code> のコンパイル結果を流用することができます。しかし逆に <code><var>patternp</var></code> に <code>NULL</code> 以外を指定し <code><var>substp</var></code> に <code>NULL</code> を指定することはできません。
+</p>
+
+
+<h4 id="SCT-4.3.3.">4.3.3. コールバック関数</h4>
+<p>
+　<code>g</code> オプションを指定し、1つの文字列に対して複数回置換を行う場合に、コールバック関数を用いて進捗を調べたり、置換を中断することができます。
+</p>
+
+<h5>関数形式</h5>
+<pre>
+typedef BOOL (__stdcall *BCallBack)(int <var>kind</var>, int <var>value</var>, ptrdiff_t <var>index</var>);
+</pre>
+<h5>引数</h5>
+<dl class="compact">
+  <dt><code><var>kind </var></code></dt><dd>0 固定</dd>
+  <dt><code><var>value</var></code></dt><dd>置換回数</dd>
+  <dt><code><var>index</var></code></dt><dd>置換位置</dd>
+</dl>
+<h5>戻り値</h5>
+<dl class="compact">
+  <dt><code>TRUE</code></dt><dd>処理継続</dd>
+  <dt><code>FALSE</code></dt><dd>処理中断</dd>
+</dl>
+
+
+<h2 id="SCT-5.">5. 使用可能な正規表現</h2>
+<p>
+　オリジナルの Bregexp.dll や、Bregexp.dll for SAKURA 互換 API については、従来と同様に、次に示す形式で検索・置換・変換パターンを与えます。
+</p>
+<dl>
+  <dt><code>BMatch()</code>, <code>BMatchEx()</code>, <code>BSplit()</code></dt>
+  <dd>
+  <code>/<var>pattern1</var>/<var>options</var></code><br>
+  <code>m/<var>pattern1</var>/<var>options</var></code><br>
+  </dd>
+
+  <dt><code>BSubst()</code>, <code>BSubstEx()</code></dt>
+  <dd>
+  <code>s/<var>pattern1</var>/<var>pattern2</var>/<var>options</var></code>
+  </dd>
+
+  <dt><code>BTrans()</code></dt>
+  <dd>
+  <code>tr/<var>pattern3</var>/<var>pattern4</var>/<var>options</var></code><br>
+  <code>y/<var>pattern3</var>/<var>pattern4</var>/<var>options</var></code> (Ver.3 以降)
+  </dd>
+</dl>
+<p>
+　Bregexp.dll や Perl と同様に、<code>m//</code>, <code>s///</code>, <code>tr///</code>, <code>y///</code> の形式の場合には、パターンの区切り文字には <code>/</code> 以外のものを使うこともできます。（<code>\x01</code> などのコントロール文字も使用可能。）
+</p>
+<p>
+　なお、Perl とは異なり、<code>s&lt;<var>ptn1</var>&gt;{<var>ptn2</var>}<var>opt</var></code> のように対応する括弧でくくったり、<code><var>pattern1</var></code> と <code><var>pattern2</var></code> を違う文字でくくることはできません。これは Bregexp.dll と同じ動作です。
+</p>
+
+<p>
+　<code><var>pattern2</var></code>, <code><var>options</var></code> の部分は bregonig.dll が自前で処理を行っており、Onigmo や Bregexp.dll あるいは Perl とは多少仕様が異なっています。（詳細は後述）
+</p>
+<p>
+　<code><var>pattern3</var></code>, <code><var>pattern4</var></code> の部分は、Bregexp.dll のソースをほとんどそのまま使用しているため、使えるパターンも Bregexp.dll とほとんど同じです。（<code>\b</code>, <code>\x{<var>HHHH</var>}</code>, <code>\o{<var>nnn</var>}</code> が追加されている点が異なります。）
+　以前のバージョンでは、垂直タブを示す <code>\v</code> も使えるようにしてありましたが、Perl 5.10 との混乱を避けるため、この機能は Ver.2 で削除されました。また、オリジナルの Bregexp.dll と同様に、<code>tr/あ-Ｚ/x/</code> などのように文字コードの範囲が 256 以上となるような指定はできません。
+</p>
+
+
+<h3 id="SCT-5.1.">5.1. 検索パターン</h3>
+<p>
+　<code><var>pattern1</var></code> の部分は、Onigmo の正規表現パターン文法として <code>ONIG_SYNTAX_PERL</code> を指定した場合の正規表現が利用可能となっており、基本的には <a href="http://perldoc.perl.org/perlre.html">Perl 5.14</a> とほぼ同じ文法が使えます。ただし、<a href="https://github.com/k-takata/Onigmo/blob/master/doc/RE.ja">Onigmo のドキュメント</a> や <a href="#SCT-5.1.11.">5.1.11.</a> にも記載しているように、一部対応していない機能があります。
+</p>
+<p>
+　なお、<code>ONIG_SYNTAX_PERL</code> は「Perl 互換」の文法であるため、Onigmo のドキュメントに記載されていても Perl で使えない機能は基本的に bregonig.dll でも使えません。しかし bregonig.dll では、利便性や旧バージョンとの互換性のために、異なる文字長の戻り読み、文字集合内の積演算、<code>\g&lt;&gt;</code> による部分式呼出し などは例外的に使えるようにしてあります。
+</p>
+<p>
+　以前のバージョンでは、垂直タブを示す <code>\v</code> も使えるようにしてありましたが、Perl 5.10 では <code>\v</code> は別の意味を持っていて矛盾するため、この機能は Ver.2 で削除されました。
+</p>
+
+<h4 id="SCT-5.1.1.">5.1.1. 基本要素</h4>
+<table>
+  <tr><td><code>\</code></td>
+    <td>退避修飾 (エスケープ)<br> 正規表現記号の有効/無効の制御</td></tr>
+  <tr><td><code>|</code></td>
+    <td>選択子</td></tr>
+  <tr><td><code>(<var>...</var>)</code></td>
+    <td>式集合   (グループ)</td></tr>
+  <tr><td><code>[<var>...</var>]</code></td>
+    <td>文字集合 (文字クラス)</td></tr>
+</table>
+
+<h4 id="SCT-5.1.2.">5.1.2. 文字</h4>
+<table>
+  <tr><td><code>\t</code></td><td>水平タブ         (0x09)</td></tr>
+  <tr><td><code>\n</code></td><td>改行             (0x0A)</td></tr>
+  <tr><td><code>\r</code></td><td>復帰             (0x0D)</td></tr>
+  <tr><td><code>\b</code></td><td>後退空白         (0x08)<br>文字集合の中でのみ有効。</td></tr>
+  <tr><td><code>\f</code></td><td>改頁             (0x0C)</td></tr>
+  <tr><td><code>\a</code></td><td>鐘               (0x07)</td></tr>
+  <tr><td><code>\e</code></td><td>退避修飾         (0x1B)</td></tr>
+  <tr><td><code>\<var>nnn</var></code></td><td>8進数表現        (符号化バイト値(の一部))<br>1～3桁</td></tr>
+  <tr><td><code>\x<var>HH</var></code></td><td>16進数表現      (符号化バイト値(の一部))<br>1～2桁</td></tr>
+  <tr><td><code>\x{<var>HHHH</var>}</code></td><td>拡張16進数表現  (コードポイント値)<br>1～4桁、あるいは 1～6桁</td></tr>
+  <tr><td><code>\o{<var>nnn</var>}</code></td><td>拡張8進数表現  (コードポイント値)<br>1～6桁、あるいは 1～7桁 (Ver.4 以降)</td></tr>
+  <tr><td><code>\c<var>x</var></code></td><td>制御文字表現      (コードポイント値)</td></tr>
+</table>
+
+<h4 id="SCT-5.1.3.">5.1.3. 文字種、文字の並び、特殊記号</h4>
+<h5>文字種</h5>
+<table>
+  <tr><td><code>.</code></td><td>任意文字 (改行を除く)</td></tr>
+  <tr><td><code>\w</code></td><td>単語構成文字</td></tr>
+  <tr><td><code>\W</code></td><td>非単語構成文字</td></tr>
+  <tr><td><code>\s</code></td><td>空白文字</td></tr>
+  <tr><td><code>\S</code></td><td>非空白文字</td></tr>
+  <tr><td><code>\d</code></td><td>10進数字</td></tr>
+  <tr><td><code>\D</code></td><td>非10進数字</td></tr>
+  <tr><td><code>\p{<var>property-name</var>}</code><br>
+  <code>\p{^<var>property-name</var>}</code> (否定)<br>
+  <code>\P{<var>property-name</var>}</code> (否定)</td><td>文字プロパティ (Ver.3 で強化)
+    <dl>
+      <dt>全てのエンコーディング:</dt>
+      <dd>Alnum, Alpha, Blank, Cntrl, Digit, Graph, Lower, Print, Punct, Space, Upper, XDigit, Word, ASCII</dd>
+      <dt>UTF-16LE, UTF-8:</dt>
+      <dd>Unicode 9.0 に対応。(プロパティ名の一覧は Onigmo の <a href="https://github.com/k-takata/Onigmo/blob/master/doc/UnicodeProps.txt">UnicodeProps.txt</a> を参照)</dd>
+      <dt>Shift_JIS:</dt>
+      <dd>Hiragana, Katakana に加え、以下のプロパティ名に対応。<br>
+      Han, Latin, Greek, Cyrillic</dd>
+    </dl>
+    現バージョンでは、Perl とは異なり、<code><var>property-name</var></code> が 1文字の場合でも、<code>{ }</code> を省略することはできません。
+  </td></tr>
+</table>
+<h5>文字の並び</h5>
+<table>
+  <tr><td><code>\R</code></td><td>改行文字 (Linebreak) (Ver.3 以降)<br>
+    改行１つにマッチします。CRLF も１文字としてマッチします。
+    <dl>
+      <dt>UTF-16LE, UTF-8:</dt>
+      <dd><code>(?&gt;\x0D\x0A|[\x0A-\x0D\x{85}\x{2028}\x{2029}])</code></dd>
+      <dt>ASCII, Shift_JIS:</dt>
+      <dd><code>(?&gt;\x0D\x0A|[\x0A-\x0D])</code></dd>
+    </dl>
+    文字集合内では使用不可
+  </td></tr>
+  <tr><td><code>\X</code></td><td>拡張書記素クラスタ (eXtended grapheme cluster) (Ver.3 以降、Ver.4 で強化)<br>
+    Unicode の結合文字等を考慮した１文字にマッチします。
+    <dl>
+      <dt>UTF-16LE, UTF-8:</dt>
+      <dd>Ver.3: <code>(?&gt;\P{M}\p{M}*)</code><br>
+          Ver.4: <a href="http://unicode.org/reports/tr29/">Unicode Standard Annex #29 UNICODE TEXT SEGMENTATION</a> 参照</dd>
+      <dt>ASCII, Shift_JIS:</dt>
+      <dd>Ver.3: <code>(?s:.)</code><br>
+          Ver.4: <code>(?&gt;\x0D\x0A|(?s:.))</code></dd>
+    </dl>
+    文字集合内では使用不可
+  </td></tr>
+</table>
+<h5>特殊記号</h5>
+<table>
+  <tr><td><code>\Q</code></td><td>次の <code>\E</code> まで、正規表現演算子を抑制します。</td></tr>
+  <tr><td><code>\E</code></td><td><code>\Q</code> の効果を終了します。</td></tr>
+</table>
+
+<h4 id="SCT-5.1.4.">5.1.4. 量指定子</h4>
+<p>繰り返し回数の指定</p>
+<table>
+  <tr><th>欲張り</th><th>無欲</th><th>強欲<br>(Ver.2 以降)</th><th></th></tr>
+  <tr><td><code>?</code></td><td><code>??</code></td><td><code>?+</code></td><td>一回または零回</td></tr>
+  <tr><td><code>*</code></td><td><code>*?</code></td><td><code>*+</code></td><td>零回以上</td></tr>
+  <tr><td><code>+</code></td><td><code>++</code></td><td><code>++</code></td><td>一回以上</td></tr>
+  <tr><td><code>{<var>n</var>,<var>m</var>}</code></td><td><code>{<var>n</var>,<var>m</var>}?</code></td><td><code>{<var>n</var>,<var>m</var>}+</code></td><td><var>n</var>回以上<var>m</var>回以下</td></tr>
+  <tr><td><code>{<var>n</var>,}</code></td><td><code>{<var>n</var>,}?</code></td><td><code>{<var>n</var>,}+</code></td><td><var>n</var>回以上</td></tr>
+  <tr><td><code>{<var>n</var>}</code></td><td><code>{<var>n</var>}?</code></td><td><code>{<var>n</var>}+</code></td><td><var>n</var>回</td></tr>
+</table>
+
+<h4 id="SCT-5.1.5.">5.1.5. 錨 (アンカー)</h4>
+<table>
+  <tr><td><code>^</code></td><td>行頭</td></tr>
+  <tr><td><code>$</code></td><td>行末</td></tr>
+  <tr><td><code>\b</code></td><td>単語境界</td></tr>
+  <tr><td><code>\B</code></td><td>非単語境界</td></tr>
+  <tr><td><code>\A</code></td><td>文字列先頭</td></tr>
+  <tr><td><code>\Z</code></td><td>文字列末尾、または文字列末尾の改行の直前</td></tr>
+  <tr><td><code>\z</code></td><td>文字列末尾</td></tr>
+  <tr><td><code>\G</code></td><td>照合開始位置<br>(<code>g</code> オプション指定時の置換処理中は、直前の照合終了位置)</td></tr>
+</table>
+
+<h4 id="SCT-5.1.6.">5.1.6. 文字集合</h4>
+<p>文字集合 (<code>[<var>...</var>]</code>) の中で使える演算子類</p>
+<table>
+  <tr><td><code>^<var>...</var></code></td><td>否定   (最低優先度演算子)</td></tr>
+  <tr><td><code><var>x</var>-<var>y</var></code></td><td>範囲   (<var>x</var> から <var>y</var> まで)</td></tr>
+  <tr><td><code>[<var>...</var>]</code></td><td>集合   (文字集合内文字集合)</td></tr>
+  <tr><td><code><var>..</var>&amp;&amp;<var>..</var></code></td><td>積演算 (<code>^</code>の次に優先度が低い演算子)</td></tr>
+  <tr><td><code>[:<var>xxxxx</var>:]</code><br> <code>[:^<var>xxxxx</var>:]</code> (否定)</td><td>POSIX ブラケット<br>
+  alnum, alpha, blank, cntrl, digit, graph, lower, print, punct, space, upper, xdigit, word, ascii
+  </td></tr>
+</table>
+
+<h4 id="SCT-5.1.7.">5.1.7. 拡張式集合</h4>
+<table>
+  <tr><td><code>(?#<var>...</var>)</code></td><td>注釈</td></tr>
+  <tr><td><code>(?imsxadlu-imsx)</code><br> <code>(?^imsxalu-imsx)</code></td><td>孤立オプション (Ver.3 で拡張)
+    <dl class="compact">
+      <dt><code>i</code></dt>
+      <dd>大文字小文字照合</dd>
+      <dt><code>m</code></dt>
+      <dd>複数行 (<code>^</code>, <code>$</code> が文字列中の改行直後・直前にマッチする)</dd>
+      <dt><code>s</code></dt>
+      <dd>単一行 (<code>.</code> が改行にマッチする)</dd>
+      <dt><code>x</code></dt>
+      <dd>拡張形式</dd>
+      <dt><code>a</code></dt>
+      <dd><code>\d</code>, <code>\s</code>, <code>\w</code>, POSIX ブラケットを ASCII の範囲に限定</dd>
+      <dt><code>aa</code></dt>
+      <dd>(ASCII/非ASCII のマッチを抑制)</dd>
+      <dt><code>d</code></dt>
+      <dd>(デフォルト)</dd>
+      <dt><code>l</code></dt>
+      <dd>(現在のロケール)</dd>
+      <dt><code>u</code></dt>
+      <dd>Unicode</dd>
+      <dt><code>^</code></dt>
+      <dd><code>d-imsx</code> と同義</dd>
+    </dl>
+    <code>i</code> を指定すると、大文字小文字を同一視してマッチを行います。Ver.3 以降では、Unicode だけでなく Shift_JIS でも、全角英字・ギリシャ文字・キリル文字を含めた大文字小文字同一視マッチを行います。<br>
+    <code>a</code> を指定すると、Unicode API, ANSI API (ASCII/Shift_JIS/UTF-8) に関わらず、<code>\d</code>, <code>\s</code>, <code>\w</code>, POSIX ブラケットのマッチ範囲を ASCII 範囲内に限定します。<code>\p{}</code> については、従来通り ASCII に限定されません。<br>
+    <code>u</code> を指定すると、<code>\d</code>, <code>\s</code>, <code>\w</code>, POSIX ブラケットのマッチ範囲が従来通りの動作となります。例えば ANSI API で <code>/k</code> オプション (Shift_JIS) を指定した場合、Onigmo のドキュメントに記載の通り、<code>\w</code> は英数字、"_" および 多バイト文字にマッチします。<br>
+    <code>\b</code>, <code>\B</code> も、この指定の影響を受けます。<br>
+    現在のバージョンでは <code>aa</code> は、<code>a</code> と同義です。また、<code>l</code>, <code>d</code> は、<code>u</code> と同義です。
+  </td></tr>
+  <tr><td><code>(?imsxadlu-imsx:<var>pattern</var>)</code><br> <code>(?^imsxalu-imsx:<var>pattern</var>)</code></td><td>式オプション (Ver.3 で拡張)</td></tr>
+  <tr><td><code>(<var>pattern</var>)</code></td><td>捕獲式集合</td></tr>
+  <tr><td><code>(?:<var>pattern</var>)</code></td><td>非捕獲式集合</td></tr>
+  <tr><td><code>(?=<var>pattern</var>)</code></td><td>先読み</td></tr>
+  <tr><td><code>(?!<var>pattern</var>)</code></td><td>否定先読み</td></tr>
+  <tr><td><code>(?&lt;=<var>pattern</var>)</code></td><td>戻り読み</td></tr>
+  <tr><td><code>(?&lt;!<var>pattern</var>)</code></td><td>否定戻り読み</td></tr>
+  <tr><td><code>\K</code></td><td>保持 (Ver.3 以降)<br>
+    <code>\K</code> より左側を保持し、それを検索結果 (<code>$&amp;</code>) に含めません。戻り読み <code>(?&lt;=<var>pattern</var>)</code> の別表記と考えることができますが、可変長が使える点が異なります。また、検索対象文字列の途中から検索を開始する場合は、結果が異なる場合があります。（戻り読みの場合は検索開始位置から戻って検索を行うが、<code>\K</code> は戻って検索は行わないため。）
+  </td></tr>
+  <tr><td><code>(?&gt;<var>pattern</var>)</code></td><td>原子的式集合</td></tr>
+  <tr><td><code>(?&lt;<var>name</var>&gt;<var>pattern</var>)</code><br> <code>(?'<var>name</var>'<var>pattern</var>)</code></td><td>名前付き捕獲式集合</td></tr>
+  <tr><td><code>(?(<var>cond</var>)<var>yes</var>|<var>no</var>)</code><br><code>(?(<var>cond</var>)<var>yes</var>)</code>
+    <td>条件式 (Ver.3 以降)<br>
+      <code>(<var>cond</var>)</code> が真であれば <code><var>yes</var></code> がマッチし、偽であれば <code><var>no</var></code> がマッチします。<code>(<var>cond</var>)</code> には以下のものが使用できます。
+      <dl>
+        <dt><code>(<var>n</var>)</code> (<var>n</var> &gt;= 1)</dt>
+        <dd>番号指定の後方参照が何かにマッチしていれば真、マッチしていなければ偽</dd>
+        <dt><code>(&lt;<var>name</var>&gt;)</code>, <code>('<var>name</var>')</code></dt>
+        <dd>名前指定の後方参照が何かにマッチしていれば真、マッチしていなければ偽</dd>
+      </dl>
+      現バージョンでは、先読み・戻り読みを条件に指定することはできません。
+  </td></tr>
+</table>
+
+<h4 id="SCT-5.1.8.">5.1.8. 後方参照</h4>
+<table>
+  <tr><td><code>\<var>n</var></code></td><td>絶対番号指定参照 (<var>n</var> &gt;= 1)</td></tr>
+  <tr><td><code>\k&lt;<var>n</var>&gt;</code><br>
+  <code>\k'<var>n</var>'</code><br>
+  <code>\g{<var>n</var>}</code></td><td>絶対番号指定参照 (<var>n</var> &gt;= 1)</td></tr>
+  <tr><td><code>\k&lt;-<var>n</var>&gt;</code><br>
+  <code>\k'-<var>n</var>'</code><br>
+  <code>\g{-<var>n</var>}</code></td><td>相対番号指定参照 (<var>n</var> &gt;= 1)</td></tr>
+  <tr><td><code>\k&lt;<var>name</var>&gt;</code><br>
+  <code>\k'<var>name</var>'</code><br>
+  <code>\g{<var>name</var>}</code></td><td>名前指定参照</td></tr>
+  <tr><td><code>\k&lt;<var>n</var>+<var>level</var>&gt;</code><br>
+  <code>\k&lt;<var>n</var>-<var>level</var>&gt;</code><br>
+  <code>\k'<var>n</var>+<var>level</var>'</code><br>
+  <code>\k'<var>n</var>-<var>level</var>'</code></td><td>ネストレベル付き後方参照 (絶対番号指定) (<var>n</var> &gt;= 1)</td></tr>
+  <tr><td><code>\k&lt;-<var>n</var>+<var>level</var>&gt;</code><br>
+  <code>\k&lt;-<var>n</var>-<var>level</var>&gt;</code><br>
+  <code>\k'-<var>n</var>+<var>level</var>'</code><br>
+  <code>\k'-<var>n</var>-<var>level</var>'</code></td><td>ネストレベル付き後方参照 (相対番号指定) (<var>n</var> &gt;= 1)</td></tr>
+  <tr><td><code>\k&lt;<var>name</var>+<var>level</var>&gt;</code><br>
+  <code>\k&lt;<var>name</var>-<var>level</var>&gt;</code><br>
+  <code>\k'<var>name</var>+<var>level</var>'</code><br>
+  <code>\k'<var>name</var>-<var>level</var>'</code></td><td>ネストレベル付き後方参照 (名前指定)</td></tr>
+</table>
+<p>
+Perl 5.10 互換の <code>\g{<var>...</var>}</code> 形式は、Ver.3 以降。
+</p>
+
+<h4 id="SCT-5.1.9.">5.1.9. 部分式呼出し</h4>
+<table>
+  <tr><td><code>\g&lt;<var>name</var>&gt;</code><br>
+  <code>\g'<var>name</var>'</code><br>
+  <code>(?&amp;<var>name</var>)</code></td><td>名前指定呼出し<br>
+  名前が多重定義されていた場合は一番左の式が呼び出されます。</td></tr>
+  <tr><td><code>\g&lt;<var>n</var>&gt;</code><br>
+  <code>\g'<var>n</var>'</code><br>
+  <code>(?<var>n</var>)</code></td><td>絶対番号指定呼出し (<var>n</var> &gt;= 1)</td></tr>
+  <tr><td><code>\g&lt;0&gt;</code><br>
+  <code>\g'0'</code><br>
+  <code>(?0)</code><br>
+  <code>(?R)</code></td><td>パターン全体の再帰呼び出し<br>(Ver.3 以降)</td></tr>
+  <tr><td><code>\g&lt;-<var>n</var>&gt;</code><br>
+  <code>\g'-<var>n</var>'</code><br>
+  <code>(?-<var>n</var>)</code></td><td>後方相対番号指定呼出し (<var>n</var> &gt;= 1)</td></tr>
+  <tr><td><code>\g&lt;+<var>n</var>&gt;</code><br>
+  <code>\g'+<var>n</var>'</code><br>
+  <code>(?+<var>n</var>)</code></td><td>前方相対番号指定呼出し (<var>n</var> &gt;= 1)<br>(Ver.3 以降)</td></tr>
+</table>
+<p>
+Perl 5.10 互換の <code>(?<var>...</var>)</code> 形式は、Ver.3 以降。
+</p>
+
+<h4 id="SCT-5.1.10.">5.1.10. PCRE/Python サポート</h4>
+<p>
+　以上のパターンに加え、以下の <a href="http://www.pcre.org/pcre.txt">PCRE</a>/<a href="http://docs.python.org/library/re.html">Python</a> 互換の名前参照も使用可能です。(Ver.3 以降)
+</p>
+<table>
+  <tr><td><code>(?P&lt;<var>name</var>&gt;<var>pattern</var>)</code></td>
+    <td>名前付き捕獲式集合<br>
+      <code>(?&lt;<var>name</var>&gt;<var>pattern</var>)</code> 相当</td></tr>
+  <tr><td><code>(?P=<var>name</var>)</code></td>
+    <td>名前指定参照<br>
+      <code>\k&lt;<var>name</var>&gt;</code> 相当</td></tr>
+  <tr><td><code>(?P&gt;<var>name</var>)</code></td>
+    <td>名前指定による部分式呼出し<br>
+      <code>(?&amp;<var>name</var>)</code> 相当</td></tr>
+</table>
+
+<h4 id="SCT-5.1.11.">5.1.11. 未対応機能</h4>
+<p>
+　以下の正規表現は、現バージョンでは未対応です。
+</p>
+<table>
+  <tr><td><code>(?|<var>pattern</var>)</code></td>
+    <td>ブランチリセット<br>
+      <code>|</code> による分岐ごとに、後方参照の番号をリセットします。</td></tr>
+  <tr><td><code>(?[])</code></td>
+    <td>拡張文字集合<br>
+      演算可能な文字集合。（現状の bregonig の文字集合でも類似の機能は使用可能。）</td></tr>
+  <tr><td><code>\g<var>n</var></code></td>
+    <td>絶対番号指定による後方参照<br>
+      <code>\g{<var>n</var>}</code> と同等です。</td></tr>
+  <tr><td><code>\g-<var>n</var></code></td>
+    <td>相対番号指定による後方参照<br>
+      <code>\g{-<var>n</var>}</code> と同等です。</td></tr>
+  <tr><td><code>\v</code>, <code>\V</code></td>
+    <td>垂直空白、非垂直空白</td></tr>
+  <tr><td><code>\h</code>, <code>\H</code></td>
+    <td>水平空白、非水平空白</td></tr>
+  <tr><td>その他</td>
+    <td><code>\N</code>, <code>\N{<var>name</var>}</code>,
+    <code>\N{U+<var>xxxx</var>}</code>, <code>\C</code>, <code>(?p)</code>,<br>
+    <code>(?{<var>code</var>})</code>, <code>(??{<var>code</var>})</code>,
+    <code>(*<var>VERB</var>:<var>ARG</var>)</code></td></tr>
+</table>
+
+<h4 id="SCT-5.1.12.">5.1.12. Unicode 利用時の検索パターン</h4>
+<p>
+　<code><var>pattern1</var></code> は Onigmo の Unicode モードで解釈されるため、<code>\w</code>, <code>\W</code>, <code>\s</code>, <code>\S</code>, <code>\d</code>, <code>\D</code> や、POSIX ブラケットなどの動作が変更されます。（例えば <code>\d</code> は各国の数字を含みます。） さらに、<code>\p{}</code>, <code>\P{}</code> では、Onigmo で使えるすべての property-name が使えるようになります。詳細は Onigmo のドキュメントを参照してください。
+</p>
+<p>
+　Unicode では文字コードが Shift_JIS とは全く異なります。例えば、Shift_JIS ではすべての漢字（第一水準、第二水準）を表す方法として、<code>[亜-熙]</code> などといった表記が使われますが、Unicode ではこの表記は意図した結果にはなりません。代わりに <code>\p{Han}</code> などの Unicode スクリプト名や Unicode プロパティ名を使った表記を使うことになるでしょう。
+</p>
+<p>
+　<code>\x{<var>HHHH</var>}</code> は、API および文字コードオプションに応じて、Shift_JIS または Unicode のコードポイントを指定します。例えば、「あ」を <code>\x{<var>HHHH</var>}</code> 形式で指定するには、以下のようにします。
+</p>
+<ul>
+  <li>Shift_JIS:       <code>\x{82a0}</code></li>
+  <li>UTF-16LE, UTF-8: <code>\x{3042}</code></li>
+</ul>
+<p>
+　Unicode では、サロゲートペアの使用も可能です。例えば、10 の 24 乗を表す「<ruby>&#x25771;<rp>(</rp><rt>じょ</rt><rp>)</rp></ruby>」の文字は、<code>\x{25771}</code> で指定できます。
+</p>
+<p>
+　結合文字の扱いについては、以下の制限があります。
+</p>
+<ul>
+  <li>合成済み文字と分解された文字を同一視した検索はできません。<br>
+  例: 「ぱ(<code>U+3071</code>)」と「は(<code>U+306F</code>)＋合成用半濁点(<code>U+309A</code>)」</li>
+  <li><code>BSplit()</code> の検索パターンに空文字列 (<code>//</code>, <code>m//</code>) を渡した場合は１文字ごとに分解する仕様となっていますが、結合文字は考慮していないため、ばらばらに分解されてしまいます。</li>
+</ul>
+
+
+<h3 id="SCT-5.2.">5.2. オプション指定</h3>
+<p>
+　<code><var>options</var></code> は、次のものが指定できます。
+</p>
+<table>
+  <tr><td><code>k</code></td><td>共通</td><td>文字コードオプション<br>文字を日本語（Shift_JIS）として扱う (Bregexp.dll 独自拡張)</td></tr>
+  <tr><td><code>i</code></td><td>検索</td><td>大文字小文字を区別しない</td></tr>
+  <tr><td><code>m</code></td><td>検索</td><td><code>^</code>, <code>$</code> が文字列中の改行直後・直前にマッチする</td></tr>
+  <tr><td><code>s</code></td><td>検索</td><td><code>.</code> が改行にマッチする</td></tr>
+  <tr><td><code>g</code></td><td>置換</td><td>グローバルな置換</td></tr>
+  <tr><td><code>c</code></td><td>変換</td><td>SEARCHLIST を補集合にする</td></tr>
+  <tr><td><code>d</code></td><td>変換</td><td>見つかったが置換されなかった文字を削除する</td></tr>
+  <tr><td><code>s</code></td><td>変換</td><td>置換された文字が重なったときに圧縮する</td></tr>
+  <tr><td><code>x</code></td><td>検索</td><td>拡張正規表現を使用する</td></tr>
+  <tr><td><code>a</code>, <code>u</code>,<br>(<code>d</code>, <code>l</code>)</td><td>検索</td><td>文字セット修飾子 (Ver.3 以降)<br>詳細は <a href="#SCT-4.3.1.">4.3.1</a> 参照</td></tr>
+  <tr><td><code>R</code></td><td>検索</td><td>LF だけでなく、CRLF も改行として扱う (bregonig.dll 独自拡張) (Ver.3 以降)<br>詳細は <a href="#SCT-4.3.1.">4.3.1</a> 参照</td></tr>
+</table>
+
+<p>
+　Bregexp.dll に比べて、<code>BMatch()</code>, <code>BSubst()</code>, <code>BSplit()</code> で <code>s</code>, <code>x</code>, <code>a</code>, <code>u</code>, <code>R</code> が使えるように拡張されています。なお、<code>x</code> は <code><var>pattern1</var></code> にのみ効果があり、<code><var>pattern2</var></code> には効果はありません。
+</p>
+<p>
+　Unicode API 利用時は <code>k</code> オプションは無視されます。漢字は常に使用可能です。
+</p>
+
+<h3 id="SCT-5.3.">5.3. 置換パターン</h3>
+<p>
+　<code><var>pattern2</var></code> で使用可能な特殊文字は以下の通りです。
+</p>
+<table>
+  <tr><td><code>\t</code></td><td>水平タブ         (0x09)</td></tr>
+  <tr><td><code>\n</code></td><td>改行             (0x0A)</td></tr>
+  <tr><td><code>\r</code></td><td>復帰             (0x0D)</td></tr>
+  <tr><td><code>\b</code></td><td>後退空白         (0x08)</td></tr>
+  <tr><td><code>\f</code></td><td>改頁             (0x0C)</td></tr>
+  <tr><td><code>\a</code></td><td>鐘               (0x07)</td></tr>
+  <tr><td><code>\e</code></td><td>退避修飾         (0x1B)</td></tr>
+  <tr><td><code>\<var>nnn</var></code></td><td>8進数表現        (符号化バイト値(の一部))</td></tr>
+  <tr><td><code>\x<var>HH</var></code></td><td>16進数表現      (符号化バイト値(の一部))</td></tr>
+  <tr><td><code>\o{<var>nnn</var>}</code></td><td>拡張8進数表現  (コードポイント値) (Ver.4 以降)</td></tr>
+  <tr><td><code>\x{<var>HHHH</var>}</code></td><td>拡張16進数表現  (コードポイント値)</td></tr>
+  <tr><td><code>\c<var>x</var></code></td><td>制御文字表現      (コードポイント値)</td></tr>
+  <tr><td><code>\l</code></td><td>次の1文字を小文字にする。(Ver.3 以降)</td></tr>
+  <tr><td><code>\u</code></td><td>次の1文字を大文字にする。(Ver.3 以降)</td></tr>
+  <tr><td><code>\L</code></td><td><code>\E</code> までを小文字にする。(Ver.3 以降)</td></tr>
+  <tr><td><code>\U</code></td><td><code>\E</code> までを大文字にする。(Ver.3 以降)</td></tr>
+  <tr><td><code>\E</code></td><td><code>\L</code>, <code>\U</code> を終了させる。(Ver.3 以降)</td></tr>
+</table>
+
+<p>
+Bregexp.dll に対して <code>\b</code>, <code>\x{<var>HHHH</var>}</code> が追加されています。また、<code>\<var>nnn</var></code> の扱いが一部変更されています。（後述）
+</p>
+<p>
+　Perl では、<code>\x{<var>HHHH</var>}</code> は Unicode でのコードポイントを指定しますが、bregonig.dll では、API と文字コードオプションに応じて、Shift_JIS または Unicode でのコードポイントを指定します。
+</p>
+<p>
+　以前のバージョンでは、垂直タブを示す <code>\v</code> が使えるようにしてありましたが、Perl 5.10 との混乱を避けるため、この機能は Ver.2 で削除されました。
+</p>
+<p>
+　Ver.3 以降で、<code>\l</code>, <code>\u</code>, <code>\L</code>, <code>\U</code>, <code>\E</code> が使用できるようになりました。ただし、現バージョンでは Perl とは異なり、大文字小文字変換を行うのは ASCII の範囲内のみとなります。また、検索パターン内では使用できません。
+</p>
+
+
+<p>
+　<code><var>pattern2</var></code> における部分文字列の参照には以下のものが使用できます。
+</p>
+
+<table>
+  <tr><td><code>\<var>n</var></code><br><code>$<var>n</var></code></td><td>番号指定参照 (<var>n</var> は 1 以上の 10進整数)<br>
+    (Perl では、<code>$<var>n</var></code> の方を推奨している。)</td></tr>
+  <tr><td><code>${<var>n</var>}</code></td><td>(安全な)番号指定参照 (<var>n</var> は 1 以上の 10進整数)</td></tr>
+  <tr><td><code>$&amp;</code></td><td>マッチした文字列全体</td></tr>
+  <tr><td><code>$+</code></td><td>最後にマッチした部分文字列 (Ver.1.40 以降)</td></tr>
+  <tr><td><code>\k&lt;<var>name</var>&gt;</code><br><code>\k'<var>name</var>'</code></td><td>名前指定参照 (Oniguruma 準拠)</td></tr>
+  <tr><td><code>${<var>name</var>}</code></td><td>名前指定参照 (bregonig.dll 独自拡張、暫定仕様)</td></tr>
+    <tr><td><code>$+{<var>name</var>}</code></td><td>名前指定参照 (Perl 5.10 準拠) (Ver.1.40 以降)<br>同名で重複定義されている場合は、最も左の結果を返す (Ver.2 以降)</td></tr>
+  <tr><td><code>$-{<var>name</var>}[<var>n</var>]</code></td><td>名前 + 番号指定参照 (Perl 5.10 準拠) (Ver.1.40 以降)</td></tr>
+</table>
+
+<p>
+　Bregexp.dll では <code>\<var>n</var></code>, <code>$<var>n</var></code>, <code>$&amp;</code> が使えましたが、bregonig.dll では <code>${<var>n</var>}</code>, <code>$+</code> と名前指定参照が追加されています。<code>${<var>n</var>}</code> が追加されたことにより、<code>s/(hoge.)/${1}2/g</code> などと、番号指定参照の後に続けて数字を書くことが可能になります。
+Bregexp.dll では、これは、<code>s/(hoge.)/$1\x32/g</code> などと書く必要がありました。（<code>\x32</code> は <code>2</code> の 16進数表現）
+</p>
+<p>
+　Perl とは異なり、<code>$`</code>, <code>$'</code>, <code>$^N</code> は使えません。また、Perl では <code>$var</code> などと書くと変数が展開されますが、bregonig.dll ではこれはただの文字列として扱われます。また、Perl では <code>$0</code> は、実行中のスクリプト名を表しますが、bregonig.dll ではこれもただの文字列として扱われます。
+</p>
+<p>
+　Ver.1.40 以降では、<code>$+</code> で最後にマッチした部分文字列を取り出せます。例えば、<code>(a)|([^a])</code> というパターンに対して、<code>$+</code> を使うと、<code>$1</code> と <code>$2</code> のどちらかマッチした方の文字列が取り出せます。
+</p>
+<p>
+　Perl では、<code>${${1}}</code> などのように番号指定参照などを入れ子にすることもできますが、bregonig.dll は、これには対応していません。（有用性が不明なため。）
+</p>
+<p>
+　Bregexp.dll には、<code><var>pattern2</var></code> の末尾が <code>$</code> で終わっていると、これが <code>\</code> に変換されてしまうというバグがありますが、bregonig.dll ではこれは修正されています。
+</p>
+<p>
+　<code><var>pattern2</var></code> の名前指定参照では、Oniguruma 準拠の <code>\k&lt;<var>name</var>&gt;</code>, <code>\k'<var>name</var>'</code> 形式と、bregonig.dll 独自の <code>${<var>name</var>}</code> 形式と、Perl 5.10 準拠の <code>$+{<var>name</var>}</code>, <code>$-{<var>name</var>}[<var>n</var>]</code> 形式が使えます。(Perl 5.10 準拠の形式を推奨。)
+</p>
+<p>
+　Perl で <code>${<var>name</var>}</code> と記述した場合には、変数 <code>$<var>name</var></code> の中身が展開されますが、bregonig.dll では変数が使えないので、代わりに現バージョンでは <code>${<var>name</var>}</code> を名前指定参照に割り当ててあります。ただし、この仕様は暫定的なものであり、今後変更される可能性もあります。
+</p>
+<p>
+　Ver.1.40 以降では Perl 5.10 準拠の <code>$+{<var>name</var>}</code>, <code>$-{<var>name</var>}[<var>n</var>]</code> 形式での名前指定参照も使えるようになりました。同じ名前で複数定義されていた場合は、<code>$+{<var>name</var>}</code> を使うと、最も左の結果が取り出されます。（ただし、Ver.1.xx では最も右の結果） <code>$-{<var>name</var>}[<var>n</var>]</code> を使うと、同じ名前の <code><var>n</var></code> 番目のマッチ結果が取り出せます。<code><var>n</var></code> に 0 を指定すると最も左のマッチ結果が取り出され、-1 を指定すると最も右のマッチ結果が取り出されます。
+</p>
+
+
+<h4><code><var>pattern2</var></code> における <code>\<var>nnn</var></code> の扱いについて</h4>
+<p>
+　Perl では、<code><var>nnn</var></code> の数字に対応する括弧の組があれば、<code>\10</code>, <code>\11</code> などで参照できますが、対応する括弧の組がなければ、<code>\10</code> は <code>\010</code> (バックスペース) として扱われ、<code>\11</code> は <code>\011</code> (タブ) のようになります。しかし Bregexp.dll ではこれとは異なり、対応する括弧の組の有無に関わらず、<code><var>nnn</var></code> の最初の数字が 0 の場合には常に文字の 8進数表現として扱い、<code><var>nnn</var></code> の最初の数字が 1～9 の場合には常に後方参照となるようになっています。そのため、Bregexp.dll では <code>\077</code> より大きな文字は <code>\<var>nnn</var></code> 形式では表現できず、<code>\x<var>HH</var></code> 形式を使わなければいけません。
+</p>
+<p>
+　bregonig.dll では、Ver.0.09 までは Bregexp.dll と同じ仕様でしたが、Ver.0.10 以降では Perl の仕様に合わせてあります。ただし、<code>\18</code> などのように数字の後ろに 8進数で使えない数字が続く場合、Perl では括弧の数に応じて <code>${1}8</code> あるいは <code>${18}</code> として扱われますが、bregonig.dll では常に <code>${18}</code> として扱われます。（将来的には、これも Perl の仕様に完全に合わせたいと考えています。）
+</p>
+
+
+<h3 id="SCT-5.4.">5.4. Bregexp.dll との非互換点</h3>
+<ul>
+  <li>オプションで <code>k</code> (日本語モード) を指定すると、<code>\w</code> は <code>[A-Za-z0-9_]</code> だけでなく、２バイト文字（漢字等）にもマッチするようになります。一方、Bregexp.dll では、オプション <code>k</code> の有無に関わらず、<code>\w</code> は <code>[A-Za-z0-9_]</code> と同義です。なお、Perl 5.8 でも、検索対象が Unicode 文字列（utf8 フラグがオン）ならば、<code>\w</code> は多バイト文字にもマッチします。Bregexp.dll と同じ動作にするには、オプション <code>a</code> を指定してください。</li>
+  <li>文字集合内で演算子を使えるように仕様変更したことにより、<code>[ ]</code> の中 に <code>[</code> を書くときは必ず <code>\[</code> のようにエスケープしなければならなくなりました。(Ver.1.30 以降)</li>
+  <li><code><var>pattern1</var></code>, <code><var>pattern2</var></code> における <code>\c\<var>x</var></code> の扱いが、Bregexp.dll や Perl と異なります。Bregexp.dll などでは、<code>\c\</code> が <code>'\x1c'</code> を表すものの、後ろの <code>\</code> が次の <code><var>x</var></code> に対するエスケープとして作用します。従って、<code>\c\</code> をパターンの末尾に置くことはできません。一方、bregonig.dll は Oniguruma の仕様を踏襲し、<code>\c\<var>x</var></code> を <code>\c<var>x</var></code> と解釈します。（ただし、<code><var>pattern3</var></code>, <code><var>pattern4</var></code> は、Bregexp.dll と同じ動作です。）</li>
+</ul>
+
+
+<h2 id="SCT-6.">6. 制限事項・注意事項など</h2>
+<h3 id="SCT-6.1.">6.1. 制限事項・注意事項</h3>
+<ul>
+  <li>現バージョンでは、Visual Basic 用の API は実装されていません。VB 製のアプリケーションから使用する場合は、オリジナルの Bregexp.dll をお使いください。</li>
+  <li>Onigmo 自体は各種文字エンコーディングに対応していますが、bregonig.dll は Bregexp.dll との互換性のため、従来 API では、ASCII と Shift_JIS 以外の文字エンコーディングは使用できません。（新 API を使うことで、Ver.2 以降では UTF-16LE、Ver.3 以降では UTF-8 も使えます。）</li>
+  <li>bregonig.dll は十分テストしてあるつもりですが、オリジナルの Bregexp.dll との互換性に問題があったり、バグが残っている可能性もあります。実際に使用する際には、事前に十分にテストを行うことをお薦めします。（バグを見つけた際には報告をお願いします。）</li>
+  <li>マルチスレッドライブラリを用いてコンパイルしてありますが、マルチスレッドでのテストは十分に行われていません。マルチスレッドで使用する際は特に十分なテストを行った上でお使いください。</li>
+</ul>
+<h3 id="SCT-6.2.">6.2. 各メジャーバージョンの位置づけ</h3>
+<p>
+　bregonig.dll の各メジャーバージョンの位置づけは以下のようになっています。
+</p>
+<dl>
+  <dt>Ver.1.xx</dt>
+  <dd>Perl 5.8 互換。<br>
+    ANSI/Shift_JIS 専用。<br>
+    開発終了。</dd>
+  <dt>Ver.2.0x</dt>
+  <dd>Perl 5.10 互換（ただし、名前指定参照は Oniguruma 形式）。<br>
+    Ver.1 の機能に加え、UTF-16LE 対応 API 追加。<br>
+    開発終了。</dd>
+  <dt>Ver.3.0x, Ver.4.xx</dt>
+  <dd>Perl 5.14 互換。<br>
+    Ver.2 の全機能に加え、UTF-8 対応 API 追加。x64 対応。</dd>
+</dl>
+<h3 id="SCT-6.3.">6.3. 今後の課題</h3>
+<ul>
+  <li>ブランチリセットパターン <code>(|<var>pattern</var>)</code> への対応。</li>
+  <li><code>(?[])</code> への対応。(Perl 5.18)</li>
+  <li>条件式における、先読み・戻り読みへの対応。</li>
+  <li>選択子 <code>|</code> を使った検索の高速化。(Commentz-Walter 法など？)<br>
+    参考: <a href="http://sinya8282.sakura.ne.jp/etc/xhago/">How to Implement World Fastest Grep.</a></li>
+  <li>ファイルサイズ (Unicode データサイズ) の縮小。</li>
+  <li>置換パターン (<code><var>pattern2</var></code>) 内の <code>\l</code>, <code>\u</code>, <code>\L</code>, <code>\U</code> による大文字小文字変換の、ASCII 範囲外の文字への対応。</li>
+  <li><code>\v</code>, <code>\V</code>, <code>\h</code>, <code>\H</code> への対応。</li>
+</ul>
+
+
+<h2 id="SCT-7.">7. コンパイル方法</h2>
+<p>
+　コンパイラは Visual C++ 2005 以降に対応しています。Onigmo のソースコードは、Onigmo のリポジトリの <code>bregonig</code> ブランチのものを使用します。
+</p>
+
+<h3>手順例</h3>
+<p>
+　Git がインストールされているものとします。
+</p>
+<pre class="code">
+&gt; git clone https://github.com/k-takata/Onigmo.git
+&gt; cd Onigmo
+&gt; git checkout bregonig
+&gt; build_nmake.cmd
+&gt; cd ..
+&gt; git clone https://github.com/k-takata/bregonig.git
+&gt; cd bregonig\src
+&gt; nmake ONIG_DIR=../../Onigmo
+</pre>
+
+
+<h2 id="SCT-8.">8. 更新履歴</h2>
+<h3 id="SCT-8.1.">8.1. ANSI/Shift_JIS 専用版 (Ver.0.xx, Ver.1.xx)</h3>
+<ul>
+  <li>2006/08/24  Ver.0.01
+  <ul>
+    <li>最初の公開バージョン。</li>
+    <li>Oniguruma 4.3.1 を使用。</li>
+  </ul>
+  </li>
+
+  <li>2006/08/25  Ver.0.02
+  <ul>
+    <li>k2regexp.dll で BMatch() の one_shot モードに対応。</li>
+    <li>正規表現パターン文法を ONIG_SYNTAX_PERL から ONIG_SYNTAX_PERL_NG に変更。これにより名前付き捕獲式集合が使用可能に。</li>
+    <li>暫定的に、戻り読みで長さの異なる文字列を指定可能に。（今後変更される可能性あり）<br>例. (?&lt;=a|bc)</li>
+    <li>Oniguruma 4.4.0 を使用。</li>
+  </ul>
+  </li>
+
+  <li>2006/08/27
+  <ul>
+    <li>パターンとして空文字列を渡したときに、BMatch() や BSubst() で文字列の先頭にマッチしていたのをマッチしないように変更。（オリジナルの Bregexp.dll の挙動にあわせるため。）</li>
+  </ul>
+  </li>
+
+  <li>2006/08/28  Ver.0.03
+  <ul>
+    <li>K2Editor などで置換で落ちる場合があった重大バグを修正。</li>
+    <li>BSplit() を実装。</li>
+    <li>Oniguruma 4.4.0 を使用。</li>
+  </ul>
+  </li>
+
+  <li>2006/08/29  Ver.0.04
+  <ul>
+    <li>BTrans() を実装。</li>
+    <li>BRegexpVersion() が返すバージョン番号を更新するのを忘れていたので、更新。</li>
+    <li>Oniguruma 4.4.0 を使用。</li>
+  </ul>
+  </li>
+
+  <li>2006/08/30  Ver.0.05
+  <ul>
+    <li>メモリ不足のときのエラー処理を見直し。</li>
+    <li>バージョンリソースを付加。</li>
+    <li>Oniguruma 4.4.1 を使用。</li>
+  </ul>
+  </li>
+
+  <li>2006/08/31  Ver.0.06
+  <ul>
+    <li>サクラエディタで大きなファイルに対して「すべて置換」「すべて行置換」を実行すると落ちる場合があるので、とりあえず暫定的に対策。詳細は調査中。</li>
+    <li>Oniguruma の API をエクスポートしないように変更。</li>
+    <li>Oniguruma 4.4.1 を使用。</li>
+  </ul>
+  </li>
+
+  <li>2006/09/02  Ver.0.07
+  <ul>
+    <li>Ver.0.06 での対策を少し変更。</li>
+    <li>コンパイル手順の例を加筆。</li>
+    <li>Oniguruma 4.4.1 を使用。</li>
+  </ul>
+  </li>
+
+  <li>2006/09/04
+  <ul>
+    <li>Spam Mail Killer で動作確認。</li>
+  </ul>
+  </li>
+
+  <li>2006/09/06
+  <ul>
+    <li>DLL アンロード時に onig_end() を呼び出すように変更。</li>
+  </ul>
+  </li>
+
+  <li>2006/09/07
+  <ul>
+    <li>INCM で動作確認。</li>
+    <li>ソース上の細かい修正。</li>
+  </ul>
+  </li>
+
+  <li>2006/09/09  Ver.0.08
+  <ul>
+    <li>鬼車の更新により、サクラエディタで落ちる問題が解消された。（Ver.0.06 での暫定的な対策をしっかりしたものに変更。）</li>
+    <li>鬼車の更新により、否定戻り読みの中で肯定戻り読みが使えるようになった。可変長の戻り読みを使う場合は、代わりにこちらを使うことを推奨。（Perl との互換性のため）<br>例. (?&lt;!(?&lt;=a)b|c)</li>
+    <li>Oniguruma 4.4.2 を使用。</li>
+  </ul>
+  </li>
+
+  <li>2006/09/12  Ver.0.09
+  <ul>
+    <li>pattern2 での \c\x の扱いを pattern1 の鬼車の仕様に合わせるように変更。（現バージョンでは、pattern3, pattern4 に関しては以前の仕様のまま。）（今後変更される可能性あり）<br>
+    例. \c\[ == \c[ == Ctrl-[ == \x1B  (pattern1, 2)<br>
+    　　\c\[ == Ctrl-\ + [ == \x1C\x5B (pattern3, 4)</li>
+    <li>Oniguruma 4.4.2 を使用。</li>
+  </ul>
+  </li>
+
+  <li>2006/09/14  Ver.0.10 （非公開）
+  <ul>
+    <li>pattern2 で \nnn の仕様を Bregexp.dll から Perl に合わせるように変更。（これに合わせて、subst.cpp を大幅書き換え。）</li>
+    <li>Oniguruma 4.4.2 を使用。</li>
+  </ul>
+  </li>
+
+  <li>2006/09/14  Ver.0.11
+  <ul>
+    <li>pattern2 で \0nn が機能していなかったバグを修正。</li>
+    <li>pattern2 で名前参照が使えるようになった。（ただし今後仕様が変更される可能性あり）</li>
+    <li>Ver.0.10 で ${n} が使えなくなっていたバグを修正。</li>
+    <li>Oniguruma 4.4.2 を使用。</li>
+  </ul>
+  </li>
+
+  <li>2006/09/16  Ver.0.11a （非公開）
+  <ul>
+    <li>ドキュメント修正。</li>
+    <li>Oniguruma 4.4.3 を使用。</li>
+  </ul>
+  </li>
+
+  <li>2006/09/18  Ver.0.11b
+  <ul>
+    <li>ファイルサイズを 15KiB 削減。</li>
+    <li>Oniguruma 4.4.3 を使用。</li>
+  </ul>
+  </li>
+
+  <li>2006/10/20
+  <ul>
+    <li>Oniguruma 5.0.0 を使用。</li>
+    <li>Oniguruma にバグがあったため、非公開。</li>
+  </ul>
+  </li>
+
+  <li>2006/10/27  Ver.1.00
+  <ul>
+    <li>試作版から正式版に昇格。</li>
+    <li>Oniguruma 5.0.1 を使用。これにより、[:word:], \p{Word} が使用可能になった。</li>
+  </ul>
+  </li>
+
+  <li>2006/11/05  Ver.1.01
+  <ul>
+    <li>Win9x でサクラエディタの終了時に落ちることがあったバグを修正。</li>
+    <li>Oniguruma 5.0.1 を使用。</li>
+  </ul>
+  </li>
+
+  <li>2006/11/09
+  <ul>
+    <li>Oniguruma 5.1.0 を使用。</li>
+  </ul>
+  </li>
+
+  <li>2006/11/14  Ver.1.10
+  <ul>
+    <li>Oniguruma 5.2.0 を使用。（[:punct:] 修正。）</li>
+  </ul>
+  </li>
+
+  <li>2006/11/22  Ver.1.20
+  <ul>
+    <li>Oniguruma 5.3.0 を使用。（\p{Hiragana}, \p{Katakana} が使用可能に。）</li>
+  </ul>
+  </li>
+
+  <li>2007/01/21  Ver.1.21
+  <ul>
+    <li>Oniguruma 5.5.2 を使用。</li>
+  </ul>
+  </li>
+
+  <li>2007/06/23  Ver.1.30
+  <ul>
+    <li>Oniguruma 5.8.0 を使用。（pattern1 で \k'name' が使用可能に。）</li>
+    <li>pattern2 で \k'name' を使えるように改良。</li>
+    <li>pattern1 で \v が使えなかった問題を修正。（ONIG_SYNTAX_PERL_NG では本来使えないが、利便性のため。）</li>
+    <li>pattern1 で、文字集合に [a-w&amp;&amp;[^c-g]z] などの表記が使えるように仕様変更。（ONIG_SYNTAX_PERL_NG では本来使えないが、利便性のため。）</li>
+    <li>pattern2 で \x{HHHH} が使えなかったバグを修正。</li>
+    <li>pattern3,4 で \nnn が正常に使えなかったバグを修正。（Bregexp.dll からのバグ）</li>
+    <li>pattern3,4 で \x{HHHH} を使えるように改良。</li>
+    <li>pattern2 に、\xQQ, \x{12{, ${3{ などのような不正なパターンを指定した場合の挙動を修正。今までは動作は不定だったが、できるだけそのままの文字列として扱うようにした。（Perl とは異なり、エラーとはならない。）</li>
+  </ul>
+  </li>
+
+  <li>2007/06/26  Ver.1.31
+  <ul>
+    <li>Oniguruma 5.8.0 改変版を使用。（非マルチラインモードで $ が改行の直前にマッチしないバグを修正。）</li>
+  </ul>
+  </li>
+
+  <li>2007/07/15  Ver.1.31a
+  <ul>
+    <li>ドキュメントの見直し。（曖昧な表現の修正、説明の追加など）</li>
+    <li>（bregonig.dll, k2regexp.dll 自体の変更は無し。）</li>
+  </ul>
+  </li>
+
+  <li>2007/08/04  Ver.1.32
+  <ul>
+    <li>マッチ長が 0 バイトのとき、BSubst() で置換が出来なかったバグを修正。</li>
+    <li>BREGEXP 構造体の startp, endp 配列の中身に不正な値が設定される場合があったバグを修正。（(a)|(b) のようなパターンを与えた場合、マッチしなかった方に不正な値が入っていた。）</li>
+    <li>垂直タブを意味する \v を廃止した。（Perl 5.10 と矛盾するため。）</li>
+    <li>Ver.2.00 での仕様変更が決定している事項について言及。</li>
+    <li>Ver.1.10 以降でマルチスレッド対応が無効になっていたバグを修正。</li>
+    <li>Oniguruma 5.9.0 を使用。（高速化のため一部設定変更）</li>
+  </ul>
+  </li>
+
+  <li>2007/08/26  Ver.1.40
+  <ul>
+    <li>ソースを Ver.2.00 系列と統一。（サンプルファイル含む）（これにより、bregexp.h をインクルードする前に tchar.h または windows.h をインクルードしなければならなくなった。）</li>
+    <li>$+, $+{name}, $-{name}[n] を使えるようにした。</li>
+    <li>検索パターン (pattern1) で名前付き捕獲と名前無し捕獲の同時使用ができるように仕様を変更。</li>
+    <li>ドキュメントの見直し。</li>
+    <li>Oniguruma 5.9.0 を使用。（設定をさらに変更）</li>
+  </ul>
+  </li>
+
+  <li>2007/08/28  Ver.1.41
+  <ul>
+    <li>BRegIf.DLL で、;n 形式が使えなかったバグを修正。（検索に失敗したときに、nparens に値が設定されていなかった。）</li>
+    <li>Oniguruma 5.9.0 を使用。（設定変更版）</li>
+  </ul>
+  </li>
+
+  <li>2007/08/29  Ver.1.41a
+  <ul>
+    <li>ドキュメントのミスを修正。</li>
+    <li>（bregonig.dll, k2regexp.dll 自体の変更は無し。）</li>
+  </ul>
+  </li>
+
+  <li>2007/09/28  Ver.1.42
+  <ul>
+    <li>BREGEXP 構造体の rsv1 の型を int から INT_PTR に変更。（これにより、bregexp.h をインクルードする前に windows.h をインクルードしなければならなくなった。）（64bit化を考慮しての変更。現行の 32bit版の動作には影響なし。）</li>
+    <li>BSubst() で g オプションと \G を使用した際の動作が、Bregexp.dll と異なる場合があったのを修正。</li>
+    <li>BSubst() でゼロ幅マッチ時に２バイト文字を正しく扱えない場合があったのを修正。</li>
+    <li>Oniguruma 5.9.0 改変版を使用。（\G 対応のための改変）</li>
+  </ul>
+  </li>
+
+  <li>2008/03/12  Ver.1.43
+  <ul>
+    <li>Oniguruma 5.9.1 改変版を使用。（\G 対応のための改変）
+    <ul>
+      <li>大文字小文字を区別しないときに、否定文字集合が正しく動かないのを修正。</li>
+      <li>pattern1 で \k&lt;n&gt; などの番号指定参照に対応。</li>
+    </ul>
+    </li>
+  </ul>
+  </li>
+
+  <li>2008/10/12  Ver.1.44
+  <ul>
+    <li>BTrans() で c オプションが効かない場合があったのを修正。（h-tomさん、ありがとうございます。）</li>
+  </ul>
+  </li>
+
+  <li>2008/10/15  Ver.1.45 （非公開）
+  <ul>
+    <li>DLL のベースアドレスをデフォルト値から変更。（DLL のロード高速化やシステム全体で見たときのメモリ使用量削減が期待できる。）</li>
+  </ul>
+  </li>
+
+  <li>2009/01/17  Ver.1.45
+  <ul>
+    <li>デバッグ用コードが残っていたのを削除。</li>
+    <li>コンパイルオプションの見直しにより、ファイルサイズを削減。</li>
+    <li>bsd_license.txt に、Oniguruma の最新版のライセンスを反映。</li>
+  </ul>
+  </li>
+
+  <li>2010/01/09  Ver.1.46
+  <ul>
+    <li>Oniguruma 5.9.2 改変版を使用。（\G 対応のための改変）
+    <ul>
+      <li>(a){2}z が aaz にマッチしないのを修正。</li>
+    </ul>
+    </li>
+  </ul>
+  </li>
+
+  <li>2011/01/01  Ver.1.47
+  <ul>
+    <li>Oniguruma 5.9.2 改変版2を使用。（\G 対応のための改変等）
+    <ul>
+      <li>(?&lt;=a).*b が aab にマッチしないのを修正。<br>
+      <a href="http://d.hatena.ne.jp/nurse/20100826#1282810156">http://d.hatena.ne.jp/nurse/20100826#1282810156</a><br>
+      <a href="http://redmine.ruby-lang.org/issues/show/3568">http://redmine.ruby-lang.org/issues/show/3568</a>
+      </li>
+    </ul>
+    </li>
+  </ul>
+  </li>
+
+  <li>2011/01/10  Ver.1.48
+  <ul>
+    <li>Oniguruma 5.9.2 改変版3を使用。（\G 対応のための改変等）
+    <ul>
+      <li>肯定戻り読みの中で否定戻り読みを使えるようにした。<br>
+      例. (?&lt;=(?&lt;!A)B)C
+      </li>
+    </ul>
+    </li>
+  </ul>
+  </li>
+
+  <li>2011/06/04  Ver.1.49
+  <ul>
+    <li>Oniguruma 5.9.2 改変版4を使用。（\G 対応のための改変等）
+    <ul>
+      <li>/(?&lt;!aa|b)c/i が Aac にマッチしてしまうのを修正。<br>
+      <a href="http://redmine.ruby-lang.org/issues/show/4088">http://redmine.ruby-lang.org/issues/show/4088</a>
+      </li>
+    </ul>
+    </li>
+    <li>python から bregonig.dll を呼び出すサンプルを添付。</li>
+  </ul>
+  </li>
+
+  <li>2011/08/28  Ver.1.50
+  <ul>
+    <li>Oniguruma 5.9.2 改変版5を使用。（\G 対応のための改変等）
+    <ul>
+      <li>改変版2 で .* の最適化が無効化されていたのを再度有効化。</li>
+    </ul>
+    </li>
+    <li>エラーメッセージを書き込む際にバッファサイズをチェックするように修正。</li>
+    <li>VC++ 2005 以降とそれ以前で swprintf に互換性がない問題に対処。</li>
+  </ul>
+  </li>
+</ul>
+
+<h3 id="SCT-8.2.">8.2. Unicode (UTF-16LE) 対応版 (Ver.2.0x)</h3>
+<ul>
+  <li>2007/06/23  Ver.2.00 beta1
+  <ul>
+    <li>Unicode 版 API を追加。（サンプルプログラムも併せて修正。）</li>
+    <li>Oniguruma 5.8.0 を使用。</li>
+  </ul>
+  </li>
+
+  <li>2007/06/26  Ver.2.00 beta2
+  <ul>
+    <li>Unicode 版 BTrans() でサロゲートペアの扱いに間違いがあったのを修正。</li>
+    <li>ANSI 版との正規表現の差異について明記。</li>
+    <li>Oniguruma 5.8.0 改変版を使用。（非マルチラインモードで $ が改行の直前にマッチしないバグを修正。）</li>
+  </ul>
+  </li>
+
+  <li>2007/06/28  Ver.2.00 beta3 (非公開)
+  <ul>
+    <li>Unicode 版 BSplit() でサロゲートペアに一部対応していなかったのを修正。（BSplit() の検索パターンに空文字列 (//, m//) を渡した場合は１文字ごとに分解する仕様となっているが、その際、サロゲートペアまで分解してしまっていた。）</li>
+    <li>ドキュメントの修正。</li>
+    <li>Oniguruma 5.8.0 改変版を使用。</li>
+  </ul>
+  </li>
+
+  <li>2007/07/17  Ver.2.00 beta4
+  <ul>
+    <li>pattern2 で、$+ を使えるように改良。（最も右の括弧にマッチした部分文字列の参照。）</li>
+    <li>pattern2 で、$+{name}, $-{name}[n] を使えるように改良。（Perl 5.10 準拠）</li>
+    <li>pattern2 で、名前付き参照を使用したとき、同じ名前が重複定義されていたときは、最も左の結果を参照するように変更。（Perl 5.10 準拠）（今後変更の可能性あり。）</li>
+    <li>強欲な量指定子を使えるように変更。（Perl 5.10 準拠）</li>
+    <li>名前付き捕獲と名前無し捕獲を同時に使用できるように変更。（Perl 5.10 準拠）</li>
+    <li>垂直タブを意味する \v を廃止した。（Perl 5.10 と矛盾するため。）</li>
+    <li>Oniguruma 5.9.0 を使用。</li>
+  </ul>
+  </li>
+
+  <li>2007/08/04  Ver.2.00 beta5
+  <ul>
+    <li>マッチ長が 0 バイトのとき、BSubst() で置換が出来なかったバグを修正。</li>
+    <li>BREGEXP 構造体の startp, endp 配列の中身に不正な値が設定される場合があったバグを修正。（(a)|(b) のようなパターンを与えた場合、マッチしなかった方に不正な値が入っていた。）</li>
+    <li>BRegexpVersion() の Unicode 版 API を追加。</li>
+    <li>Unicode 版 API のエラーメッセージは Unicode で返すように仕様変更。（サンプルプログラムも併せて修正。）</li>
+    <li>$+ の挙動が一部 Perl と異なっていたのを修正。（(a)|(b) のようなパターンを与えた場合、マッチした中で最も右の捕獲結果を返すべきところが、マッチ結果に関わらず最も右の捕獲結果を返していた。）</li>
+    <li>Ver.1.10 以降でマルチスレッド対応が無効になっていたバグを修正。</li>
+    <li>Oniguruma 5.9.0 を使用。（高速化のため一部設定変更）</li>
+  </ul>
+  </li>
+
+  <li>2007/08/26  Ver.2.00 beta6
+  <ul>
+    <li>BSplit() で、漢字フラグの扱いが間違っていたのを修正。</li>
+    <li>Ver.1.xx 系列とソースを統合。</li>
+    <li>Oniguruma 5.9.0 を使用。（設定をさらに変更）</li>
+  </ul>
+  </li>
+
+  <li>2007/08/28  Ver.2.00 beta7
+  <ul>
+    <li>BRegIf.DLL で、;n 形式が使えなかったバグを修正。（検索に失敗したときに、nparens に値が設定されていなかった。）</li>
+    <li>Oniguruma 5.9.0 を使用。（設定変更版）</li>
+  </ul>
+  </li>
+
+  <li>2007/09/28  Ver.2.00 beta8
+  <ul>
+    <li>BREGEXP 構造体の rsv1 の型を int から INT_PTR に変更。（これにより、bregexp.h をインクルードする前に windows.h をインクルードしなければならなくなった。）（64bit化を考慮しての変更。現行の 32bit版の動作には影響なし。）</li>
+    <li>BSubst() で g オプションと \G を使用した際の動作が、Bregexp.dll と異なる場合があったのを修正。</li>
+    <li>BSubst() でゼロ幅マッチ時に２バイト文字を正しく扱えない場合があったのを修正。</li>
+    <li>Oniguruma 5.9.0 改変版を使用。（\G 対応のための改変）</li>
+  </ul>
+  </li>
+
+  <li>2008/03/12  Ver.2.00 beta9
+  <ul>
+    <li>Oniguruma 5.9.1 改変版を使用。（\G 対応のための改変等）
+    <ul>
+      <li>大文字小文字を区別しないときに、否定文字集合が正しく動かないのを修正。</li>
+      <li>pattern1 で \k&lt;n&gt; などの番号指定参照に対応。</li>
+    </ul>
+    </li>
+  </ul>
+  </li>
+
+  <li>2008/10/12  Ver.2.00 beta10
+  <ul>
+    <li>BTrans() で c オプションが効かない場合があったのを修正。（h-tomさん、ありがとうございます。）</li>
+  </ul>
+  </li>
+
+  <li>2008/10/15  Ver.2.00 beta11 （非公開）
+  <ul>
+    <li>DLL のベースアドレスをデフォルト値から変更。（DLL のロード高速化やシステム全体で見たときのメモリ使用量削減が期待できる。）</li>
+  </ul>
+  </li>
+
+  <li>2009/01/17  Ver.2.00 beta11
+  <ul>
+    <li>デバッグ用コードが残っていたのを削除。</li>
+    <li>コンパイルオプションの見直しにより、ファイルサイズを削減。</li>
+  </ul>
+  </li>
+
+  <li>2010/01/09  Ver.2.00
+  <ul>
+    <li>Ver.2.00 正式版。</li>
+    <li>Oniguruma 5.9.2 改変版を使用。（\G 対応のための改変等）
+    <ul>
+      <li>(a){2}z が aaz にマッチしないのを修正 。</li>
+      <li>\x{XXXXX} がサロゲートペアにマッチしないのを修正。</li>
+    </ul>
+    </li>
+  </ul>
+  </li>
+
+  <li>2011/01/01  Ver.2.01
+  <ul>
+    <li>Oniguruma 5.9.2 改変版2を使用。（\G 対応のための改変等）
+    <ul>
+      <li>(?&lt;=a).*b が aab にマッチしないのを修正。<br>
+      <a href="http://d.hatena.ne.jp/nurse/20100826#1282810156">http://d.hatena.ne.jp/nurse/20100826#1282810156</a><br>
+      <a href="http://redmine.ruby-lang.org/issues/show/3568">http://redmine.ruby-lang.org/issues/show/3568</a>
+      </li>
+    </ul>
+    </li>
+  </ul>
+  </li>
+
+  <li>2011/01/10  Ver.2.02
+  <ul>
+    <li>Oniguruma 5.9.2 改変版3を使用。（\G 対応のための改変等）
+    <ul>
+      <li>(?&lt;=a).*b が aab にマッチしないのを修正。</li>
+      <li>肯定戻り読みの中で否定戻り読みを使えるようにした。<br>
+      例. (?&lt;=(?&lt;!A)B)C</li>
+    </ul>
+    </li>
+  </ul>
+  </li>
+
+  <li>2011/06/04  Ver.2.03
+  <ul>
+    <li>Oniguruma 5.9.2 改変版4を使用。（\G 対応のための改変等）
+    <ul>
+      <li>/(?&lt;!aa|b)c/i が Aac にマッチしてしまうのを修正。<br>
+      <a href="http://redmine.ruby-lang.org/issues/show/4088">http://redmine.ruby-lang.org/issues/show/4088</a>
+      </li>
+    </ul>
+    </li>
+    <li>python から bregonig.dll を呼び出すサンプルを添付。</li>
+  </ul>
+  </li>
+
+  <li>2011/08/28  Ver.2.04
+  <ul>
+    <li>Oniguruma 5.9.2 改変版5を使用。（\G 対応のための改変等）
+    <ul>
+      <li>改変版2 で .* の最適化が無効化されていたのを再度有効化。</li>
+    </ul>
+    </li>
+    <li>エラーメッセージを書き込む際にバッファサイズをチェックするように修正。</li>
+    <li>VC++ 2005 以降とそれ以前で swprintf に互換性がない問題に対処。</li>
+  </ul>
+  </li>
+
+  <li>2011/11/21  Ver.2.05
+  <ul>
+    <li>Oniguruma 5.9.2 改変版6を使用。（\G 対応のための改変等）
+    <ul>
+      <li>UTF-16/32 で /[\x{0}-X]/i が正しくマッチしないのを修正。</li>
+      <li>x64 暫定対応。</li>
+    </ul>
+    </li>
+  </ul>
+  </li>
+
+  <li>2012/11/03  Ver.2.06
+  <ul>
+    <li>Oniguruma 5.9.2 改変版7を使用。（\G 対応のための改変等）<br>
+    <a href="https://github.com/k-takata/Onigmo/tree/onig-5.9.2-mod7">https://github.com/k-takata/Onigmo/tree/onig-5.9.2-mod7</a>
+    <ul>
+      <li>[0-9-a] が [0-9\-a] として扱われていなかったのを修正。</li>
+      <li>複数のメモリリークを修正。</li>
+      <li>ビルド高速化。</li>
+    </ul>
+    </li>
+    <li>ビルドディレクトリの構成を変更、ビルド高速化。</li>
+    <li>test_cp932.py: V2 でエラーとなるテストをコメントアウト。</li>
+  </ul>
+  </li>
+
+  <li>2013/03/17  Ver.2.07
+  <ul>
+    <li>Oniguruma 5.9.2 改変版8を使用。（\G 対応のための改変等）<br>
+    <a href="https://github.com/k-takata/Onigmo/tree/onig-5.9.2-mod8">https://github.com/k-takata/Onigmo/tree/onig-5.9.2-mod8</a>
+    <ul>
+      <li>/(?&lt;=fo).*/s が正しくマッチしなかったのを修正。<br>
+      <a href="http://bugs.ruby-lang.org/issues/8023">http://bugs.ruby-lang.org/issues/8023</a>
+      </li>
+      <li>デバッグコードの修正。</li>
+    </ul>
+  </ul>
+  </li>
+
+  <li>2013/07/07  Ver.2.08
+  <ul>
+    <li>Oniguruma 5.9.4 改変版1 for bregonig.dll V2 を使用。<br>
+    <a href="https://github.com/k-takata/Onigmo/tree/onig-5.9.4-mod1_for_bregonig-v2">https://github.com/k-takata/Onigmo/tree/onig-5.9.4-mod1_for_bregonig-v2</a>
+    <ul>
+      <li>ベースバージョンを Oniguruma 5.9.2 から 5.9.4 に変更。</li>
+      <li>\z の最適化に関する問題を修正。<br>
+      <a href="http://bugs.ruby-lang.org/issues/8210">http://bugs.ruby-lang.org/issues/8210</a>
+      </li>
+    </ul>
+  </ul>
+  </li>
+
+  <li>2014/09/13  Ver.2.09
+  <ul>
+    <li>Oniguruma 5.9.5 改変版2 for bregonig.dll V2 を使用。<br>
+    <a href="https://github.com/k-takata/Onigmo/tree/onig-5.9.5-mod2_for_bregonig-v2">https://github.com/k-takata/Onigmo/tree/onig-5.9.5-mod2_for_bregonig-v2</a>
+    <ul>
+      <li>ベースバージョンを Oniguruma 5.9.4 から 5.9.5 に変更。</li>
+      <li>大量のグループを使うと落ちる問題を修正<br>
+      <a href="https://github.com/k-takata/Onigmo/issues/24">https://github.com/k-takata/Onigmo/issues/24</a>
+      </li>
+      <li>UTF-16/32 で /[a-c#]+\W/ =~ "def#" がマッチしない問題を修正</li>
+      <li>/(?i)\u0149\u0149/ =~ "\u0149\u0149" がマッチしない問題を修正<br>
+      <a href="https://github.com/k-takata/Onigmo/issues/40">https://github.com/k-takata/Onigmo/issues/40</a>
+      </li>
+      <li>"ab" =~ /(?!^a).*b/ がマッチしない問題を修正<br>
+      <a href="https://github.com/k-takata/Onigmo/issues/44">https://github.com/k-takata/Onigmo/issues/44</a>
+      </li>
+    </ul>
+  </ul>
+  </li>
+
+</ul>
+
+<h3 id="SCT-8.3.">8.3. Perl 5.14 対応版（鬼雲利用版） (Ver.2.50 betaX, Ver.3.00 以降)</h3>
+<ul>
+  <li>2011/06/07  Ver.2.50 beta1
+  <ul>
+    <li>正式版 Ver.2.03 を元に開発。</li>
+    <li>各 API のパターン文字列と検索対象文字列について、空文字列を受け付けるように仕様変更。</li>
+    <li>Oniguruma 5.9.2 改変版を使用。
+    <ul>
+      <li>\R, \K, \X に対応。</li>
+    </ul>
+    </li>
+  </ul>
+  </li>
+
+  <li>2011/06/08  Ver.2.50 beta2
+  <ul>
+    <li>Oniguruma 5.9.2 改変版を使用。
+    <ul>
+      <li>(?&amp;name), (?n), (?-n) に対応。</li>
+    </ul>
+    </li>
+  </ul>
+  </li>
+
+  <li>2011/06/12  Ver.2.50 beta3
+  <ul>
+    <li>Onigmo (Oniguruma-mod) 5.9.2 (3995156) を使用。<br>
+    <a href="https://github.com/k-takata/Onigmo">https://github.com/k-takata/Onigmo</a>
+    <ul>
+      <li>(?adlu), (?^alu) に対応。</li>
+      <li>\g{n}, \g{-n}, \g{name} に対応。</li>
+    </ul>
+    </li>
+  </ul>
+  </li>
+
+  <li>2011/06/14  Ver.2.50 beta4
+  <ul>
+    <li>Onigmo (Oniguruma-mod) 5.9.2 (81f52e7) を使用。<br>
+    <a href="https://github.com/k-takata/Onigmo">https://github.com/k-takata/Onigmo</a>
+    <ul>
+      <li>(?P&lt;name&gt;...), (?P=name), (?P&gt;name) に対応。</li>
+      <li>Shift_JIS で (?i) 指定時に、全角アルファベット、ギリシャ文字、キリル文字の大文字小文字同一視検索。</li>
+      <li>Unicode API で (?a) が正しく動かない場合があったのを修正。</li>
+      <li>(?-n) が正しく動かなかったのを修正。</li>
+      <li>名前が多重定義されている場合に部分式呼出しができなかったのを、Perl 5.10+ に合わせて、最も左の定義が呼び出されるように変更。</li>
+    </ul>
+    </li>
+  </ul>
+  </li>
+
+  <li>2011/06/15  Ver.2.50 beta5
+  <ul>
+    <li>Onigmo (Oniguruma-mod) 5.9.2 (5f60f85) を使用。<br>
+    <a href="https://github.com/k-takata/Onigmo">https://github.com/k-takata/Onigmo</a>
+    <ul>
+      <li>(?R), (?0), (?+n) に対応。</li>
+      <li>Shift_JIS で使えるプロパティー名に以下を追加。<br>Han, Latin, Greek, Cyrillic</li>
+    </ul>
+    </li>
+  </ul>
+  </li>
+
+  <li>2011/06/19  Ver.2.50 beta6
+  <ul>
+    <li>Onigmo (Oniguruma-mod) 5.10.0 を使用。<br>
+    <a href="https://github.com/k-takata/Onigmo/tree/Onigmo-5.10.0">https://github.com/k-takata/Onigmo/tree/Onigmo-5.10.0</a>
+    <li>新規 API を追加。（ただし、今後仕様変更の可能性あり。）
+    <ul>
+      <li>BoMatch(), BoSubst()</li>
+    </ul>
+    </li>
+    <li>BTrans() で、tr/// 以外に y/// を使えるようにした。</li>
+  </ul>
+  </li>
+
+  <li>2011/06/25  Ver.2.50 beta7
+  <ul>
+    <li>Onigmo (Oniguruma-mod) 5.10.1 を使用。<br>
+    <a href="https://github.com/k-takata/Onigmo/tree/Onigmo-5.10.1">https://github.com/k-takata/Onigmo/tree/Onigmo-5.10.1</a>
+    <ul>
+      <li>(?(cond)yes), (?(cond)yes|no) に対応。</li>
+      <li>.* の最適化が無効化されていたのを修正。</li>
+    </ul>
+    </li>
+    <li>2.50 beta6 で、従来 API でパターンの再利用ができなくなっていたバグを修正。（サクラエディタなどで動かなくなっていた。）</li>
+  </ul>
+  </li>
+
+  <li>2011/06/29  Ver.2.50 beta8
+  <ul>
+    <li>Onigmo (Oniguruma-mod) 5.10.2 を使用。<br>
+    <a href="https://github.com/k-takata/Onigmo/tree/Onigmo-5.10.2">https://github.com/k-takata/Onigmo/tree/Onigmo-5.10.2</a>
+    <ul>
+      <li>\X の中でバックトラックしないように修正。</li>
+      <li>(?a) が \d, \h, \s に対して有効になっていなかったのを修正。</li>
+      <li>暗黙のアンカーによる最適化を実装。/.*a/ ==&gt; /^.*a/</li>
+    </ul>
+    </li>
+  </ul>
+  </li>
+
+  <li>2011/07/03  Ver.2.50 beta9
+  <ul>
+    <li>Onigmo (Oniguruma-mod) 5.10.3 を使用。<br>
+    <a href="https://github.com/k-takata/Onigmo/tree/Onigmo-5.10.3">https://github.com/k-takata/Onigmo/tree/Onigmo-5.10.3</a>
+    <ul>
+      <li>(?a) が \p{} に影響していたのを修正。</li>
+      <li>暗黙のアンカーによる最適化を修正。/.*a/ ==&gt; /(?:^|\G).*a/</li>
+    </ul>
+    </li>
+  </ul>
+  </li>
+
+  <li>2011/07/11  Ver.2.50 beta10
+  <ul>
+    <li>Onigmo (Oniguruma-mod) 5.10.4 を使用。<br>
+    <a href="https://github.com/k-takata/Onigmo/tree/Onigmo-5.10.4">https://github.com/k-takata/Onigmo/tree/Onigmo-5.10.4</a>
+    <ul>
+      <li>暗黙のアンカーによる最適化を再修正。</li>
+      <li>.* の最適化が無効化されていたのを再修正。</li>
+    </ul>
+    </li>
+  </ul>
+  </li>
+
+  <li>2011/08/16  Ver.2.50 beta11
+  <ul>
+    <li>Onigmo (Oniguruma-mod) 5.10.6 を使用。<br>
+    <a href="https://github.com/k-takata/Onigmo/tree/Onigmo-5.10.6">https://github.com/k-takata/Onigmo/tree/Onigmo-5.10.6</a>
+    <ul>
+      <li>\g&lt;0&gt;, \g&lt;+n&gt; に対応。</li>
+      <li>[^x]*x が不正ポインタアクセスを引き起こしていたのを修正。</li>
+    </ul>
+    </li>
+  </ul>
+  </li>
+
+  <li>2011/08/28  Ver.2.50 beta12
+  <ul>
+    <li>Onigmo (Oniguruma-mod) 5.10.6 (d689af8) を使用。<br>
+    <a href="https://github.com/k-takata/Onigmo/tree/d689af85c2">https://github.com/k-takata/Onigmo/tree/d689af85c2</a>
+    <ul>
+      <li>条件判定の最適化。</li>
+      <li>_MSC_VER の値を元に LTCG を有効にするかどうかを判定。</li>
+    </ul>
+    </li>
+    <li>エラーメッセージを書き込む際にバッファサイズをチェックするように修正。</li>
+    <li>VC++ 2005 以降とそれ以前で swprintf に互換性がない問題に対処。</li>
+    <li>bregexp.h に BREGEXP_MAX_ERROR_MESSAGE_LEN （エラーメッセージ用のバッファサイズ）を追加。</li>
+  </ul>
+  </li>
+
+  <li>2011/08/30  Ver.2.50 beta13
+  <ul>
+    <li>JmEditor で NULL ポインタアクセスが発生するのを修正。（2.50 beta6 以降、rx-&gt;parap に値が設定されていなかった。）</li>
+  </ul>
+  </li>
+
+  <li>2011/09/04  Ver.2.50 beta14
+  <ul>
+    <li>Onigmo (Oniguruma-mod) 5.11.0 を使用。<br>
+    <a href="https://github.com/k-takata/Onigmo/tree/Onigmo-5.11.0">https://github.com/k-takata/Onigmo/tree/Onigmo-5.11.0</a>
+    <ul>
+      <li>x64 対応。</li>
+      <li>条件判定の最適化。</li>
+    </ul>
+    </li>
+    <li>x64 対応。</li>
+    <li>BoSubst で不正メモリアクセスが発生するのを修正。（2.50 beta6 以降）</li>
+  </ul>
+  </li>
+
+  <li>2011/09/10  Ver.2.50 beta15
+  <ul>
+    <li>Onigmo (Oniguruma-mod) 5.11.2 を使用。<br>
+    <a href="https://github.com/k-takata/Onigmo/tree/Onigmo-5.11.2">https://github.com/k-takata/Onigmo/tree/Onigmo-5.11.2</a>
+    <ul>
+      <li>\R の最適化。</li>
+      <li>(?a) の最適化。</li>
+      <li>文字クラスの最適化。</li>
+      <li>Ruby での修正を一部マージ。</li>
+    </ul>
+    </li>
+    <li>従来の API の検索対象文字列について、空文字列を受け付けるように仕様変更していたのを元に戻した。新 API は変更無し。（サクラエディタで a* の置換が終わらない問題が発生したため。）</li>
+  </ul>
+  </li>
+
+  <li>2011/09/18  Ver.3.00 beta1
+  <ul>
+    <li>バージョン番号を 3.00 に変更。（2.0系との区別を明確化するため。）</li>
+    <li>Onigmo (Oniguruma-mod) 5.11.3 を使用。<br>
+    <a href="https://github.com/k-takata/Onigmo/tree/Onigmo-5.11.3">https://github.com/k-takata/Onigmo/tree/Onigmo-5.11.3</a>
+    <ul>
+      <li>.*\Z が正しくマッチしないのを修正。</li>
+      <li>a{n,m} の最適化。</li>
+      <li>\x{} の最適化。</li>
+      <li>ONIG_OPTION_NEWLINE_CRLF オプションを追加。</li>
+      <li>Unicode 系のエンコーディングで、\R が \x{85}, \x{2028}, \x{2029} にもマッチするように変更。</li>
+    </ul>
+    </li>
+    <li>/R オプションを追加。</li>
+  </ul>
+  </li>
+
+  <li>2011/10/17  Ver.3.00 beta2
+  <ul>
+    <li>Onigmo (Oniguruma-mod) 5.11.4 を使用。<br>
+    <a href="https://github.com/k-takata/Onigmo/tree/Onigmo-5.11.4">https://github.com/k-takata/Onigmo/tree/Onigmo-5.11.4</a>
+    <ul>
+      <li>大文字小文字同一視検索の高速化。（BMH法）</li>
+      <li>固定文字列検索の高速化。（Sunday's Quick Search）</li>
+    </ul>
+    </li>
+    <li>ビルド時間短縮。</li>
+  </ul>
+  </li>
+
+  <li>2011/12/02  Ver.3.00 beta3
+  <ul>
+    <li>Onigmo (Oniguruma-mod) 5.11.4-9 を使用。<br>
+    <a href="https://github.com/k-takata/Onigmo/tree/Onigmo-5.11.4-9-g4ca7590">https://github.com/k-takata/Onigmo/tree/Onigmo-5.11.4-9-g4ca7590</a>
+    <ul>
+      <li>UTF-16/32 で /[\x{0}-X]/i が正しくマッチしないのを修正。</li>
+      <li>/a{2}/i が AA にマッチしないのを修正。</li>
+    </ul>
+    </li>
+  </ul>
+  </li>
+
+  <li>2011/12/24  Ver.3.00 beta4
+  <ul>
+    <li>Onigmo (Oniguruma-mod) 5.12.0 を使用。<br>
+    <a href="https://github.com/k-takata/Onigmo/tree/Onigmo-5.12.0">https://github.com/k-takata/Onigmo/tree/Onigmo-5.12.0</a>
+    <ul>
+      <li>Unicode 系エンコーディングで、\p{NEWLINE} を無効化。</li>
+      <li>Unicode 系エンコーディングで、\p{Print} に改行コードが含まれていたのを含まないように変更。</li>
+      <li>Unicode 6.0 に対応。（スクリプト、Age、ブロック (\p{In_XXX})、大文字小文字変換等。）</li>
+    </ul>
+    </li>
+    <li>test_cp932.py を更新。</li>
+    <li>置換文字列で \l, \u, \L, \U に対応。（ASCII 範囲内のみ）</li>
+    <li>サンプルプログラムのファイル名を変更。
+    <ul>
+      <li>test_*.{cpp,py} -&gt; sample_*.{cpp,py}</li>
+    </ul></li>
+    <li>テストスクリプトのファイル名を変更。
+    <ul>
+      <li>crnl.py -&gt; test_crnl.py</li>
+      <li>test_cp932.py -&gt; test_match.py</li>
+    </ul></li>
+    <li>BoSubst() 用のテストスクリプトを追加。(test_subst.py)</li>
+    <li>サンプルプログラムを追加。(sample_bosubst.cpp)</li>
+    <li>test_*.py を Python 3 に対応。</li>
+  </ul>
+  </li>
+
+  <li>2011/12/28  Ver.3.00
+  <ul>
+    <li>Ver.3.00 正式版。</li>
+    <li>Onigmo (Oniguruma-mod) 5.12.1 を使用。<br>
+    <a href="https://github.com/k-takata/Onigmo/tree/Onigmo-5.12.1">https://github.com/k-takata/Onigmo/tree/Onigmo-5.12.1</a>
+    </li>
+    <li>ドキュメント更新、HTML 化。</li>
+  </ul>
+  </li>
+
+  <li>2012/01/21  Ver.3.01
+  <ul>
+    <li>Onigmo (Oniguruma-mod) 5.13.0 を使用。<br>
+    <a href="https://github.com/k-takata/Onigmo/tree/Onigmo-5.13.0">https://github.com/k-takata/Onigmo/tree/Onigmo-5.13.0</a>
+    <ul>
+      <li>Unicode や ISO-8859 系のエンコーディングで /^ss$/i が "\x{DF}" (&szlig;) にマッチしない問題を修正。</li>
+      <li>捕獲履歴参照を有効にするとメモリリークしていたのを修正。</li>
+      <li>その他、メモリリークの可能性があったのを修正。</li>
+      <li>ONIG_SYNTAX_RUBY における \b, \B, POSIX ブラケットのデフォルトの動作を Ruby 1.9.3 に合わせた上で、(?d) を追加。</li>
+    </ul>
+    </li>
+  </ul>
+  </li>
+
+  <li>2012/02/23
+  <ul>
+    <li>ドキュメント修正。Shift_JIS で全ての漢字を表すのに使われる表記は、<code>[亜-煕]</code> ではなく <code>[亜-熙]</code> が正しい。</li>
+  </ul>
+  </li>
+
+  <li>2012/03/30  Ver.3.02
+  <ul>
+    <li>Onigmo (Oniguruma-mod) 5.13.2 を使用。<br>
+    <a href="https://github.com/k-takata/Onigmo/tree/Onigmo-5.13.2">https://github.com/k-takata/Onigmo/tree/Onigmo-5.13.2</a>
+    <ul>
+      <li>Unicode 6.1 に対応。(5.13.1)</li>
+      <li>戻り読みの中で \b, \B の使用を許可。(5.13.1)</li>
+      <li>ネストレベル付き後方参照で相対番号指定参照を許可。（仕様として明記）</li>
+      <li>[a&amp;&amp;b] のような 1文字も含まない文字クラスが予期しないマッチをすることがあったバグを修正。</li>
+      <li>条件式の条件として後方参照以外を指定したときにエラーとならず、不正な動作をしていたのを修正。</li>
+      <li>1文字しか含まない文字クラスでメモリリークしていたのを修正。</li>
+    </ul>
+    </li>
+  </ul>
+  </li>
+
+  <li>2012/11/03  Ver.3.03
+  <ul>
+    <li>Onigmo (Oniguruma-mod) 5.13.3 を使用。<br>
+    <a href="https://github.com/k-takata/Onigmo/tree/Onigmo-5.13.3">https://github.com/k-takata/Onigmo/tree/Onigmo-5.13.3</a>
+    <ul>
+      <li>[0-9-a] が [0-9\-a] として扱われていなかったのを修正。</li>
+      <li>ビルド高速化。</li>
+    </ul>
+    </li>
+    <li>JaneXeno で置換の際に大文字・小文字がおかしくなるバグを修正。</li>
+    <li>ビルドディレクトリの構成を変更、ビルド高速化。</li>
+  </ul>
+  </li>
+
+  <li>2013/03/17  Ver.3.04
+  <ul>
+    <li>Onigmo (Oniguruma-mod) 5.13.4 を使用。<br>
+    <a href="https://github.com/k-takata/Onigmo/tree/Onigmo-5.13.4">https://github.com/k-takata/Onigmo/tree/Onigmo-5.13.4</a>
+    <ul>
+      <li>(?a) と文字クラスを組み合わせると正しくマッチしなかったのを修正。<br>
+      <a href="http://bugs.ruby-lang.org/issues/7972">http://bugs.ruby-lang.org/issues/7972</a>
+      </li>
+      <li>(?i:...) が正しく動かない場合があったのを修正。<br>
+      <a href="http://bugs.ruby-lang.org/issues/7974">http://bugs.ruby-lang.org/issues/7974</a>
+      </li>
+      <li>\Z がマッチすべきでないところにマッチするのを修正。<br>
+      <a href="http://bugs.ruby-lang.org/issues/8001">http://bugs.ruby-lang.org/issues/8001</a>
+      </li>
+      <li>/(?&lt;=fo).*/s が正しくマッチしなかったのを修正。<br>
+      <a href="http://bugs.ruby-lang.org/issues/8023">http://bugs.ruby-lang.org/issues/8023</a>
+      </li>
+    </ul>
+  </ul>
+  </li>
+
+  <li>2013/07/07  Ver.3.05
+  <ul>
+    <li>Onigmo (Oniguruma-mod) 5.13.5 を使用。<br>
+    <a href="https://github.com/k-takata/Onigmo/tree/Onigmo-5.13.5">https://github.com/k-takata/Onigmo/tree/Onigmo-5.13.5</a>
+    <ul>
+      <li>\z の最適化に関する問題を修正。<br>
+      <a href="http://bugs.ruby-lang.org/issues/8210">http://bugs.ruby-lang.org/issues/8210</a>
+      </li>
+      <li>戻り読みの中で、式オプションをサポート。<br>
+      <a href="https://github.com/k-takata/Onigmo/pull/17">https://github.com/k-takata/Onigmo/pull/17</a>
+      </li>
+      <li>条件式で名前付きキャプチャを使ったときの問題を修正。<br>
+      <a href="https://github.com/k-takata/Onigmo/pull/20">https://github.com/k-takata/Onigmo/pull/20</a>
+      </li>
+    </ul>
+  </ul>
+  </li>
+
+  <li>2014/09/13  Ver.3.06
+  <ul>
+    <li>Onigmo (Oniguruma-mod) 5.15.0 for bregonig.dll を使用。<br>
+    <a href="https://github.com/k-takata/Onigmo/tree/Onigmo-5.15.0_for_bregonig">https://github.com/k-takata/Onigmo/tree/Onigmo-5.15.0_for_bregonig</a>
+    <ul>
+      <li>Unicode 7.0 に対応</li>
+      <li>Oniguruma 5.9.5 をマージ</li>
+      <li>大量のグループを使うと落ちる問題を修正<br>
+      <a href="https://github.com/k-takata/Onigmo/issues/24">https://github.com/k-takata/Onigmo/issues/24</a>
+      </li>
+      <li>/\x{1ffc}/i =~ "\x1ff3" がマッチしない問題を修正</li>
+      <li>UTF-16/32 で /[a-c#]+\W/ =~ "def#" がマッチしない問題を修正</li>
+      <li>/(?i)\u0149\u0149/ =~ "\u0149\u0149" がマッチしない問題を修正<br>
+      <a href="https://github.com/k-takata/Onigmo/issues/40">https://github.com/k-takata/Onigmo/issues/40</a>
+      </li>
+      <li>文字クラスの中で \w を使い、/i オプションを指定したときの問題を修正<br>
+      <a href="https://github.com/k-takata/Onigmo/issues/4">https://github.com/k-takata/Onigmo/issues/4</a>
+      </li>
+      <li>文字プロパティが /i オプションを無視する問題を修正<br>
+      <a href="https://github.com/k-takata/Onigmo/issues/41">https://github.com/k-takata/Onigmo/issues/41</a>
+      </li>
+      <li>"ab" =~ /(?!^a).*b/ がマッチしない問題を修正<br>
+      <a href="https://github.com/k-takata/Onigmo/issues/44">https://github.com/k-takata/Onigmo/issues/44</a>
+      </li>
+    </ul>
+    <li>「コンパイル方法」を更新。<br>
+  </ul>
+  </li>
+
+  <li>2016/12/xx  Ver.4.00
+  <ul>
+    <li>Onigmo (Oniguruma-mod) 6.0.0 for bregonig.dll を使用。<br>
+    <a href="https://github.com/k-takata/Onigmo/tree/Onigmo-6.0.0_for_bregonig">https://github.com/k-takata/Onigmo/tree/Onigmo-6.0.0_for_bregonig</a>
+    <ul>
+      <li>GCC または Clang でコンパイルした場合に、Token Threaded VM に対応<br>
+      <a href="https://github.com/k-takata/Onigmo/pull/52">https://github.com/k-takata/Onigmo/pull/52</a>
+      </li>
+      <li>Unicode 9.0 に対応</li>
+      <li>Unicode エンコーディングにおける [[:punct:]] の挙動の変更<br>
+      <a href="https://github.com/k-takata/Onigmo/issues/42">https://github.com/k-takata/Onigmo/issues/42</a>
+      </li>
+      <li>大量のグループを使うと落ちる問題を修正<br>
+      <li>\X の改善</li>
+      <li>\o{OOO} の対応</li>
+      <li>非常に深くネストしたキャプチャグループでスタックオーバーフローが起きる問題を修正<br>
+      <a href="https://github.com/k-takata/Onigmo/issues/68">https://github.com/k-takata/Onigmo/issues/68</a>
+      </li>
+      <li>いくつかのパターンでクラッシュする問題を修正<br>
+      <a href="https://github.com/k-takata/Onigmo/issues/65">https://github.com/k-takata/Onigmo/issues/65</a> 等
+      </li>
+      <li>戻り読みで Unicode の case-folding に対応していない場合がある問題を修正<br>
+      <a href="https://github.com/k-takata/Onigmo/issues/18">https://github.com/k-takata/Onigmo/issues/18</a>
+      </li>
+      <li>再帰的なマッチでキャプチャ位置が不正となる問題を修正<br>
+      <a href="https://github.com/k-takata/Onigmo/issues/48">https://github.com/k-takata/Onigmo/issues/48</a>
+      </li>
+      <li>MSVC でマルチプロセスビルドに対応</li>
+      <li>その他、多数の修正を Ruby と Oniguruma からマージ</li>
+    </ul>
+    <li>「コンパイル方法」を更新。<br>
+  </ul>
+  </li>
+
+</ul>
+
+
+<h2 id="SCT-9.">9. ライセンス</h2>
+<p>
+　bregonig.dll のライセンスは Bregexp.dll 同様に Perl と同じライセンス、すなわち GPL と Artistic License のどちらかを選択できるものとします。Artistic License は同梱の perl_license.txt, perl_license_jp.txt を参照してください。
+</p>
+<p>
+　また、bregonig.dll は、正規表現ライブラリとして Oniguruma (Onigmo) を使用しており、Oniguruma (Onigmo) は BSD ライセンスとなっています。また、ソースファイルの一部にも BSD ライセンスのものが含まれています。同梱の bsd_license.txt を参照してください。再配布などの際には、BSD ライセンスに従い、bsd_license.txt も同梱してください。（ドキュメントに bsd_license.txt の内容を転記でも可）
+</p>
+
+<h2 id="SCT-10.">10. 謝辞</h2>
+<p>
+　すばらしいライブラリを作られた以下の各氏に感謝します。
+</p>
+<ul>
+  <li>K.Kosako氏 (Oniguruma)</li>
+  <li>Tatsuo Baba氏 (Bregexp.dll)</li>
+  <li>Koyabu Kazuya(K2)氏 (K2Regexp.dll)</li>
+  <li>かろと氏 (Bregexp.dll for SAKURA)</li>
+</ul>
+
+<h2 id="SCT-11.">11. 連絡先</h2>
+<ul>
+  <li>作者:   K.Takata (高田 謙)</li>
+  <li>E-mail: kentkt ATMARK csc DOT jp</li>
+  <li>URL:
+  <ul>
+    <li><a href="http://k-takata.o.oo7.jp/">http://k-takata.o.oo7.jp/</a></li>
+    <li><a href="https://github.com/k-takata/bregonig">https://github.com/k-takata/bregonig</a> (最新ソースコード)</li>
+  </ul>
+  </li>
+</ul>
+
+
+<hr class="endoftext">
+
+<!--[[
+<p><a href="index.html">戻る</a></p>
+]]-->
+
+<address>
+Copyright (C) 2006-2016 <a href="mailto:kentkt ATMARK csc DOT jp">K.Takata</a>
+</address>
+
+</body>
+
+</html>
