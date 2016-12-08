@@ -120,7 +120,7 @@
 　Tatsuo Baba氏による正規表現ライブラリである <a href="http://www.hi-ho.ne.jp/babaq/bregexp.html">Bregexp.dll</a> 互換の正規表現ライブラリです。Windows アプリで Perl 互換の正規表現が使えるようになります。
 </p>
 <p>
-　正規表現エンジンとして、<a href="https://github.com/kkos/oniguruma.git">鬼車 (Oniguruma)</a> を改良した<a href="https://github.com/k-takata/Onigmo">鬼雲 (Onigmo, Oniguruma-mod)</a> を採用することにより、オリジナルの Bregexp.dll よりも高度な正規表現を使用できるようになっています。具体的には、戻り読み (look-behind) 《<code>(?&lt;=式)</code>, <code>(?&lt;!式)</code>》、式オプション 《<code>(?imsx-imsx:式)</code>》、POSIX ブラケット 《<code>[:ascii:]</code>》、文字プロパティ 《<code>\p{Ascii}</code>》、名前付き捕獲式集合と名前指定後方参照 《<code>(?&lt;name&gt;式)</code>, <code>\k&lt;name&gt;</code>》 などが新たに使えるようになります。
+　正規表現エンジンとして、<a href="https://github.com/kkos/oniguruma">鬼車 (Oniguruma)</a> を改良した<a href="https://github.com/k-takata/Onigmo">鬼雲 (Onigmo, Oniguruma-mod)</a> を採用することにより、オリジナルの Bregexp.dll よりも高度な正規表現を使用できるようになっています。具体的には、戻り読み (look-behind) 《<code>(?&lt;=式)</code>, <code>(?&lt;!式)</code>》、式オプション 《<code>(?imsx-imsx:式)</code>》、POSIX ブラケット 《<code>[:ascii:]</code>》、文字プロパティ 《<code>\p{Ascii}</code>》、名前付き捕獲式集合と名前指定後方参照 《<code>(?&lt;name&gt;式)</code>, <code>\k&lt;name&gt;</code>》 などが新たに使えるようになります。
 </p>
 <p>
 　K2Editor で使われている <a href="http://k2top.jpn.org/index.php?K2Editor">K2Regexp.dll</a> と、サクラエディタで使われている <a href="http://sourceforge.net/projects/sakura-editor/files/bregexp/">Bregexp.dll for SAKURA</a> にも対応しています。K2Editor やサクラエディタなどで、この bregonig.dll を使うことで、検索機能や置換機能が大幅に強化されます。
@@ -315,7 +315,7 @@ int BoMatch(const TCHAR *<var>patternp</var>, const TCHAR *<var>optionp</var>,
   Unicode API では、オプションの指定に関わらず UTF-16LE として扱う
   </dd>
 
-  <dt>Perl 5.14 互換文字セット修飾子（限定サポート）</dt>
+  <dt>Perl 5.14 互換の文字セット修飾子（限定サポート）</dt>
   <dd>
   <dl class="compact">
     <dt><code>a</code></dt><dd>ASCII<br>
@@ -1936,6 +1936,9 @@ Bregexp.dll では、これは、<code>s/(hoge.)/$1\x32/g</code> などと書く必要がありま
       <a href="https://github.com/k-takata/Onigmo/pull/52">https://github.com/k-takata/Onigmo/pull/52</a>
       </li>
       <li>Unicode 9.0 に対応</li>
+      <li>Perl 文法の際の名前参照の挙動を Perl と同じとなるように変更<br>
+      <a href="https://github.com/k-takata/Onigmo/issues/74">https://github.com/k-takata/Onigmo/issues/74</a>
+      </li>
       <li>Unicode エンコーディングにおける [[:punct:]] の挙動の変更<br>
       <a href="https://github.com/k-takata/Onigmo/issues/42">https://github.com/k-takata/Onigmo/issues/42</a>
       </li>
