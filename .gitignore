@@ -15,3 +15,8 @@
 *.map
 *.RES
 *.res
+
+*.zip
+*.7z
+
+tags
