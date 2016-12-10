@@ -38,7 +38,7 @@
 <h1>正規表現ライブラリ bregonig.dll</h1>
 <p class="copyright">bregonig.dll Ver.4.00   Copyright (C) 2006-2016  K.Takata</p>
 
-<p class="renew">2016/12/xx 更新</p>
+<p class="renew">2016/12/10 更新</p>
 
 <!--[[
 <h2>ダウンロード</h2>
@@ -222,7 +222,7 @@ pBRegfree = GetProcAddress(hBregOnig, "BRegfreeW");
 <ul>
   <li>同じ <code>BREGEXP</code> 構造体を使って、Unicode 版 API と ANSI 版 API を混在して呼び出してはいけません。混在して呼び出すと予期しない結果が起こる可能性があります。</li>
   <li>メモリを解放する <code>BRegfree()</code> も、Unicode 版と ANSI 版は別になっていますので注意してください。</li>
-  <li>現バージョンの k2regexp.dll では Unicode 版 API は使えません。Ver.1.xx と異なる点は、使える正規表現が拡張されている点のみです。</li>
+  <li>k2regexp.dll では Unicode 版 API は使えません。Ver.1.xx と異なる点は、使える正規表現が拡張されている点のみです。</li>
 </ul>
 
 
@@ -1927,7 +1927,7 @@ Bregexp.dll では、これは、<code>s/(hoge.)/$1\x32/g</code> などと書く必要がありま
   </ul>
   </li>
 
-  <li>2016/12/xx  Ver.4.00
+  <li>2016/12/10  Ver.4.00
   <ul>
     <li>Onigmo (Oniguruma-mod) 6.0.0 for bregonig.dll を使用。<br>
     <a href="https://github.com/k-takata/Onigmo/tree/Onigmo-6.0.0_for_bregonig">https://github.com/k-takata/Onigmo/tree/Onigmo-6.0.0_for_bregonig</a>
