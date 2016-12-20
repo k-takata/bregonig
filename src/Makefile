@@ -63,7 +63,11 @@ LDFLAGS = /DLL /nologo /MAP /BASE:$(BASEADDR) /merge:.rdata=.text
 !ifdef USE_MSVCRT
 CPPFLAGS = $(CPPFLAGS) /MD
 !else
+!ifdef DEBUG
+CPPFLAGS = $(CPPFLAGS) /MTd
+!else
 CPPFLAGS = $(CPPFLAGS) /MT
+!endif
 !endif
 
 !ifndef USE_ONIG_DLL
