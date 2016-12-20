@@ -15,6 +15,7 @@
 *.map
 *.RES
 *.res
+*.pdb
 
 *.zip
 *.7z
