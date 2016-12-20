@@ -26,8 +26,13 @@ ctr = BoSubst(r"(\d\d)-\d{4}-\d{4}".encode('ASCII'), r"$1-xxxx-xxxx".encode('ASC
         t1p, t1p, t1p.value + len(t1),
         None, byref(rxp), msg)
 if ctr > 0:
-    print("after(%d)=%s" % (ctr, string_at(rxp.contents.outp).decode('ASCII')))
-    print("length=%d" % (rxp.contents.outendp - rxp.contents.outp))
+    if rxp.contents.outp:
+        print("after(%d)=%s" % (ctr, string_at(rxp.contents.outp).decode('ASCII')))
+        print("length=%d" % (rxp.contents.outendp - rxp.contents.outp))
+    else:
+        # Result is an empty string.
+        print("after(%d)" % ctr)
+        print("length=0")
 
 
 # use same patternp and same substp -> reused
@@ -35,8 +40,13 @@ ctr = BoSubst(r"(\d\d)-\d{4}-\d{4}".encode('ASCII'), r"$1-xxxx-xxxx".encode('ASC
         t1p, t1p, t1p.value + len(t1),
         None, byref(rxp), msg)
 if ctr > 0:
-    print("after(%d)=%s" % (ctr, string_at(rxp.contents.outp).decode('ASCII')))
-    print("length=%d" % (rxp.contents.outendp - rxp.contents.outp))
+    if rxp.contents.outp:
+        print("after(%d)=%s" % (ctr, string_at(rxp.contents.outp).decode('ASCII')))
+        print("length=%d" % (rxp.contents.outendp - rxp.contents.outp))
+    else:
+        # Result is an empty string.
+        print("after(%d)" % ctr)
+        print("length=0")
 
 
 # reuse patternp, use new substp
@@ -45,8 +55,13 @@ ctr = BoSubst(None, r"$1-yyyy-zzzz".encode('ASCII'), None,
         t1p, t1p, t1p.value + len(t1),
         BCallBack(subst_callback), byref(rxp), msg)
 if ctr > 0:
-    print("after(%d)=%s" % (ctr, string_at(rxp.contents.outp).decode('ASCII')))
-    print("length=%d" % (rxp.contents.outendp - rxp.contents.outp))
+    if rxp.contents.outp:
+        print("after(%d)=%s" % (ctr, string_at(rxp.contents.outp).decode('ASCII')))
+        print("length=%d" % (rxp.contents.outendp - rxp.contents.outp))
+    else:
+        # Result is an empty string.
+        print("after(%d)" % ctr)
+        print("length=0")
 
 
 # reuse patternp and substp
@@ -55,8 +70,13 @@ ctr = BoSubst(None, None, None,
         t1p, t1p, t1p.value + len(t1),
         BCallBack(subst_callback), byref(rxp), msg)
 if ctr > 0:
-    print("after(%d)=%s" % (ctr, string_at(rxp.contents.outp).decode('ASCII')))
-    print("length=%d" % (rxp.contents.outendp - rxp.contents.outp))
+    if rxp.contents.outp:
+        print("after(%d)=%s" % (ctr, string_at(rxp.contents.outp).decode('ASCII')))
+        print("length=%d" % (rxp.contents.outendp - rxp.contents.outp))
+    else:
+        # Result is an empty string.
+        print("after(%d)" % ctr)
+        print("length=0")
 
 
 # use new patternp and same substp -> not reused
@@ -65,8 +85,13 @@ ctr = BoSubst(r"(\d{3})-\d{3}-\d{4}".encode('ASCII'), r"$1-yyyy-zzzz".encode('AS
         t1p, t1p, t1p.value + len(t1),
         BCallBack(subst_callback), byref(rxp), msg)
 if ctr > 0:
-    print("after(%d)=%s" % (ctr, string_at(rxp.contents.outp).decode('ASCII')))
-    print("length=%d" % (rxp.contents.outendp - rxp.contents.outp))
+    if rxp.contents.outp:
+        print("after(%d)=%s" % (ctr, string_at(rxp.contents.outp).decode('ASCII')))
+        print("length=%d" % (rxp.contents.outendp - rxp.contents.outp))
+    else:
+        # Result is an empty string.
+        print("after(%d)" % ctr)
+        print("length=0")
 
 if (rxp):
     BRegfree(rxp)

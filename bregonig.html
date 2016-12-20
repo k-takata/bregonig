@@ -390,7 +390,8 @@ int BoSubst(const TCHAR *<var>patternp</var>, const TCHAR *<var>substp</var>, co
   <dt><code><var>rx</var>-&gt;outendp</code></dt><dd>置換結果の末尾（置換成功時のみ有効）</dd>
 </dl>
 <p>
-　置換結果は NUL 文字終端されているため、置換結果に NUL 文字が含まれていないことが分かっているのであれば、<code><var>rx</var>-&gt;outendp</code> を参照する必要はありません。
+　置換結果は NUL 文字終端されているため、置換結果に NUL 文字が含まれていないことが分かっているのであれば、<code><var>rx</var>-&gt;outendp</code> を参照する必要はありません。<br>
+　置換が成功した場合でも、置換結果が空文字となった場合は、<code>outp</code>, <code>outendp</code> には NULL が格納されます。
 </p>
 <h5>検索結果</h5>
 <p>

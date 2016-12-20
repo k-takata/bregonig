@@ -18,8 +18,13 @@ t1p = cast(t1, c_void_p)
 pattern1 = r"s/(\d\d)-\d{4}-\d{4}/$1-xxxx-xxxx/g".encode('ASCII')
 ctr = BSubst(pattern1, t1p, t1p.value + len(t1), byref(rxp), msg)
 if ctr > 0:
-    print("after(%d)=%s" % (ctr, string_at(rxp.contents.outp).decode('ASCII')))
-    print("length=%d" % (rxp.contents.outendp - rxp.contents.outp))
+    if rxp.contents.outp:
+        print("after(%d)=%s" % (ctr, string_at(rxp.contents.outp).decode('ASCII')))
+        print("length=%d" % (rxp.contents.outendp - rxp.contents.outp))
+    else:
+        # Result is an empty string.
+        print("after(%d)" % ctr)
+        print("length=0")
 
 if (rxp):
     BRegfree(rxp)

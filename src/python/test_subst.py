@@ -52,6 +52,7 @@ def xx(pattern, replacement, target, s_result, not_match=False):
         return
     
     if r == 0:
+        # Not matched
         if not_match:
             inc_nsucc()
             print_result("OK(N)", "s/%s/%s/g '%s'" % (pattern, replacement, target))
@@ -59,14 +60,19 @@ def xx(pattern, replacement, target, s_result, not_match=False):
             inc_nfail()
             print_result("FAIL", "s/%s/%s/g '%s'" % (pattern, replacement, target))
     else:
+        # Matched
+        if rxp.contents.outp:
+            out_result = tstring_at(rxp.contents.outp)
+        else:
+            out_result = ""
+        if isinstance(out_result, bytes):
+            out_result = out_result.decode(encoding)
+
         if not_match:
             inc_nfail()
             print_result("FAIL(N)",
                     "s/%s/%s/g '%s' => '%s'" % (pattern, replacement, target, out_result))
         else:
-            out_result = tstring_at(rxp.contents.outp)
-            if isinstance(out_result, bytes):
-                out_result = out_result.decode(encoding)
             if out_result == s_result:
                 inc_nsucc()
                 print_result("OK",

@@ -22,39 +22,64 @@ int main()
 	int ctr;
 	if ((ctr = BoSubst("(\\d\\d)-\\d{4}-\\d{4}", "$1-xxxx-xxxx", "g",
 			t1,t1,t1+strlen(t1),NULL,&rxp,msg)) > 0) {
-		_tprintf(_T("after(%d)=%s\n"),ctr,rxp->outp);	// 置換したパターン数と文字列
-		_tprintf(_T("length=%d\n"),rxp->outendp - rxp->outp);	// 置換後の文字数
+		if (rxp->outp != NULL) {
+			_tprintf(_T("after(%d)=%s\n"),ctr,rxp->outp);	// 置換したパターン数と文字列
+			_tprintf(_T("length=%d\n"),rxp->outendp - rxp->outp);	// 置換後の文字数
+		} else {
+			_tprintf(_T("after(%d)\n"),ctr);	// 置換したパターン数
+			_tprintf(_T("length=0\n"));		// 結果は空文字列
+		}
 	}
 
 	// 同じ patternp と substp を指定した場合、再利用される
 	if ((ctr = BoSubst("(\\d\\d)-\\d{4}-\\d{4}", "$1-xxxx-xxxx", "g",
 			t1,t1,t1+strlen(t1),NULL,&rxp,msg)) > 0) {
-		_tprintf(_T("after(%d)=%s\n"),ctr,rxp->outp);	// 置換したパターン数と文字列
-		_tprintf(_T("length=%d\n"),rxp->outendp - rxp->outp);	// 置換後の文字数
+		if (rxp->outp != NULL) {
+			_tprintf(_T("after(%d)=%s\n"),ctr,rxp->outp);	// 置換したパターン数と文字列
+			_tprintf(_T("length=%d\n"),rxp->outendp - rxp->outp);	// 置換後の文字数
+		} else {
+			_tprintf(_T("after(%d)\n"),ctr);	// 置換したパターン数
+			_tprintf(_T("length=0\n"));		// 結果は空文字列
+		}
 	}
 
 	// patternp を再利用、新しい substp を指定
 	// callback を指定
 	if ((ctr = BoSubst(NULL, "$1-yyyy-zzzz", NULL,
 			t1,t1,t1+strlen(t1),callback,&rxp,msg)) > 0) {
-		_tprintf(_T("after(%d)=%s\n"),ctr,rxp->outp);	// 置換したパターン数と文字列
-		_tprintf(_T("length=%d\n"),rxp->outendp - rxp->outp);	// 置換後の文字数
+		if (rxp->outp != NULL) {
+			_tprintf(_T("after(%d)=%s\n"),ctr,rxp->outp);	// 置換したパターン数と文字列
+			_tprintf(_T("length=%d\n"),rxp->outendp - rxp->outp);	// 置換後の文字数
+		} else {
+			_tprintf(_T("after(%d)\n"),ctr);	// 置換したパターン数
+			_tprintf(_T("length=0\n"));		// 結果は空文字列
+		}
 	}
 
 	// patternp と substp を再利用
 	// callback を指定
 	if ((ctr = BoSubst(NULL, NULL, NULL,
 			t1,t1,t1+strlen(t1),callback,&rxp,msg)) > 0) {
-		_tprintf(_T("after(%d)=%s\n"),ctr,rxp->outp);	// 置換したパターン数と文字列
-		_tprintf(_T("length=%d\n"),rxp->outendp - rxp->outp);	// 置換後の文字数
+		if (rxp->outp != NULL) {
+			_tprintf(_T("after(%d)=%s\n"),ctr,rxp->outp);	// 置換したパターン数と文字列
+			_tprintf(_T("length=%d\n"),rxp->outendp - rxp->outp);	// 置換後の文字数
+		} else {
+			_tprintf(_T("after(%d)\n"),ctr);	// 置換したパターン数
+			_tprintf(_T("length=0\n"));		// 結果は空文字列
+		}
 	}
 
 	// 新しい patternp と、同じ substp を指定した場合、再利用されない
 	// callback を指定
 	if ((ctr = BoSubst("(\\d{3})-\\d{3}-\\d{4}", "$1-yyyy-zzzz", "g",
 			t1,t1,t1+strlen(t1),callback,&rxp,msg)) > 0) {
-		_tprintf(_T("after(%d)=%s\n"),ctr,rxp->outp);	// 置換したパターン数と文字列
-		_tprintf(_T("length=%d\n"),rxp->outendp - rxp->outp);	// 置換後の文字数
+		if (rxp->outp != NULL) {
+			_tprintf(_T("after(%d)=%s\n"),ctr,rxp->outp);	// 置換したパターン数と文字列
+			_tprintf(_T("length=%d\n"),rxp->outendp - rxp->outp);	// 置換後の文字数
+		} else {
+			_tprintf(_T("after(%d)\n"),ctr);	// 置換したパターン数
+			_tprintf(_T("length=0\n"));		// 結果は空文字列
+		}
 	}
 
 	if (rxp)			// コンパイルブロックの開放
