@@ -252,7 +252,7 @@ TRACE0(_T("Substitution loop\n"));
 		else
 			delete [] buf;
 		
-TRACE1(_T("subst_count: %d\n"), subst_count);
+TRACE2(_T("subst_count: %d, copycnt: %d\n"), subst_count, copycnt);
 		return subst_count;
 	}
 	catch (std::bad_alloc& /*ex*/) {
