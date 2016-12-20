@@ -100,6 +100,7 @@ LDFLAGS = $(LDFLAGS) /opt:nowin98
 
 !ifdef DEBUG
 CPPFLAGS = $(CPPFLAGS) /D_DEBUG /Zi
+LDFLAGS = $(LDFLAGS) /debug
 RFLAGS = $(RFLAGS) /D_DEBUG
 !endif
 
