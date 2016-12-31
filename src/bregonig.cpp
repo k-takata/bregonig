@@ -63,11 +63,16 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
 	switch (fdwReason) {
 	case DLL_PROCESS_ATTACH:
+		/* Enable bregonig.dll extensions. */
 		OnigSyntaxPerl_NG_EX.op2 |=
-				ONIG_SYN_OP2_ESC_G_SUBEXP_CALL |			/* bregonig.dll extension */
-				ONIG_SYN_OP2_CCLASS_SET_OP;					/* bregonig.dll extension */
+#ifdef ONIG_SYN_OP2_QMARK_TILDE_ABSENT
+				ONIG_SYN_OP2_QMARK_TILDE_ABSENT |
+#endif
+				ONIG_SYN_OP2_ESC_G_SUBEXP_CALL |
+				ONIG_SYN_OP2_CCLASS_SET_OP;
 		OnigSyntaxPerl_NG_EX.behavior |=
-				ONIG_SYN_DIFFERENT_LEN_ALT_LOOK_BEHIND;		/* bregonig.dll extension */
+				ONIG_SYN_DIFFERENT_LEN_ALT_LOOK_BEHIND;
+
 		onig_init();
 		break;
 		
