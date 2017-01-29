@@ -1219,6 +1219,7 @@ def main():
     x2("(?~abc|)", "abc", 0, 1)     # ???
     x2("(?~abc|def)x", "abcx", 1, 4)
     x2("(?~abc|def)x", "defx", 1, 4)
+    x2("^(?~\\S+)TEST", "TEST", 0, 4)
 
     # Perl syntax
     x2("\\Q()\\[a]\\E[b]", "()\\[a]b", 0, 7)
