@@ -36,9 +36,9 @@
 <body>
 
 <h1>正規表現ライブラリ bregonig.dll</h1>
-<p class="copyright">bregonig.dll Ver.4.11   Copyright (C) 2006-2017  K.Takata</p>
+<p class="copyright">bregonig.dll Ver.4.12   Copyright (C) 2006-2017  K.Takata</p>
 
-<p class="renew">2017/01/29 更新</p>
+<p class="renew">2017/05/15 更新</p>
 
 <!--[[
 <h2>ダウンロード</h2>
@@ -1992,6 +1992,23 @@ Bregexp.dll では、これは、<code>s/(hoge.)/$1\x32/g</code> などと書く必要がありま
     <ul>
       <li>UTF-16LE で (?~\S+) が無限ループになるのを修正</li>
     </ul>
+  </ul>
+  </li>
+
+  <li>2017/05/15  Ver.4.12
+  <ul>
+    <li>Onigmo (Oniguruma-mod) 6.1.2 for bregonig.dll を使用。<br>
+    <a href="https://github.com/k-takata/Onigmo/tree/Onigmo-6.1.2_for_bregonig">https://github.com/k-takata/Onigmo/tree/Onigmo-6.1.2_for_bregonig</a>
+    <ul>
+      <li>戻り値の初期化処理の修正 (Ruby r57660)<br>
+        <a href="https://bugs.ruby-lang.org/issues/13234">https://bugs.ruby-lang.org/issues/13234</a><br>
+        <a href="https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2017-6181">https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2017-6181</a>
+      </li>
+      <li>非包含オペレータのドキュメント改善<br>
+        <a href="https://github.com/k-takata/Onigmo/issues/87">https://github.com/k-takata/Onigmo/issues/87</a>
+      </li>
+    </ul>
+    </li>
   </ul>
   </li>
 
