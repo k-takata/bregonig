@@ -331,7 +331,7 @@ void sv_grow(SV* sv,STRLEN len)
 	len += 512;
 	TCHAR *ptr = new (std::nothrow) TCHAR[len];
 	if (ptr == NULL)
-		throw std::bad_alloc("lack of memory");
+		throw std::bad_alloc();
 
 	memcpy(ptr,sv->xpv_pv,sv->xpv_cur*sizeof(TCHAR));
 	ptr[sv->xpv_cur] = '\0';
@@ -467,7 +467,7 @@ SV *newSVpv(TCHAR *s, STRLEN len)
     register SV *sv;
     sv = new (std::nothrow) SV;
 	if (sv == NULL)
-		throw std::bad_alloc("lack of memory");
+		throw std::bad_alloc();
 	memset(sv,0,sizeof(SV));
 	
     SvREFCNT(sv) = 1;
