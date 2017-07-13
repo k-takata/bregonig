@@ -71,6 +71,9 @@ typedef struct repstr {
 	static void *operator new(size_t cb, size_t data_size) {
 		return ::operator new (cb + data_size * sizeof(TCHAR));
 	}
+	static void operator delete(void *p) {
+		::operator delete (p);
+	}
 	static void operator delete(void *p, size_t data_size) {
 		::operator delete (p);
 	}
