@@ -36,9 +36,9 @@
 <body>
 
 <h1>正規表現ライブラリ bregonig.dll</h1>
-<p class="copyright">bregonig.dll Ver.4.12   Copyright (C) 2006-2017  K.Takata</p>
+<p class="copyright">bregonig.dll Ver.4.20   Copyright (C) 2006-2019  K.Takata</p>
 
-<p class="renew">2017/05/15 更新</p>
+<p class="renew">2019/01/30 更新</p>
 
 <!--[[
 <h2>ダウンロード</h2>
@@ -51,71 +51,71 @@
 
 <h2>目次</h2>
 <ul>
-  <li><a href="#SCT-1.">1. 概要</a>
-  <li><a href="#SCT-2.">2. 動作環境</a>
-  <li><a href="#SCT-3.">3. インストール</a>
+  <li><a href="#SCT-1">1. 概要</a>
+  <li><a href="#SCT-2">2. 動作環境</a>
+  <li><a href="#SCT-3">3. インストール</a>
   <ul>
-    <li><a href="#SCT-3.1.">3.1. bregonig.dll に標準で対応しているアプリケーションの場合</a>
-    <li><a href="#SCT-3.2.">3.2. bregonig.dll に標準で対応していないアプリケーションの場合</a>
-    <li><a href="#SCT-3.3.">3.3. K2Editor の場合</a>
+    <li><a href="#SCT-3.1">3.1. bregonig.dll に標準で対応しているアプリケーションの場合</a>
+    <li><a href="#SCT-3.2">3.2. bregonig.dll に標準で対応していないアプリケーションの場合</a>
+    <li><a href="#SCT-3.3">3.3. K2Editor の場合</a>
   </ul>
-  <li><a href="#SCT-4.">4. API</a>
+  <li><a href="#SCT-4">4. API</a>
   <ul>
-    <li><a href="#SCT-4.1.">4.1. Bregexp.dll 互換 API (ANSI/Shift_JIS)</a>
-    <li><a href="#SCT-4.2.">4.2. Unicode 版 API</a>
+    <li><a href="#SCT-4.1">4.1. Bregexp.dll 互換 API (ANSI/Shift_JIS)</a>
+    <li><a href="#SCT-4.2">4.2. Unicode 版 API</a>
     <ul>
-      <li><a href="#SCT-4.2.1.">4.2.1. 暗黙的リンク</a>
-      <li><a href="#SCT-4.2.2.">4.2.2. 明示的リンク</a>
-      <li><a href="#SCT-4.2.3.">4.2.3. 注意事項</a>
+      <li><a href="#SCT-4.2.1">4.2.1. 暗黙的リンク</a>
+      <li><a href="#SCT-4.2.2">4.2.2. 明示的リンク</a>
+      <li><a href="#SCT-4.2.3">4.2.3. 注意事項</a>
     </ul>
-    <li><a href="#SCT-4.3.">4.3. bregonig.dll 独自 API</a>
+    <li><a href="#SCT-4.3">4.3. bregonig.dll 独自 API</a>
     <ul>
-      <li><a href="#SCT-4.3.1.">4.3.1. 検索</a>
-      <li><a href="#SCT-4.3.2.">4.3.2. 置換</a>
-      <li><a href="#SCT-4.3.3.">4.3.3. コールバック関数</a>
+      <li><a href="#SCT-4.3.1">4.3.1. 検索</a>
+      <li><a href="#SCT-4.3.2">4.3.2. 置換</a>
+      <li><a href="#SCT-4.3.3">4.3.3. コールバック関数</a>
     </ul>
   </ul>
-  <li><a href="#SCT-5.">5. 使用可能な正規表現</a>
+  <li><a href="#SCT-5">5. 使用可能な正規表現</a>
   <ul>
-    <li><a href="#SCT-5.1.">5.1. 検索パターン</a>
+    <li><a href="#SCT-5.1">5.1. 検索パターン</a>
     <ul>
-      <li><a href="#SCT-5.1.1.">5.1.1. 基本要素</a>
-      <li><a href="#SCT-5.1.2.">5.1.2. 文字</a>
-      <li><a href="#SCT-5.1.3.">5.1.3. 文字種、文字の並び、特殊記号</a>
-      <li><a href="#SCT-5.1.4.">5.1.4. 量指定子</a>
-      <li><a href="#SCT-5.1.5.">5.1.5. 錨 (アンカー)</a>
-      <li><a href="#SCT-5.1.6.">5.1.6. 文字集合</a>
-      <li><a href="#SCT-5.1.7.">5.1.7. 拡張式集合</a>
-      <li><a href="#SCT-5.1.8.">5.1.8. 後方参照</a>
-      <li><a href="#SCT-5.1.9.">5.1.9. 部分式呼出し</a>
-      <li><a href="#SCT-5.1.10.">5.1.10. PCRE/Python サポート</a>
-      <li><a href="#SCT-5.1.11.">5.1.11. 未対応機能</a>
-      <li><a href="#SCT-5.1.12.">5.1.12. Unicode 利用時の検索パターン</a>
+      <li><a href="#SCT-5.1.1">5.1.1. 基本要素</a>
+      <li><a href="#SCT-5.1.2">5.1.2. 文字</a>
+      <li><a href="#SCT-5.1.3">5.1.3. 文字種、文字の並び、特殊記号</a>
+      <li><a href="#SCT-5.1.4">5.1.4. 量指定子</a>
+      <li><a href="#SCT-5.1.5">5.1.5. 錨 (アンカー)</a>
+      <li><a href="#SCT-5.1.6">5.1.6. 文字集合</a>
+      <li><a href="#SCT-5.1.7">5.1.7. 拡張式集合</a>
+      <li><a href="#SCT-5.1.8">5.1.8. 後方参照</a>
+      <li><a href="#SCT-5.1.9">5.1.9. 部分式呼出し</a>
+      <li><a href="#SCT-5.1.10">5.1.10. PCRE/Python サポート</a>
+      <li><a href="#SCT-5.1.11">5.1.11. 未対応機能</a>
+      <li><a href="#SCT-5.1.12">5.1.12. Unicode 利用時の検索パターン</a>
     </ul>
-    <li><a href="#SCT-5.2.">5.2. オプション指定</a>
-    <li><a href="#SCT-5.3.">5.3. 置換パターン</a>
-    <li><a href="#SCT-5.4.">5.4. Bregexp.dll との非互換点</a>
+    <li><a href="#SCT-5.2">5.2. オプション指定</a>
+    <li><a href="#SCT-5.3">5.3. 置換パターン</a>
+    <li><a href="#SCT-5.4">5.4. Bregexp.dll との非互換点</a>
   </ul>
-  <li><a href="#SCT-6.">6. 制限事項・注意事項など</a>
+  <li><a href="#SCT-6">6. 制限事項・注意事項など</a>
   <ul>
-    <li><a href="#SCT-6.1.">6.1. 制限事項・注意事項</a>
-    <li><a href="#SCT-6.2.">6.2. 各メジャーバージョンの位置づけ</a>
-    <li><a href="#SCT-6.3.">6.3. 今後の課題</a>
+    <li><a href="#SCT-6.1">6.1. 制限事項・注意事項</a>
+    <li><a href="#SCT-6.2">6.2. 各メジャーバージョンの位置づけ</a>
+    <li><a href="#SCT-6.3">6.3. 今後の課題</a>
   </ul>
-  <li><a href="#SCT-7.">7. コンパイル方法</a>
-  <li><a href="#SCT-8.">8. 更新履歴</a>
+  <li><a href="#SCT-7">7. コンパイル方法</a>
+  <li><a href="#SCT-8">8. 更新履歴</a>
   <ul>
-    <li><a href="#SCT-8.1.">8.1. ANSI/Shift_JIS 専用版 (Ver.0.xx, Ver.1.xx)</a>
-    <li><a href="#SCT-8.2.">8.2. Unicode (UTF-16LE) 対応版 (Ver.2.0x)</a>
-    <li><a href="#SCT-8.3.">8.3. Perl 5.14 対応版（鬼雲利用版） (Ver.2.50 betaX, Ver.3.00 以降)</a>
+    <li><a href="#SCT-8.1">8.1. ANSI/Shift_JIS 専用版 (Ver.0.xx, Ver.1.xx)</a>
+    <li><a href="#SCT-8.2">8.2. Unicode (UTF-16LE) 対応版 (Ver.2.0x)</a>
+    <li><a href="#SCT-8.3">8.3. Perl 5.14 対応版（鬼雲利用版） (Ver.2.50 betaX, Ver.3.00 以降)</a>
   </ul>
-  <li><a href="#SCT-9.">9. ライセンス</a>
-  <li><a href="#SCT-10.">10. 謝辞</a>
-  <li><a href="#SCT-11.">11. 連絡先</a>
+  <li><a href="#SCT-9">9. ライセンス</a>
+  <li><a href="#SCT-10">10. 謝辞</a>
+  <li><a href="#SCT-11">11. 連絡先</a>
 </ul>
 
 
-<h2 id="SCT-1.">1. 概要</h2>
+<h2 id="SCT-1">1. 概要</h2>
 <p>
 　Tatsuo Baba氏による正規表現ライブラリである <a href="http://www.hi-ho.ne.jp/babaq/bregexp.html">Bregexp.dll</a> 互換の正規表現ライブラリです。Windows アプリで Perl 互換の正規表現が使えるようになります。
 </p>
@@ -127,7 +127,7 @@
 </p>
 
 
-<h2 id="SCT-2.">2. 動作環境</h2>
+<h2 id="SCT-2">2. 動作環境</h2>
 <ul>
   <li>Windows XP / Vista / 7 / 8 / 8.1 / 10</li>
   <li>bregonig.dll または Bregexp.dll に対応したアプリケーション<br>
@@ -146,23 +146,23 @@
 </ul>
 
 
-<h2 id="SCT-3.">3. インストール</h2>
+<h2 id="SCT-3">3. インストール</h2>
 <p>
 　32bit アプリには、アーカイブを解凍した直下のディレクトリにあるファイルを、64bit アプリには、x64 ディレクトリにあるファイルをお使いください。
 </p>
 
-<h3 id="SCT-3.1.">3.1. bregonig.dll に標準で対応しているアプリケーションの場合</h3>
+<h3 id="SCT-3.1">3.1. bregonig.dll に標準で対応しているアプリケーションの場合</h3>
 <p>
 　サクラエディタ 1.6.0 以降など、bregonig.dll に標準で対応しているアプリケーションの場合は、bregonig.dll をそのままアプリケーションと同じ場所に置いてください。（ただし、アプリケーションによってはインストール方法が異なる場合もありますので、詳細はそれぞれのマニュアルでご確認ください。）
 </p>
 <p>
 　使用している OS に関わらず、アプリケーションが 32bit 版の場合は 32bit 版の bregonig.dll を、アプリケーションが 64bit 版の場合は 64bit 版の bregonig.dll をお使いください。64bit 版の bregonig.dll は、アーカイブファイルを解凍した先の x64 フォルダの中に入っています。
 </p>
-<h3 id="SCT-3.2.">3.2. bregonig.dll に標準で対応していないアプリケーションの場合</h3>
+<h3 id="SCT-3.2">3.2. bregonig.dll に標準で対応していないアプリケーションの場合</h3>
 <p>
 　Bregexp.dll に対応しているが、bregonig.dll には標準で対応していないアプリケーションの場合、bregonig.dll の名前を bregexp.dll に変更し、それをアプリケーションと同じフォルダに置いてください。（ただし、アプリケーションによってはインストール方法が異なる場合もありますので、詳細はそれぞれのマニュアルでご確認ください。）
 </p>
-<h3 id="SCT-3.3.">3.3. K2Editor の場合</h3>
+<h3 id="SCT-3.3">3.3. K2Editor の場合</h3>
 <p>
 　K2Editor の場合は、同梱の k2regexp.dll を K2Editor.exe のあるフォルダにコピーしてください。（K2Regexp.dll は Bregexp.dll を元に作られているものの、オリジナルの Bregexp.dll とは互換性が無いため、別ファイルになっています。）
 </p>
@@ -171,8 +171,8 @@
 </p>
 
 
-<h2 id="SCT-4.">4. API</h2>
-<h3 id="SCT-4.1.">4.1. Bregexp.dll 互換 API (ANSI/Shift_JIS)</h3>
+<h2 id="SCT-4">4. API</h2>
+<h3 id="SCT-4.1">4.1. Bregexp.dll 互換 API (ANSI/Shift_JIS)</h3>
 <p>
 以下の Bregexp.dll 互換の API が使用できます。
 </p>
@@ -193,12 +193,12 @@
 </ul>
 
 
-<h3 id="SCT-4.2.">4.2. Unicode 版 API</h3>
+<h3 id="SCT-4.2">4.2. Unicode 版 API</h3>
 <p>
 　bregonig.dll Ver.2 以降では、<a href="#SCT-4.1.">4.1.</a> の各 API について、Unicode (UTF-16LE) 版 API が用意されています。以下のいずれかの方法で使用できます。
 </p>
 
-<h4 id="SCT-4.2.1.">4.2.1. 暗黙的リンク</h4>
+<h4 id="SCT-4.2.1">4.2.1. 暗黙的リンク</h4>
 <p>
 　以下のように、<code>UNICODE</code>, <code>_UNICODE</code> を定義した状態で、同梱の src.7z に入っている bregexp.h をインクルードし、bregonig.lib をリンクすることで Unicode 版 API が使用できるようになります。（Bregexp.dll に付属の bregexp.h は不可）
 </p>
@@ -208,7 +208,7 @@
 #include "bregexp.h"
 </pre>
 
-<h4 id="SCT-4.2.2.">4.2.2. 明示的リンク</h4>
+<h4 id="SCT-4.2.2">4.2.2. 明示的リンク</h4>
 <p>
 　<code>LoadLibrary()</code>, <code>GetProcAddress()</code> を使って明示的リンクをする場合は、API 名の末尾に <code>W</code> を付けた名前を使って、<code>GetProcAddress()</code> を呼ぶことで、Unicode 版 API の関数アドレスを取得できます。
 </p>
@@ -218,7 +218,7 @@ pBMatch = GetProcAddress(hBregOnig, "BMatchW");
 pBRegfree = GetProcAddress(hBregOnig, "BRegfreeW");
 </pre>
 
-<h4 id="SCT-4.2.3.">4.2.3. 注意事項</h4>
+<h4 id="SCT-4.2.3">4.2.3. 注意事項</h4>
 <ul>
   <li>同じ <code>BREGEXP</code> 構造体を使って、Unicode 版 API と ANSI 版 API を混在して呼び出してはいけません。混在して呼び出すと予期しない結果が起こる可能性があります。</li>
   <li>メモリを解放する <code>BRegfree()</code> も、Unicode 版と ANSI 版は別になっていますので注意してください。</li>
@@ -226,7 +226,7 @@ pBRegfree = GetProcAddress(hBregOnig, "BRegfreeW");
 </ul>
 
 
-<h3 id="SCT-4.3.">4.3. bregonig.dll 独自 API</h3>
+<h3 id="SCT-4.3">4.3. bregonig.dll 独自 API</h3>
 <p>
 　Ver.3 から、新たに 2つの API を公開しており、それぞれ Unicode 版と ANSI 版が用意されています。
 </p>
@@ -237,7 +237,7 @@ pBRegfree = GetProcAddress(hBregOnig, "BRegfreeW");
 　従来の API とは異なり、各 API の検索対象文字列について、空文字列を受け付けるようになっています。
 </p>
 
-<h4 id="SCT-4.3.1.">4.3.1. 検索</h4>
+<h4 id="SCT-4.3.1">4.3.1. 検索</h4>
 <h5>関数宣言</h5>
 <pre>
 #include "bregexp.h"
@@ -346,7 +346,7 @@ int BoMatch(const TCHAR *<var>patternp</var>, const TCHAR *<var>optionp</var>,
 </dd>
 </dl>
 
-<h4 id="SCT-4.3.2.">4.3.2. 置換</h4>
+<h4 id="SCT-4.3.2">4.3.2. 置換</h4>
 <h5>関数宣言</h5>
 <pre>
 #include "bregexp.h"
@@ -412,7 +412,7 @@ int BoSubst(const TCHAR *<var>patternp</var>, const TCHAR *<var>substp</var>, co
 </p>
 
 
-<h4 id="SCT-4.3.3.">4.3.3. コールバック関数</h4>
+<h4 id="SCT-4.3.3">4.3.3. コールバック関数</h4>
 <p>
 　<code>g</code> オプションを指定し、1つの文字列に対して複数回置換を行う場合に、コールバック関数を用いて進捗を調べたり、置換を中断することができます。
 </p>
@@ -434,7 +434,7 @@ typedef BOOL (__stdcall *BCallBack)(int <var>kind</var>, int <var>value</var>, p
 </dl>
 
 
-<h2 id="SCT-5.">5. 使用可能な正規表現</h2>
+<h2 id="SCT-5">5. 使用可能な正規表現</h2>
 <p>
 　オリジナルの Bregexp.dll や、Bregexp.dll for SAKURA 互換 API については、従来と同様に、次に示す形式で検索・置換・変換パターンを与えます。
 </p>
@@ -472,7 +472,7 @@ typedef BOOL (__stdcall *BCallBack)(int <var>kind</var>, int <var>value</var>, p
 </p>
 
 
-<h3 id="SCT-5.1.">5.1. 検索パターン</h3>
+<h3 id="SCT-5.1">5.1. 検索パターン</h3>
 <p>
 　<code><var>pattern1</var></code> の部分は、Onigmo の正規表現パターン文法として <code>ONIG_SYNTAX_PERL</code> を指定した場合の正規表現が利用可能となっており、基本的には <a href="http://perldoc.perl.org/perlre.html">Perl 5.14</a> とほぼ同じ文法が使えます。ただし、<a href="https://github.com/k-takata/Onigmo/blob/master/doc/RE.ja">Onigmo のドキュメント</a> や <a href="#SCT-5.1.11.">5.1.11.</a> にも記載しているように、一部対応していない機能があります。
 </p>
@@ -483,7 +483,7 @@ typedef BOOL (__stdcall *BCallBack)(int <var>kind</var>, int <var>value</var>, p
 　以前のバージョンでは、垂直タブを示す <code>\v</code> も使えるようにしてありましたが、Perl 5.10 では <code>\v</code> は別の意味を持っていて矛盾するため、この機能は Ver.2 で削除されました。
 </p>
 
-<h4 id="SCT-5.1.1.">5.1.1. 基本要素</h4>
+<h4 id="SCT-5.1.1">5.1.1. 基本要素</h4>
 <table>
   <tr><td><code>\</code></td>
     <td>退避修飾 (エスケープ)<br> 正規表現記号の有効/無効の制御</td></tr>
@@ -495,7 +495,7 @@ typedef BOOL (__stdcall *BCallBack)(int <var>kind</var>, int <var>value</var>, p
     <td>文字集合 (文字クラス)</td></tr>
 </table>
 
-<h4 id="SCT-5.1.2.">5.1.2. 文字</h4>
+<h4 id="SCT-5.1.2">5.1.2. 文字</h4>
 <table>
   <tr><td><code>\t</code></td><td>水平タブ         (0x09)</td></tr>
   <tr><td><code>\n</code></td><td>改行             (0x0A)</td></tr>
@@ -511,7 +511,7 @@ typedef BOOL (__stdcall *BCallBack)(int <var>kind</var>, int <var>value</var>, p
   <tr><td><code>\c<var>x</var></code></td><td>制御文字表現      (コードポイント値)</td></tr>
 </table>
 
-<h4 id="SCT-5.1.3.">5.1.3. 文字種、文字の並び、特殊記号</h4>
+<h4 id="SCT-5.1.3">5.1.3. 文字種、文字の並び、特殊記号</h4>
 <h5>文字種</h5>
 <table>
   <tr><td><code>.</code></td><td>任意文字 (改行を除く)</td></tr>
@@ -567,7 +567,7 @@ typedef BOOL (__stdcall *BCallBack)(int <var>kind</var>, int <var>value</var>, p
   <tr><td><code>\E</code></td><td><code>\Q</code> の効果を終了します。</td></tr>
 </table>
 
-<h4 id="SCT-5.1.4.">5.1.4. 量指定子</h4>
+<h4 id="SCT-5.1.4">5.1.4. 量指定子</h4>
 <p>繰り返し回数の指定</p>
 <table>
   <tr><th>欲張り</th><th>無欲</th><th>強欲<br>(Ver.2 以降)</th><th></th></tr>
@@ -579,7 +579,7 @@ typedef BOOL (__stdcall *BCallBack)(int <var>kind</var>, int <var>value</var>, p
   <tr><td><code>{<var>n</var>}</code></td><td><code>{<var>n</var>}?</code></td><td><code>{<var>n</var>}+</code></td><td><var>n</var>回</td></tr>
 </table>
 
-<h4 id="SCT-5.1.5.">5.1.5. 錨 (アンカー)</h4>
+<h4 id="SCT-5.1.5">5.1.5. 錨 (アンカー)</h4>
 <table>
   <tr><td><code>^</code></td><td>行頭</td></tr>
   <tr><td><code>$</code></td><td>行末</td></tr>
@@ -591,7 +591,7 @@ typedef BOOL (__stdcall *BCallBack)(int <var>kind</var>, int <var>value</var>, p
   <tr><td><code>\G</code></td><td>照合開始位置<br>(<code>g</code> オプション指定時の置換処理中は、直前の照合終了位置)</td></tr>
 </table>
 
-<h4 id="SCT-5.1.6.">5.1.6. 文字集合</h4>
+<h4 id="SCT-5.1.6">5.1.6. 文字集合</h4>
 <p>文字集合 (<code>[<var>...</var>]</code>) の中で使える演算子類</p>
 <table>
   <tr><td><code>^<var>...</var></code></td><td>否定   (最低優先度演算子)</td></tr>
@@ -603,7 +603,7 @@ typedef BOOL (__stdcall *BCallBack)(int <var>kind</var>, int <var>value</var>, p
   </td></tr>
 </table>
 
-<h4 id="SCT-5.1.7.">5.1.7. 拡張式集合</h4>
+<h4 id="SCT-5.1.7">5.1.7. 拡張式集合</h4>
 <table>
   <tr><td><code>(?#<var>...</var>)</code></td><td>注釈</td></tr>
   <tr><td><code>(?imsxadlu-imsx)</code><br> <code>(?^imsxalu-imsx)</code></td><td>孤立オプション (Ver.3 で拡張)
@@ -661,7 +661,7 @@ typedef BOOL (__stdcall *BCallBack)(int <var>kind</var>, int <var>value</var>, p
   <tr><td><code>(?~<var>pattern</var>)</code></td><td>非包含オペレータ (Ver.4.10 以降) (実験的、将来的に変更の可能性あり)</td></tr>
 </table>
 
-<h4 id="SCT-5.1.8.">5.1.8. 後方参照</h4>
+<h4 id="SCT-5.1.8">5.1.8. 後方参照</h4>
 <table>
   <tr><td><code>\<var>n</var></code></td><td>絶対番号指定参照 (<var>n</var> &gt;= 1)</td></tr>
   <tr><td><code>\k&lt;<var>n</var>&gt;</code><br>
@@ -690,7 +690,7 @@ typedef BOOL (__stdcall *BCallBack)(int <var>kind</var>, int <var>value</var>, p
 Perl 5.10 互換の <code>\g{<var>...</var>}</code> 形式は、Ver.3 以降。
 </p>
 
-<h4 id="SCT-5.1.9.">5.1.9. 部分式呼出し</h4>
+<h4 id="SCT-5.1.9">5.1.9. 部分式呼出し</h4>
 <table>
   <tr><td><code>\g&lt;<var>name</var>&gt;</code><br>
   <code>\g'<var>name</var>'</code><br>
@@ -714,7 +714,7 @@ Perl 5.10 互換の <code>\g{<var>...</var>}</code> 形式は、Ver.3 以降。
 Perl 5.10 互換の <code>(?<var>...</var>)</code> 形式は、Ver.3 以降。
 </p>
 
-<h4 id="SCT-5.1.10.">5.1.10. PCRE/Python サポート</h4>
+<h4 id="SCT-5.1.10">5.1.10. PCRE/Python サポート</h4>
 <p>
 　以上のパターンに加え、以下の <a href="http://www.pcre.org/pcre.txt">PCRE</a>/<a href="http://docs.python.org/library/re.html">Python</a> 互換の名前参照も使用可能です。(Ver.3 以降)
 </p>
@@ -730,7 +730,7 @@ Perl 5.10 互換の <code>(?<var>...</var>)</code> 形式は、Ver.3 以降。
       <code>(?&amp;<var>name</var>)</code> 相当</td></tr>
 </table>
 
-<h4 id="SCT-5.1.11.">5.1.11. 未対応機能</h4>
+<h4 id="SCT-5.1.11">5.1.11. 未対応機能</h4>
 <p>
 　以下の正規表現は、現バージョンでは未対応です。
 </p>
@@ -758,7 +758,7 @@ Perl 5.10 互換の <code>(?<var>...</var>)</code> 形式は、Ver.3 以降。
     <code>(*<var>VERB</var>:<var>ARG</var>)</code></td></tr>
 </table>
 
-<h4 id="SCT-5.1.12.">5.1.12. Unicode 利用時の検索パターン</h4>
+<h4 id="SCT-5.1.12">5.1.12. Unicode 利用時の検索パターン</h4>
 <p>
 　<code><var>pattern1</var></code> は Onigmo の Unicode モードで解釈されるため、<code>\w</code>, <code>\W</code>, <code>\s</code>, <code>\S</code>, <code>\d</code>, <code>\D</code> や、POSIX ブラケットなどの動作が変更されます。（例えば <code>\d</code> は各国の数字を含みます。） さらに、<code>\p{}</code>, <code>\P{}</code> では、Onigmo で使えるすべての property-name が使えるようになります。詳細は Onigmo のドキュメントを参照してください。
 </p>
@@ -785,7 +785,7 @@ Perl 5.10 互換の <code>(?<var>...</var>)</code> 形式は、Ver.3 以降。
 </ul>
 
 
-<h3 id="SCT-5.2.">5.2. オプション指定</h3>
+<h3 id="SCT-5.2">5.2. オプション指定</h3>
 <p>
 　<code><var>options</var></code> は、次のものが指定できます。
 </p>
@@ -810,7 +810,7 @@ Perl 5.10 互換の <code>(?<var>...</var>)</code> 形式は、Ver.3 以降。
 　Unicode API 利用時は <code>k</code> オプションは無視されます。漢字は常に使用可能です。
 </p>
 
-<h3 id="SCT-5.3.">5.3. 置換パターン</h3>
+<h3 id="SCT-5.3">5.3. 置換パターン</h3>
 <p>
 　<code><var>pattern2</var></code> で使用可能な特殊文字は以下の通りです。
 </p>
@@ -900,7 +900,7 @@ Bregexp.dll では、これは、<code>s/(hoge.)/$1\x32/g</code> などと書く必要がありま
 </p>
 
 
-<h3 id="SCT-5.4.">5.4. Bregexp.dll との非互換点</h3>
+<h3 id="SCT-5.4">5.4. Bregexp.dll との非互換点</h3>
 <ul>
   <li>オプションで <code>k</code> (日本語モード) を指定すると、<code>\w</code> は <code>[A-Za-z0-9_]</code> だけでなく、２バイト文字（漢字等）にもマッチするようになります。一方、Bregexp.dll では、オプション <code>k</code> の有無に関わらず、<code>\w</code> は <code>[A-Za-z0-9_]</code> と同義です。なお、Perl 5.8 でも、検索対象が Unicode 文字列（utf8 フラグがオン）ならば、<code>\w</code> は多バイト文字にもマッチします。Bregexp.dll と同じ動作にするには、オプション <code>a</code> を指定してください。</li>
   <li>文字集合内で演算子を使えるように仕様変更したことにより、<code>[ ]</code> の中 に <code>[</code> を書くときは必ず <code>\[</code> のようにエスケープしなければならなくなりました。(Ver.1.30 以降)</li>
@@ -908,15 +908,15 @@ Bregexp.dll では、これは、<code>s/(hoge.)/$1\x32/g</code> などと書く必要がありま
 </ul>
 
 
-<h2 id="SCT-6.">6. 制限事項・注意事項など</h2>
-<h3 id="SCT-6.1.">6.1. 制限事項・注意事項</h3>
+<h2 id="SCT-6">6. 制限事項・注意事項など</h2>
+<h3 id="SCT-6.1">6.1. 制限事項・注意事項</h3>
 <ul>
   <li>現バージョンでは、Visual Basic 用の API は実装されていません。VB 製のアプリケーションから使用する場合は、オリジナルの Bregexp.dll をお使いください。</li>
   <li>Onigmo 自体は各種文字エンコーディングに対応していますが、bregonig.dll は Bregexp.dll との互換性のため、従来 API では、ASCII と Shift_JIS 以外の文字エンコーディングは使用できません。（新 API を使うことで、Ver.2 以降では UTF-16LE、Ver.3 以降では UTF-8 も使えます。）</li>
   <li>bregonig.dll は十分テストしてあるつもりですが、オリジナルの Bregexp.dll との互換性に問題があったり、バグが残っている可能性もあります。実際に使用する際には、事前に十分にテストを行うことをお薦めします。（バグを見つけた際には報告をお願いします。）</li>
   <li>マルチスレッドライブラリを用いてコンパイルしてありますが、マルチスレッドでのテストは十分に行われていません。マルチスレッドで使用する際は特に十分なテストを行った上でお使いください。</li>
 </ul>
-<h3 id="SCT-6.2.">6.2. 各メジャーバージョンの位置づけ</h3>
+<h3 id="SCT-6.2">6.2. 各メジャーバージョンの位置づけ</h3>
 <p>
 　bregonig.dll の各メジャーバージョンの位置づけは以下のようになっています。
 </p>
@@ -933,7 +933,7 @@ Bregexp.dll では、これは、<code>s/(hoge.)/$1\x32/g</code> などと書く必要がありま
   <dd>Perl 5.14 互換。<br>
     Ver.2 の全機能に加え、UTF-8 対応 API 追加。x64 対応。</dd>
 </dl>
-<h3 id="SCT-6.3.">6.3. 今後の課題</h3>
+<h3 id="SCT-6.3">6.3. 今後の課題</h3>
 <ul>
   <li>ブランチリセットパターン <code>(|<var>pattern</var>)</code> への対応。</li>
   <li><code>(?[])</code> への対応。(Perl 5.18)</li>
@@ -946,7 +946,7 @@ Bregexp.dll では、これは、<code>s/(hoge.)/$1\x32/g</code> などと書く必要がありま
 </ul>
 
 
-<h2 id="SCT-7.">7. コンパイル方法</h2>
+<h2 id="SCT-7">7. コンパイル方法</h2>
 <p>
 　コンパイラは Visual C++ 2005 以降に対応しています。Onigmo のソースコードは、Onigmo のリポジトリの <code>bregonig</code> ブランチのものを使用します。
 </p>
@@ -967,8 +967,8 @@ Bregexp.dll では、これは、<code>s/(hoge.)/$1\x32/g</code> などと書く必要がありま
 </pre>
 
 
-<h2 id="SCT-8.">8. 更新履歴</h2>
-<h3 id="SCT-8.1.">8.1. ANSI/Shift_JIS 専用版 (Ver.0.xx, Ver.1.xx)</h3>
+<h2 id="SCT-8">8. 更新履歴</h2>
+<h3 id="SCT-8.1">8.1. ANSI/Shift_JIS 専用版 (Ver.0.xx, Ver.1.xx)</h3>
 <ul>
   <li>2006/08/24  Ver.0.01
   <ul>
@@ -1305,7 +1305,7 @@ Bregexp.dll では、これは、<code>s/(hoge.)/$1\x32/g</code> などと書く必要がありま
   </li>
 </ul>
 
-<h3 id="SCT-8.2.">8.2. Unicode (UTF-16LE) 対応版 (Ver.2.0x)</h3>
+<h3 id="SCT-8.2">8.2. Unicode (UTF-16LE) 対応版 (Ver.2.0x)</h3>
 <ul>
   <li>2007/06/23  Ver.2.00 beta1
   <ul>
@@ -1544,7 +1544,7 @@ Bregexp.dll では、これは、<code>s/(hoge.)/$1\x32/g</code> などと書く必要がありま
 
 </ul>
 
-<h3 id="SCT-8.3.">8.3. Perl 5.14 対応版（鬼雲利用版） (Ver.2.50 betaX, Ver.3.00 以降)</h3>
+<h3 id="SCT-8.3">8.3. Perl 5.14 対応版（鬼雲利用版） (Ver.2.50 betaX, Ver.3.00 以降)</h3>
 <ul>
   <li>2011/06/07  Ver.2.50 beta1
   <ul>
@@ -2012,10 +2012,25 @@ Bregexp.dll では、これは、<code>s/(hoge.)/$1\x32/g</code> などと書く必要がありま
   </ul>
   </li>
 
+  <li>2019/01/30  Ver.4.20
+  <ul>
+    <li>Onigmo (Oniguruma-mod) 6.2.0 for bregonig.dll を使用。<br>
+    <a href="https://github.com/k-takata/Onigmo/tree/Onigmo-6.2.0_for_bregonig">https://github.com/k-takata/Onigmo/tree/Onigmo-6.2.0_for_bregonig</a>
+    <ul>
+      <li>Unicode データの更新 (Unicode 11.0.0, Emoji 11.0)</li>
+      <li>その他バグ修正</li>
+    </ul>
+    </li>
+    <li>本ドキュメントの各節へのリンク先を変更。<br>
+      利便性がよくなかったため、ID 末尾の `.` を削除。
+    </li>
+  </ul>
+  </li>
+
 </ul>
 
 
-<h2 id="SCT-9.">9. ライセンス</h2>
+<h2 id="SCT-9">9. ライセンス</h2>
 <p>
 　bregonig.dll のライセンスは Bregexp.dll 同様に Perl と同じライセンス、すなわち GPL と Artistic License のどちらかを選択できるものとします。Artistic License は同梱の perl_license.txt, perl_license_jp.txt を参照してください。
 </p>
@@ -2023,7 +2038,7 @@ Bregexp.dll では、これは、<code>s/(hoge.)/$1\x32/g</code> などと書く必要がありま
 　また、bregonig.dll は、正規表現ライブラリとして Oniguruma (Onigmo) を使用しており、Oniguruma (Onigmo) は BSD ライセンスとなっています。また、ソースファイルの一部にも BSD ライセンスのものが含まれています。同梱の bsd_license.txt を参照してください。再配布などの際には、BSD ライセンスに従い、bsd_license.txt も同梱してください。（ドキュメントに bsd_license.txt の内容を転記でも可）
 </p>
 
-<h2 id="SCT-10.">10. 謝辞</h2>
+<h2 id="SCT-10">10. 謝辞</h2>
 <p>
 　すばらしいライブラリを作られた以下の各氏に感謝します。
 </p>
@@ -2034,7 +2049,7 @@ Bregexp.dll では、これは、<code>s/(hoge.)/$1\x32/g</code> などと書く必要がありま
   <li>かろと氏 (Bregexp.dll for SAKURA)</li>
 </ul>
 
-<h2 id="SCT-11.">11. 連絡先</h2>
+<h2 id="SCT-11">11. 連絡先</h2>
 <ul>
   <li>作者:   K.Takata (高田 謙)</li>
   <li>E-mail: kentkt ATMARK csc DOT jp</li>
@@ -2054,7 +2069,7 @@ Bregexp.dll では、これは、<code>s/(hoge.)/$1\x32/g</code> などと書く必要がありま
 ]]-->
 
 <address>
-Copyright (C) 2006-2017 <a href="mailto:kentkt ATMARK csc DOT jp">K.Takata</a>
+Copyright (C) 2006-2019 <a href="mailto:kentkt ATMARK csc DOT jp">K.Takata</a>
 </address>
 
 </body>
