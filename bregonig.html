@@ -195,7 +195,7 @@
 
 <h3 id="SCT-4.2">4.2. Unicode 版 API</h3>
 <p>
-　bregonig.dll Ver.2 以降では、<a href="#SCT-4.1.">4.1.</a> の各 API について、Unicode (UTF-16LE) 版 API が用意されています。以下のいずれかの方法で使用できます。
+　bregonig.dll Ver.2 以降では、<a href="#SCT-4.1">4.1.</a> の各 API について、Unicode (UTF-16LE) 版 API が用意されています。以下のいずれかの方法で使用できます。
 </p>
 
 <h4 id="SCT-4.2.1">4.2.1. 暗黙的リンク</h4>
@@ -250,7 +250,7 @@ int BoMatch(const TCHAR *<var>patternp</var>, const TCHAR *<var>optionp</var>,
 </pre>
 <h5>引数</h5>
 <dl class="params">
-  <dt><code><var>patternp</var></code></dt><dd>検索パターン（NUL 文字終端） (<a href="#SCT-5.1.">5.1.</a> 参照)<br>
+  <dt><code><var>patternp</var></code></dt><dd>検索パターン（NUL 文字終端） (<a href="#SCT-5.1">5.1.</a> 参照)<br>
     <code>NULL</code> を指定すると、前回のコンパイル済みパターンを使用する。</dd>
   <dt><code><var>optionp</var></code></dt><dd>オプション（NUL 文字終端） (<a href="#SCT-4.3.1-OPTIONS">下記</a>参照)<br>
     <code><var>patternp</var></code> が <code>NULL</code> の場合は無視される。不要時は空文字または <code>NULL</code> を指定する。</dd>
@@ -359,9 +359,9 @@ int BoSubst(const TCHAR *<var>patternp</var>, const TCHAR *<var>substp</var>, co
 </pre>
 <h5>引数</h5>
 <dl class="params">
-  <dt><code><var>patternp</var></code>    </dt><dd>検索パターン（NUL 文字終端） (<a href="#SCT-5.1.">5.1.</a> 参照)<br>
+  <dt><code><var>patternp</var></code>    </dt><dd>検索パターン（NUL 文字終端） (<a href="#SCT-5.1">5.1.</a> 参照)<br>
   <code>NULL</code> を指定すると、前回のコンパイル済みパターンを使用する。</dd>
-  <dt><code><var>substp</var></code>      </dt><dd>置換パターン (NUL 文字終端) (<a href="#SCT-5.3.">5.3.</a> 参照)<br>
+  <dt><code><var>substp</var></code>      </dt><dd>置換パターン (NUL 文字終端) (<a href="#SCT-5.3">5.3.</a> 参照)<br>
   <code>NULL</code> を指定すると、前回のコンパイル済みパターンを使用する。</dd>
   <dt><code><var>optionp</var></code>     </dt><dd>オプション（NUL 文字終端） (<a href="#SCT-4.3.1-OPTIONS">4.3.1. のオプション項目</a>参照)<br>
   <code><var>patternp</var></code> が <code>NULL</code> の場合は無視される。
@@ -369,7 +369,7 @@ int BoSubst(const TCHAR *<var>patternp</var>, const TCHAR *<var>substp</var>, co
   <dt><code><var>strstartp</var></code>   </dt><dd>置換対象文字列（<code>NULL</code> 不可）</dd>
   <dt><code><var>targetstartp</var></code></dt><dd>置換開始位置（<code>NULL</code> 不可）</dd>
   <dt><code><var>targetendp</var></code>  </dt><dd>置換終了位置（<code>NULL</code> 不可）</dd>
-  <dt><code><var>callback</var></code>    </dt><dd>コールバック関数へのポインタ。(<a href="#SCT-4.3.3.">4.3.3.</a> 参照)<br>
+  <dt><code><var>callback</var></code>    </dt><dd>コールバック関数へのポインタ。(<a href="#SCT-4.3.3">4.3.3.</a> 参照)<br>
   不要時は <code>NULL</code> を指定すること。</dd>
   <dt><code><var>rxp</var></code>         </dt><dd><code>BREGEXP</code> 構造体ポインタ (<code><var>rx</var></code>) へのポインタ<br>
   初回呼び出し時は <code>BREGEXP</code> 構造体ポインタ (<code><var>rx</var></code>) を <code>NULL</code> で初期化しておかなければならない。<br>
@@ -474,7 +474,7 @@ typedef BOOL (__stdcall *BCallBack)(int <var>kind</var>, int <var>value</var>, p
 
 <h3 id="SCT-5.1">5.1. 検索パターン</h3>
 <p>
-　<code><var>pattern1</var></code> の部分は、Onigmo の正規表現パターン文法として <code>ONIG_SYNTAX_PERL</code> を指定した場合の正規表現が利用可能となっており、基本的には <a href="http://perldoc.perl.org/perlre.html">Perl 5.14</a> とほぼ同じ文法が使えます。ただし、<a href="https://github.com/k-takata/Onigmo/blob/master/doc/RE.ja">Onigmo のドキュメント</a> や <a href="#SCT-5.1.11.">5.1.11.</a> にも記載しているように、一部対応していない機能があります。
+　<code><var>pattern1</var></code> の部分は、Onigmo の正規表現パターン文法として <code>ONIG_SYNTAX_PERL</code> を指定した場合の正規表現が利用可能となっており、基本的には <a href="http://perldoc.perl.org/perlre.html">Perl 5.14</a> とほぼ同じ文法が使えます。ただし、<a href="https://github.com/k-takata/Onigmo/blob/master/doc/RE.ja">Onigmo のドキュメント</a> や <a href="#SCT-5.1.11">5.1.11.</a> にも記載しているように、一部対応していない機能があります。
 </p>
 <p>
 　なお、<code>ONIG_SYNTAX_PERL</code> は「Perl 互換」の文法であるため、Onigmo のドキュメントに記載されていても Perl で使えない機能は基本的に bregonig.dll でも使えません。しかし bregonig.dll では、利便性や旧バージョンとの互換性のために、異なる文字長の戻り読み、文字集合内の積演算、<code>\g&lt;&gt;</code> による部分式呼出し などは例外的に使えるようにしてあります。
@@ -799,8 +799,8 @@ Perl 5.10 互換の <code>(?<var>...</var>)</code> 形式は、Ver.3 以降。
   <tr><td><code>d</code></td><td>変換</td><td>見つかったが置換されなかった文字を削除する</td></tr>
   <tr><td><code>s</code></td><td>変換</td><td>置換された文字が重なったときに圧縮する</td></tr>
   <tr><td><code>x</code></td><td>検索</td><td>拡張正規表現を使用する</td></tr>
-  <tr><td><code>a</code>, <code>u</code>,<br>(<code>d</code>, <code>l</code>)</td><td>検索</td><td>文字セット修飾子 (Ver.3 以降)<br>詳細は <a href="#SCT-4.3.1.">4.3.1</a> 参照</td></tr>
-  <tr><td><code>R</code></td><td>検索</td><td>LF だけでなく、CRLF も改行として扱う (bregonig.dll 独自拡張) (Ver.3 以降)<br>詳細は <a href="#SCT-4.3.1.">4.3.1</a> 参照</td></tr>
+  <tr><td><code>a</code>, <code>u</code>,<br>(<code>d</code>, <code>l</code>)</td><td>検索</td><td>文字セット修飾子 (Ver.3 以降)<br>詳細は <a href="#SCT-4.3.1">4.3.1</a> 参照</td></tr>
+  <tr><td><code>R</code></td><td>検索</td><td>LF だけでなく、CRLF も改行として扱う (bregonig.dll 独自拡張) (Ver.3 以降)<br>詳細は <a href="#SCT-4.3.1">4.3.1</a> 参照</td></tr>
 </table>
 
 <p>
