@@ -20,8 +20,6 @@ TARGET_CPU = x86
 !endif
 !endif
 
-BASEADDR = 0x60500000
-
 !ifdef DEBUG
 DBGFLG = d
 !else
@@ -58,7 +56,7 @@ CPPFLAGS = $(CPPFLAGS) /DUSE_VTAB /DPERL_5_8_COMPAT /DNAMEGROUP_RIGHTMOST
 CPPFLAGS = $(CPPFLAGS) /DUSE_ONIGMO_6
 !endif
 LD = link
-LDFLAGS = /DLL /nologo /MAP /BASE:$(BASEADDR) /merge:.rdata=.text
+LDFLAGS = /DLL /nologo /MAP /DYNAMICBASE /merge:.rdata=.text
 
 !ifdef USE_MSVCRT
 CPPFLAGS = $(CPPFLAGS) /MD
